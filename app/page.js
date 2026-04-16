@@ -11,8 +11,6 @@ You have access to family tools: a chores tracker for the kids, a shared shoppin
 
 Kevin is saving for his daughter's college at University of Kentucky. Keep responses concise and conversational. Address family members by name when you know who's asking.`
 
-const FAMILY_PHOTO = '/family.png'
-
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;600;700&family=Share+Tech+Mono&family=Inter:wght@400;500;600;700&display=swap');
 
@@ -199,40 +197,30 @@ const styles = `
   .clear-checked-btn{background:none;border:1px solid rgba(255,80,80,0.2);color:rgba(255,80,80,0.5);font-family:'Inter',sans-serif;font-size:10px;padding:5px 12px;cursor:pointer;border-radius:6px;}
   .clear-checked-btn:hover{border-color:rgba(255,80,80,0.5);color:rgba(255,80,80,0.8);}
 
-  /* ── MESSAGES ── */
-  .messages-panel{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:12px;}
-  .message-item{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-left:3px solid #0056b3;border-radius:0 12px 12px 0;padding:12px 16px;margin-bottom:8px;}
-  .message-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
-  .message-author{font-size:12px;font-weight:700;color:#0056b3;letter-spacing:1px;}
-  .message-time{font-size:9px;color:rgba(255,255,255,0.3);letter-spacing:1px;}
-  .message-content{font-size:13px;color:rgba(255,255,255,0.85);line-height:1.6;}
-  .message-form{display:flex;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.06);}
-  .message-input{flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);padding:10px 12px;color:#fff;font-family:'Inter',sans-serif;font-size:12px;outline:none;border-radius:8px;resize:none;min-height:40px;max-height:80px;}
-  .message-input:focus{border-color:rgba(0,86,179,0.5);}
-  .message-input::placeholder{color:rgba(255,255,255,0.2);}
-  .message-send{background:#0056b3;border:none;color:white;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:10px 16px;cursor:pointer;border-radius:8px;letter-spacing:0.5px;}
-  .message-send:hover{background:#0066cc;}
-  .message-delete{background:none;border:none;color:rgba(255,80,80,0.4);cursor:pointer;font-size:12px;padding:0 4px;}
-  .message-delete:hover{color:rgba(255,80,80,0.8);}
+  /* ── BULLETIN BOARD ── */
+  .bulletin-form{display:flex;gap:8px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.06);}
+  .bulletin-input{flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);padding:10px 12px;color:#fff;font-family:'Inter',sans-serif;font-size:12px;outline:none;border-radius:8px;resize:none;min-height:40px;max-height:80px;}
+  .bulletin-input:focus{border-color:rgba(0,86,179,0.5);}
+  .bulletin-input::placeholder{color:rgba(255,255,255,0.2);}
+  .bulletin-send{background:#0056b3;border:none;color:white;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:10px 16px;cursor:pointer;border-radius:8px;letter-spacing:0.5px;}
+  .bulletin-send:hover{background:#0066cc;}
+  .bulletin-item{background:rgba(0,86,179,0.08);border:1px solid rgba(0,86,179,0.15);border-left:3px solid #0056b3;border-radius:0 8px 8px 0;padding:10px 12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:flex-start;}
+  .bulletin-content{flex:1;}
+  .bulletin-text{font-size:12px;color:rgba(255,255,255,0.85);line-height:1.4;margin-bottom:4px;}
+  .bulletin-meta{font-size:9px;color:rgba(0,86,179,0.6);letter-spacing:1px;}
+  .bulletin-delete{background:none;border:none;color:rgba(255,80,80,0.4);cursor:pointer;font-size:14px;padding:0 4px;margin-left:8px;}
+  .bulletin-delete:hover{color:rgba(255,80,80,0.8);}
+
+  /* ── NOTIFICATION ── */
+  .notification{position:fixed;top:20px;right:20px;background:linear-gradient(135deg,#0056b3,#003580);color:#fff;padding:12px 16px;border-radius:8px;box-shadow:0 4px 20px rgba(0,86,179,0.6);z-index:1000;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.5px;animation:notifySlide 0.3s ease-out;max-width:300px;}
+  @keyframes notifySlide{from{transform:translateX(100%);opacity:0;}to{transform:translateX(0);opacity:1;}}
+  .notification.hide{animation:notifySlideOut 0.3s ease-out forwards;}
+  @keyframes notifySlideOut{from{transform:translateX(0);opacity:1;}to{transform:translateX(100%);opacity:0;}}
 
   /* ── CALENDAR ── */
   .calendar-panel{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:12px;}
   .calendar-iframe{width:100%;height:calc(100vh - 160px);border:0;border-radius:12px;background:rgba(255,255,255,0.95);}
-  .gcal-connect{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;flex:1;}
-  .gcal-connect p{font-size:13px;color:rgba(255,255,255,0.4);text-align:center;max-width:260px;line-height:1.7;}
-  .gcal-btn{background:linear-gradient(135deg,#0056b3,#003580);border:none;padding:13px 28px;color:white;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer;border-radius:12px;box-shadow:0 4px 20px rgba(0,86,179,0.4);transition:all 0.2s;}
-  .gcal-btn:hover{box-shadow:0 6px 28px rgba(0,86,179,0.6);}
-  .gcal-disconnect{background:none;border:1px solid rgba(255,80,80,0.2);color:rgba(255,80,80,0.5);font-family:'Inter',sans-serif;font-size:10px;padding:4px 12px;cursor:pointer;border-radius:6px;}
-  .gcal-disconnect:hover{border-color:rgba(255,80,80,0.5);color:rgba(255,80,80,0.8);}
-  .cal-event{display:flex;gap:12px;padding:10px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-left:3px solid #0056b3;border-radius:0 10px 10px 0;margin-bottom:5px;}
-  .cal-event-time{font-size:10px;color:rgba(255,255,255,0.4);white-space:nowrap;padding-top:2px;font-weight:600;}
-  .cal-event-title{font-size:13px;color:rgba(255,255,255,0.85);flex:1;}
-  .cal-day-header{font-size:11px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:2px;text-transform:uppercase;margin:12px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.07);}
-  .cal-loading{font-size:12px;color:rgba(255,255,255,0.3);text-align:center;padding:20px;animation:blink 1s ease-in-out infinite;}
 `
-
-const GOOGLE_CLIENT_ID = '523937270224-lum8mrkbggm92pi15037v78r8ed0v4qo.apps.googleusercontent.com'
-const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/calendar.readonly'
 
 const KIDS = ['Lincoln', 'Camille', 'Cicily', 'Carter']
 const SHOP_CATS = ['ALL', 'PRODUCE', 'DAIRY', 'MEAT', 'PANTRY', 'HOUSEHOLD', 'OTHER']
@@ -250,8 +238,6 @@ function loadLS(key, fallback) {
 function saveLS(key, val) {
   try { localStorage.setItem(key, JSON.stringify(val)) } catch {}
 }
-function saveChores(updated) { setChores(updated); saveLS('jarvis_chores', updated) }
-function saveMessages(updated) { setMessages(updated); saveLS('jarvis_messages', updated) }
 
 export default function Home() {
   const [messages, setMessages] = useState([])
@@ -263,29 +249,42 @@ export default function Home() {
   const [time, setTime] = useState('')
   const [tab, setTab] = useState('dashboard')
   const [weather, setWeather] = useState(null)
-  const [calEvents, setCalEvents] = useState([])
-  const [calAuthed, setCalAuthed] = useState(false)
-  const [calLoading, setCalLoading] = useState(false)
-  const [tokenClient, setTokenClient] = useState(null)
   const [chores, setChores] = useState({})
   const [shopping, setShopping] = useState([])
   const [shopFilter, setShopFilter] = useState('ALL')
   const [newChore, setNewChore] = useState({})
   const [newShopItem, setNewShopItem] = useState('')
   const [newShopCat, setNewShopCat] = useState('OTHER')
-  const [familyMessages, setFamilyMessages] = useState([])
-  const [newMessage, setNewMessage] = useState('')
+  const [bulletins, setBulletins] = useState([])
+  const [newBulletin, setNewBulletin] = useState('')
+  const [notification, setNotification] = useState('')
   const bottomRef = useRef(null)
   const family = ['Dad', 'Mom', 'Lincoln', 'Camille', 'Cicily', 'Carter']
 
-  // Load persisted data
+  // Load persisted data and set up notification system
   useEffect(() => {
     setChores(loadLS('jarvis_chores', DEFAULT_CHORES.Cicily ? 
       Object.fromEntries(KIDS.map(k => [k, (DEFAULT_CHORES[k] || []).map((t, i) => ({ id: i, text: t, done: false }))])) : {}
     ))
     setShopping(loadLS('jarvis_shopping', []))
-    setFamilyMessages(loadLS('jarvis_messages', []))
-  }, [])
+    setBulletins(loadLS('jarvis_bulletins', []))
+
+    // Simple notification system - check for new bulletins every 2 seconds
+    const interval = setInterval(() => {
+      const stored = loadLS('jarvis_bulletins', [])
+      const current = JSON.parse(localStorage.getItem('jarvis_bulletins_temp') || '[]')
+      
+      if (stored.length > current.length) {
+        const newBulletin = stored[0] // newest is first
+        if (newBulletin && newBulletin.author !== user) { // don't notify self
+          showNotification(`New bulletin from ${newBulletin.author}: ${newBulletin.text.substring(0, 50)}...`)
+        }
+      }
+      localStorage.setItem('jarvis_bulletins_temp', JSON.stringify(stored))
+    }, 2000)
+
+    return () => clearInterval(interval)
+  }, [user])
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
 
@@ -293,6 +292,12 @@ export default function Home() {
     const t = setInterval(() => {
       setTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }))
     }, 1000)
+    
+    // Request notification permission
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission()
+    }
+    
     return () => clearInterval(t)
   }, [])
 
@@ -314,134 +319,45 @@ export default function Home() {
       }).catch(() => setWeather({ temp: '--', icon: '🌡️', desc: 'Unavailable', wind: '--' }))
   }, [authed])
 
-  // Load Google Identity Services for dashboard calendar previews only
-  useEffect(() => {
-    if (!authed) return
-    const script = document.createElement('script')
-    script.src = 'https://accounts.google.com/gsi/client'
-    script.async = true
-    script.onload = () => {
-      const client = window.google.accounts.oauth2.initTokenClient({
-        client_id: GOOGLE_CLIENT_ID,
-        scope: GOOGLE_SCOPES,
-        callback: (resp) => {
-          if (resp.access_token) {
-            saveLS('jarvis_cal_token', { token: resp.access_token, exp: Date.now() + 3500000 })
-            fetchCalendarEvents(resp.access_token)
-          }
-        }
+  function showNotification(message) {
+    setNotification(message)
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+      setNotification('')
+    }, 5000)
+    
+    // Try to show browser notification if allowed
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification('JARVIS Family Bulletin', {
+        body: message,
+        icon: '/favicon.ico'
       })
-      setTokenClient(client)
-      // Auto-reconnect if we have a saved non-expired token
-      const saved = loadLS('jarvis_cal_token', null)
-      if (saved && saved.exp > Date.now()) {
-        fetchCalendarEvents(saved.token)
-      }
     }
-    document.body.appendChild(script)
-    return () => document.body.removeChild(script)
-  }, [authed])
+  }
 
-  async function fetchCalendarEvents(token) {
-    setCalLoading(true)
-    try {
-      const now = new Date().toISOString()
-      const future = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-      
-      // Fetch from all calendars
-      const listRes = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList', {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      const listData = await listRes.json()
-      
-      // Get all calendar IDs, but prioritize primary and imported calendars
-      const allCalendars = listData.items || []
-      console.log('Available calendars:', allCalendars.map(c => ({ id: c.id, summary: c.summary })))
-      
-      const calendarIds = allCalendars
-        .filter(c => !c.hidden && c.accessRole !== 'freeBusyReader') // Only calendars we can read events from
-        .map(c => c.id)
-      
-      if (calendarIds.length === 0) calendarIds.push('primary')
-      console.log('Reading from calendars:', calendarIds)
-
-      let allEvents = []
-      for (const calId of calendarIds) {
-        try {
-          const encoded = encodeURIComponent(calId)
-          const res = await fetch(
-            `https://www.googleapis.com/calendar/v3/calendars/${encoded}/events?timeMin=${now}&timeMax=${future}&singleEvents=true&orderBy=startTime&maxResults=50`,
-            { headers: { Authorization: `Bearer ${token}` } }
-          )
-          const data = await res.json()
-          if (data.items) {
-            console.log(`Found ${data.items.length} events in calendar ${calId}`)
-            allEvents = allEvents.concat(data.items)
-          }
-        } catch (err) {
-          console.warn(`Failed to fetch events from calendar ${calId}:`, err)
-        }
-      }
-      
-      // Remove duplicates and sort
-      const uniqueEvents = allEvents.filter((event, index, self) => 
-        index === self.findIndex(e => e.id === event.id)
-      )
-      
-      uniqueEvents.sort((a, b) => {
-        const aTime = a.start?.dateTime || a.start?.date || ''
-        const bTime = b.start?.dateTime || b.start?.date || ''
-        return aTime.localeCompare(bTime)
-      })
-      
-      console.log(`Total unique events found: ${uniqueEvents.length}`)
-      setCalEvents(uniqueEvents)
-      setCalAuthed(true)
-    } catch (e) {
-      console.error('Calendar fetch error:', e)
+  function addBulletin() {
+    const text = newBulletin.trim()
+    if (!text) return
+    const bulletin = {
+      id: Date.now(),
+      text,
+      author: user,
+      timestamp: new Date().toISOString()
     }
-    setCalLoading(false)
+    const updated = [bulletin, ...bulletins]
+    setBulletins(updated)
+    saveLS('jarvis_bulletins', updated)
+    setNewBulletin('')
   }
-
-  function connectCalendar() {
-    if (tokenClient) tokenClient.requestAccessToken({ prompt: '' })
-  }
-
-  function disconnectCalendar() {
-    setCalAuthed(false)
-    setCalEvents([])
-    saveLS('jarvis_cal_token', null)
-  }
-
-  // Group events by day
-  function groupEventsByDay(events) {
-    const groups = {}
-    events.forEach(ev => {
-      const start = ev.start?.dateTime || ev.start?.date
-      if (!start) return
-      const day = start.split('T')[0]
-      if (!groups[day]) groups[day] = []
-      groups[day].push(ev)
-    })
-    return groups
-  }
-
-  function formatDay(dateStr) {
-    const d = new Date(dateStr + 'T12:00:00')
-    const today = new Date()
-    const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1)
-    if (dateStr === today.toISOString().split('T')[0]) return 'TODAY'
-    if (dateStr === tomorrow.toISOString().split('T')[0]) return 'TOMORROW'
-    return d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }).toUpperCase()
-  }
-
-  function formatEventTime(ev) {
-    if (ev.start?.date && !ev.start?.dateTime) return 'ALL DAY'
-    const d = new Date(ev.start.dateTime)
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  
+  function deleteBulletin(id) {
+    const updated = bulletins.filter(b => b.id !== id)
+    setBulletins(updated)
+    saveLS('jarvis_bulletins', updated)
   }
 
   function saveShopping(updated) { setShopping(updated); saveLS('jarvis_shopping', updated) }
+  function saveChores(updated) { setChores(updated); saveLS('jarvis_chores', updated) }
 
   function toggleChore(kid, id) {
     const updated = { ...chores, [kid]: chores[kid].map(c => c.id === id ? { ...c, done: !c.done } : c) }
@@ -472,27 +388,6 @@ export default function Home() {
   function toggleShop(id) { saveShopping(shopping.map(i => i.id === id ? { ...i, done: !i.done } : i)) }
   function deleteShop(id) { saveShopping(shopping.filter(i => i.id !== id)) }
   function clearChecked() { saveShopping(shopping.filter(i => !i.done)) }
-
-  function addMessage() {
-    const text = newMessage.trim()
-    if (!text) return
-    const message = {
-      id: Date.now(),
-      text,
-      author: user,
-      timestamp: new Date().toISOString()
-    }
-    const updated = [message, ...familyMessages]
-    setFamilyMessages(updated)
-    saveLS('jarvis_messages', updated)
-    setNewMessage('')
-  }
-  
-  function deleteMessage(id) {
-    const updated = familyMessages.filter(m => m.id !== id)
-    setFamilyMessages(updated)
-    saveLS('jarvis_messages', updated)
-  }
 
   async function send() {
     if (!input.trim() || loading) return
@@ -548,6 +443,14 @@ export default function Home() {
       <style>{styles}</style>
       <div className="app-bg" />
       {tab === 'chat' && <><div className="arc-bg" /><div className="scan" /><div className="corner tl" /><div className="corner tr" /><div className="corner bl" /><div className="corner br" /></>}
+      
+      {/* Notification popup */}
+      {notification && (
+        <div className="notification" onClick={() => setNotification('')}>
+          📢 {notification}
+        </div>
+      )}
+      
       <div className="app">
 
         {/* HEADER */}
@@ -585,9 +488,9 @@ export default function Home() {
 
         {/* NAV */}
         <div className="nav-tabs">
-          {['dashboard', 'messages', 'chat', 'chores', 'shopping', 'calendar'].map(t => (
+          {['dashboard', 'chat', 'chores', 'shopping', 'calendar'].map(t => (
             <button key={t} className={`nav-tab${tab === t ? ' active' : ''}`} onClick={() => setTab(t)}>
-              {t === 'dashboard' ? '⬡ HOME' : t === 'messages' ? '✉ MESSAGES' : t === 'chat' ? '◈ CHAT' : t === 'chores' ? '✦ CHORES' : t === 'shopping' ? '⊕ SHOPPING' : '◷ CALENDAR'}
+              {t === 'dashboard' ? '⬡ HOME' : t === 'chat' ? '◈ CHAT' : t === 'chores' ? '✦ CHORES' : t === 'shopping' ? '⊕ SHOPPING' : '◷ CALENDAR'}
             </button>
           ))}
         </div>
@@ -596,11 +499,7 @@ export default function Home() {
         {tab === 'chat' && (
           <div className="user-bar">
             {family.map(f => (
-              <button key={f} className={`user-btn${user === f ? ' active' : ''}`} onClick={() => {
-                console.log('User button clicked:', f, 'Current user:', user)
-                setUser(f)
-                console.log('User should now be:', f)
-              }}>
+              <button key={f} className={`user-btn${user === f ? ' active' : ''}`} onClick={() => setUser(f)}>
                 {f.toUpperCase()}
               </button>
             ))}
@@ -636,7 +535,68 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Chore Summary */}
+            {/* Family Bulletin Board - TOP PRIORITY */}
+            <div className="dash-card">
+              <div className="dash-card-label">
+                FAMILY BULLETIN BOARD
+                <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', marginLeft: 8 }}>
+                  ({bulletins.length} announcements)
+                </span>
+              </div>
+              
+              {/* Quick Post Form */}
+              <div className="bulletin-form">
+                <textarea 
+                  className="bulletin-input" 
+                  placeholder={`Post an announcement as ${user}...`}
+                  value={newBulletin}
+                  onChange={e => setNewBulletin(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault()
+                      addBulletin()
+                    }
+                  }}
+                />
+                <button className="bulletin-send" onClick={addBulletin}>POST</button>
+              </div>
+
+              {/* Bulletins Display */}
+              {bulletins.length === 0 ? (
+                <div style={{ fontSize: 11, color: 'rgba(0,180,255,0.3)', letterSpacing: 1, textAlign: 'center', padding: '12px 0' }}>
+                  NO ANNOUNCEMENTS · POST ONE ABOVE
+                </div>
+              ) : (
+                <div>
+                  {bulletins.slice(0, 5).map(bulletin => (
+                    <div key={bulletin.id} className="bulletin-item">
+                      <div className="bulletin-content">
+                        <div className="bulletin-text">{bulletin.text}</div>
+                        <div className="bulletin-meta">
+                          <strong>{bulletin.author}</strong> · {new Date(bulletin.timestamp).toLocaleDateString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric', 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                          })}
+                        </div>
+                      </div>
+                      <button 
+                        className="bulletin-delete" 
+                        onClick={() => deleteBulletin(bulletin.id)}
+                      >×</button>
+                    </div>
+                  ))}
+                  {bulletins.length > 5 && (
+                    <div style={{ fontSize: 10, color: 'rgba(0,180,255,0.4)', textAlign: 'center', padding: 4 }}>
+                      +{bulletins.length - 5} more announcements
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Chore Summary - MOVED TO BOTTOM */}
             <div className="dash-card">
               <div className="dash-card-label">CHORE STATUS BY AGENT</div>
               <div className="chore-summary">
@@ -657,7 +617,7 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Shopping Summary */}
+            {/* Shopping Summary - MOVED TO BOTTOM */}
             <div className="dash-card">
               <div className="dash-card-label">SHOPPING LIST</div>
               {shopping.filter(i => !i.done).length === 0 ? (
@@ -673,92 +633,6 @@ export default function Home() {
                 </div>
               )}
             </div>
-
-            {/* Calendar Debug Section */}
-            <div className="dash-card">
-              <div className="dash-card-label">CALENDAR DEBUG</div>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-                {!calAuthed ? (
-                  <button className="gcal-btn" style={{ padding: '8px 16px', fontSize: 11 }} onClick={connectCalendar}>
-                    CONNECT GOOGLE CALENDAR
-                  </button>
-                ) : (
-                  <>
-                    <button className="reset-btn" onClick={() => {
-                      console.log('Manual refresh clicked')
-                      const saved = loadLS('jarvis_cal_token', null)
-                      if (saved && saved.exp > Date.now()) {
-                        console.log('Using saved token to refresh')
-                        fetchCalendarEvents(saved.token)
-                      } else {
-                        console.log('No valid token found')
-                      }
-                    }} style={{ fontSize: 10, padding: '4px 8px' }}>
-                      REFRESH EVENTS
-                    </button>
-                    <button className="gcal-disconnect" onClick={disconnectCalendar}>Disconnect</button>
-                  </>
-                )}
-                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)' }}>
-                  Status: {calAuthed ? 'Connected' : 'Not connected'} | Events: {calEvents.length}
-                </div>
-              </div>
-            </div>
-
-            {/* Today's Events + Upcoming Events (only show if calendar connected) */}
-            {calAuthed && (() => {
-              const todayStr = new Date().toISOString().split('T')[0]
-              const todayEvents = calEvents.filter(ev => {
-                const start = ev.start?.dateTime || ev.start?.date || ''
-                return start.startsWith(todayStr)
-              })
-              const upcomingEvents = calEvents.filter(ev => {
-                const start = ev.start?.dateTime || ev.start?.date || ''
-                return !start.startsWith(todayStr)
-              })
-              return (
-                <>
-                  <div className="dash-card">
-                    <div className="dash-card-label">
-                      TODAY&apos;S EVENTS
-                      <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                        <button className="reset-btn" onClick={() => {
-                          const saved = loadLS('jarvis_cal_token', null)
-                          if (saved && saved.exp > Date.now()) {
-                            fetchCalendarEvents(saved.token)
-                          }
-                        }} style={{ fontSize: 9, padding: '2px 8px' }}>
-                          REFRESH
-                        </button>
-                        <button className="gcal-disconnect" onClick={disconnectCalendar}>Disconnect</button>
-                      </div>
-                    </div>
-                    {todayEvents.length === 0
-                      ? <div style={{ fontSize: 10, color: 'rgba(0,180,255,0.3)', letterSpacing: 2 }}>NOTHING SCHEDULED TODAY</div>
-                      : <div className="briefing-list">
-                          {todayEvents.map(ev => (
-                            <div key={ev.id} className="briefing-item">
-                              {ev.summary} <span style={{ color: 'rgba(0,180,255,0.3)' }}>· {formatEventTime(ev)}</span>
-                            </div>
-                          ))}
-                        </div>
-                    }
-                  </div>
-                  {upcomingEvents.length > 0 && (
-                    <div className="dash-card">
-                      <div className="dash-card-label">UPCOMING EVENTS</div>
-                      <div className="briefing-list">
-                        {upcomingEvents.slice(0, 5).map(ev => (
-                          <div key={ev.id} className="briefing-item">
-                            {ev.summary} <span style={{ color: 'rgba(0,180,255,0.3)' }}>· {formatDay(ev.start?.dateTime?.split('T')[0] || ev.start?.date)} · {formatEventTime(ev)}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </>
-              )
-            })()}
           </div>
         )}
 
@@ -893,61 +767,6 @@ export default function Home() {
                 </div>
               ))}
             </div>
-          </div>
-        )}
-
-        {/* ── MESSAGES TAB ── */}
-        {tab === 'messages' && (
-          <div className="messages-panel">
-            <div className="section-header">
-              <div className="section-title">Family Messages</div>
-              <div className="section-count">{familyMessages.length} messages</div>
-            </div>
-
-            {/* Message Input Form */}
-            <div className="dash-card">
-              <div className="dash-card-label">POST A MESSAGE</div>
-              <div className="message-form">
-                <textarea 
-                  className="message-input" 
-                  placeholder={`Write a message to the family as ${user}...`}
-                  value={newMessage}
-                  onChange={e => setNewMessage(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault()
-                      addMessage()
-                    }
-                  }}
-                />
-                <button className="message-send" onClick={addMessage}>POST</button>
-              </div>
-            </div>
-
-            {/* Messages List */}
-            {familyMessages.length === 0 ? (
-              <div className="empty-state">NO FAMILY MESSAGES YET<br />POST THE FIRST ONE ABOVE!</div>
-            ) : (
-              familyMessages.map(msg => (
-                <div key={msg.id} className="message-item">
-                  <div className="message-header">
-                    <span className="message-author">{msg.author}</span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span className="message-time">
-                        {new Date(msg.timestamp).toLocaleDateString('en-US', { 
-                          month: 'short', 
-                          day: 'numeric', 
-                          hour: '2-digit', 
-                          minute: '2-digit' 
-                        })}
-                      </span>
-                      <button className="message-delete" onClick={() => deleteMessage(msg.id)}>×</button>
-                    </div>
-                  </div>
-                  <div className="message-content">{msg.text}</div>
-                </div>
-              ))
-            )}
           </div>
         )}
 
