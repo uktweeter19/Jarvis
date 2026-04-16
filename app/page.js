@@ -831,23 +831,46 @@ God bless your studies! 📚`
               </div>
             </div>
 
-            {/* Today's Events - Separate Large Card */}
+            {/* Today's Events - Simple Text List Only */}
             <div className="dash-card">
               <div className="dash-card-label">TODAY'S EVENTS</div>
               
-              {/* Large Calendar Widget - Mobile Optimized */}
-              <iframe 
-                src="https://calendar.google.com/calendar/embed?mode=AGENDA&height=300&wkst=1&bgcolor=%23FFFFFF&src=uktweeter19%40gmail.com&src=family021430976716499641216%40group.calendar.google.com&src=98vibj87ujjb3cm68lo4jatcghv2dq16%40import.calendar.google.com&color=%23039BE5&color=%2333B679&color=%23F4511E&ctz=America%2FNew_York&showTitle=0&showNav=0&showDate=0&showPrint=0&showTabs=0&showCalendars=0&showTz=0"
-                style={{
-                  width: '100%',
-                  height: window.innerWidth <= 768 ? '300px' : '180px',
-                  border: 'none',
-                  borderRadius: '8px',
-                  backgroundColor: '#fff',
-                  display: 'block'
-                }}
-                title="Today's Calendar Events"
-              />
+              {/* Simple Today's Events - No Calendar Widget */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                
+                {/* Today's Event List */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ 
+                    fontSize: '12px', 
+                    color: '#0056b3', 
+                    fontWeight: '600',
+                    minWidth: '70px'
+                  }}>7:00 PM</div>
+                  <div style={{ 
+                    fontSize: '12px', 
+                    color: 'rgba(255,255,255,0.85)'
+                  }}>Dinner at Carson's</div>
+                </div>
+                
+                {/* Add more events as needed - copy the format above */}
+                {/* 
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ fontSize: '12px', color: '#0056b3', fontWeight: '600', minWidth: '70px' }}>8:30 PM</div>
+                  <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.85)' }}>Kids Basketball</div>
+                </div>
+                */}
+                
+                <div style={{ 
+                  fontSize: '10px', 
+                  color: 'rgba(255,255,255,0.3)', 
+                  textAlign: 'center',
+                  marginTop: '8px',
+                  fontStyle: 'italic'
+                }}>
+                  Update events by editing the code
+                </div>
+                
+              </div>
             </div>
 
             {/* Family Bulletin Board */}
