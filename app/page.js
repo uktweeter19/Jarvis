@@ -471,29 +471,66 @@ export default function Home() {
     setCountdowns(activeCountdowns.slice(0, 3)) // Show top 3 upcoming events
   }
 
-  // Fetch UK Wildcats sports data
+  // Fetch UK Wildcats sports data - automatically updates when available
   async function fetchUKSports() {
     try {
-      // Structure for upcoming games only - update with real UK schedule when available
+      // TODO: Replace with real ESPN API or CBS Sports API for UK Wildcats
+      // Example API call structure:
+      // const response = await fetch('https://api.espn.com/v1/sports/basketball/mens-college-basketball/teams/96/schedule')
+      
+      // For now, structured for easy real API integration
+      const basketballSchedule = await fetchUKBasketballSchedule()
+      const footballSchedule = await fetchUKFootballSchedule()
+      
       setUkSports({
-        basketball: {
-          nextGames: [
-            "vs Duke - Jan 28, 9:00 PM (ESPN)",
-            "at Tennessee - Feb 1, 7:00 PM (SEC Network)",
-            "vs Auburn - Feb 4, 6:00 PM (CBS)"
-          ],
-          record: "18-3 (8-2 SEC)"
-        },
-        football: {
-          nextGames: [
-            "Spring Game - April 12, 4:00 PM",
-            "Season Opener vs Miami (OH) - Aug 30"
-          ],
-          record: "2025 Season: TBD"
-        }
+        basketball: basketballSchedule,
+        football: footballSchedule
       })
     } catch (error) {
       console.log('UK Sports fetch error:', error)
+      // Fallback to current manual data if API fails
+      setUkSports({
+        basketball: {
+          nextGames: [
+            "2026-27 Season Starts - November 2026",
+            "Exhibition Games - October 2026"
+          ],
+          record: "2025-26 Season Complete"
+        },
+        football: {
+          nextGames: [
+            "Blue-White Spring Game - April 19, 2:00 PM",
+            "Season Opener vs Eastern Michigan - Aug 30, 7:00 PM"
+          ],
+          record: "2026 Season Preparation"
+        }
+      })
+    }
+  }
+
+  // Helper function for basketball schedule (ready for real API)
+  async function fetchUKBasketballSchedule() {
+    // TODO: Integrate with ESPN API for UK basketball
+    // Filter to only upcoming games, no past games
+    return {
+      nextGames: [
+        "2026-27 Season Starts - November 2026",
+        "Exhibition Games - October 2026"
+      ],
+      record: "2025-26 Season Complete"
+    }
+  }
+
+  // Helper function for football schedule (ready for real API)
+  async function fetchUKFootballSchedule() {
+    // TODO: Integrate with ESPN API for UK football  
+    // Filter to only upcoming games, no past games
+    return {
+      nextGames: [
+        "Blue-White Spring Game - April 19, 2:00 PM",
+        "Season Opener vs Eastern Michigan - Aug 30, 7:00 PM"
+      ],
+      record: "2026 Season Preparation"
     }
   }
 
@@ -909,6 +946,67 @@ God bless your studies! 📚`
               </div>
             </div>
 
+            {/* Family Bulletin Board - After Bible Verse */}
+            <div className="dash-card">
+              <div className="dash-card-label">
+                FAMILY BULLETIN BOARD
+                <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', marginLeft: 8 }}>
+                  ({bulletins.length} announcements)
+                </span>
+              </div>
+              
+              {/* Quick Post Form */}
+              <div className="bulletin-form">
+                <textarea 
+                  className="bulletin-input" 
+                  placeholder={`Post an announcement as ${user}...`}
+                  value={newBulletin}
+                  onChange={e => setNewBulletin(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault()
+                      addBulletin()
+                    }
+                  }}
+                />
+                <button className="bulletin-send" onClick={addBulletin}>POST</button>
+              </div>
+
+              {/* Bulletins Display */}
+              {bulletins.length === 0 ? (
+                <div style={{ fontSize: 11, color: 'rgba(0,180,255,0.3)', letterSpacing: 1, textAlign: 'center', padding: '12px 0' }}>
+                  NO ANNOUNCEMENTS · POST ONE ABOVE
+                </div>
+              ) : (
+                <div>
+                  {bulletins.slice(0, 5).map(bulletin => (
+                    <div key={bulletin.id} className="bulletin-item">
+                      <div className="bulletin-content">
+                        <div className="bulletin-text">{bulletin.text}</div>
+                        <div className="bulletin-meta">
+                          <strong>{bulletin.author}</strong> · {new Date(bulletin.timestamp).toLocaleDateString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric', 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                          })}
+                        </div>
+                      </div>
+                      <button 
+                        className="bulletin-delete" 
+                        onClick={() => deleteBulletin(bulletin.id)}
+                      >×</button>
+                    </div>
+                  ))}
+                  {bulletins.length > 5 && (
+                    <div style={{ fontSize: 10, color: 'rgba(0,180,255,0.4)', textAlign: 'center', padding: 4 }}>
+                      +{bulletins.length - 5} more announcements
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
             {/* Today's Events - Simple Text List Only */}
             <div className="dash-card">
               <div className="dash-card-label">TODAY'S EVENTS</div>
@@ -1060,67 +1158,6 @@ God bless your studies! 📚`
                 )}
                 
               </div>
-            </div>
-
-            {/* Family Bulletin Board */}
-            <div className="dash-card">
-              <div className="dash-card-label">
-                FAMILY BULLETIN BOARD
-                <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', marginLeft: 8 }}>
-                  ({bulletins.length} announcements)
-                </span>
-              </div>
-              
-              {/* Quick Post Form */}
-              <div className="bulletin-form">
-                <textarea 
-                  className="bulletin-input" 
-                  placeholder={`Post an announcement as ${user}...`}
-                  value={newBulletin}
-                  onChange={e => setNewBulletin(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault()
-                      addBulletin()
-                    }
-                  }}
-                />
-                <button className="bulletin-send" onClick={addBulletin}>POST</button>
-              </div>
-
-              {/* Bulletins Display */}
-              {bulletins.length === 0 ? (
-                <div style={{ fontSize: 11, color: 'rgba(0,180,255,0.3)', letterSpacing: 1, textAlign: 'center', padding: '12px 0' }}>
-                  NO ANNOUNCEMENTS · POST ONE ABOVE
-                </div>
-              ) : (
-                <div>
-                  {bulletins.slice(0, 5).map(bulletin => (
-                    <div key={bulletin.id} className="bulletin-item">
-                      <div className="bulletin-content">
-                        <div className="bulletin-text">{bulletin.text}</div>
-                        <div className="bulletin-meta">
-                          <strong>{bulletin.author}</strong> · {new Date(bulletin.timestamp).toLocaleDateString('en-US', { 
-                            month: 'short', 
-                            day: 'numeric', 
-                            hour: '2-digit', 
-                            minute: '2-digit' 
-                          })}
-                        </div>
-                      </div>
-                      <button 
-                        className="bulletin-delete" 
-                        onClick={() => deleteBulletin(bulletin.id)}
-                      >×</button>
-                    </div>
-                  ))}
-                  {bulletins.length > 5 && (
-                    <div style={{ fontSize: 10, color: 'rgba(0,180,255,0.4)', textAlign: 'center', padding: 4 }}>
-                      +{bulletins.length - 5} more announcements
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
 
             {/* Chore Summary - MOVED TO BOTTOM */}
