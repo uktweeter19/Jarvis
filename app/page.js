@@ -73,13 +73,15 @@ const firebase = new SimpleFirebase(firebaseConfig.databaseURL)
 
 const PASSWORD = 'deatherage2024'
 
-const FAMILY_CONTEXT = `You are JARVIS, the intelligent family assistant for the Deatherage family in Lexington, Kentucky. You are helpful, warm, and efficient — like a trusted household AI. 
+const FAMILY_CONTEXT = `You are JARVIS, the intelligent family assistant for the Deatherage family in Lexington, Kentucky. You are helpful, warm, efficient, and proudly American — like a trusted household AI with strong family values.
 
 Family members: Kevin (Dad, works in logistics/freight), Mom, Lincoln, Camille, Cicily, and Carter.
 
+Your personality: You love America, appreciate traditional family values, and have a positive outlook rooted in faith and patriotism. You're respectful, hardworking, and believe in personal responsibility. You occasionally reference American pride, the importance of family, and conservative values in a natural, family-friendly way.
+
 You have access to family tools: a chores tracker for the kids, a shared shopping list, and a daily briefing system. When users ask about chores or shopping, remind them they can use the Chores and Shopping tabs.
 
-Kevin is saving for his daughter's college at University of Kentucky. Keep responses concise and conversational. Address family members by name when you know who's asking.`
+Kevin is saving for his daughter's college at University of Kentucky. Keep responses concise and conversational. Address family members by name when you know who's asking. Occasionally add a "God bless" or reference to American values when appropriate.`
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;600;700&family=Share+Tech+Mono&family=Inter:wght@400;500;600;700&display=swap');
@@ -504,9 +506,54 @@ export default function Home() {
     const userMsg = { role: 'user', content: input, name: user }
     const newMessages = [...messages, userMsg]
     setMessages(newMessages)
+    const userInput = input.toLowerCase()
     setInput('')
     setLoading(true)
+    
     try {
+      // Check for special commands first
+      if (userInput.includes('weather') && (userInput.includes('tomorrow') || userInput.includes('forecast'))) {
+        // Fetch tomorrow's weather
+        const response = await fetch('https://api.open-meteo.com/v1/forecast?latitude=38.0406&longitude=-84.5037&daily=temperature_2m_max,temperature_2m_min,weathercode&temperature_unit=fahrenheit&forecast_days=2')
+        const data = await response.json()
+        const tomorrowData = data.daily
+        const tomorrowCode = tomorrowData.weathercode[1]
+        const tomorrowHigh = Math.round(tomorrowData.temperature_2m_max[1])
+        const tomorrowLow = Math.round(tomorrowData.temperature_2m_min[1])
+        
+        const icons = { 0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️', 45: '🌫️', 48: '🌫️', 51: '🌦️', 61: '🌧️', 71: '🌨️', 80: '🌦️', 95: '⛈️' }
+        const descs = { 0: 'Clear', 1: 'Mainly Clear', 2: 'Partly Cloudy', 3: 'Overcast', 45: 'Foggy', 51: 'Drizzle', 61: 'Rain', 71: 'Snow', 80: 'Showers', 95: 'Thunderstorm' }
+        
+        const weatherReply = `Tomorrow's weather in Lexington: ${icons[tomorrowCode] || '🌡️'} ${descs[tomorrowCode] || 'Mixed conditions'}\n\nHigh: ${tomorrowHigh}°F\nLow: ${tomorrowLow}°F\n\nPlan accordingly, ${user}!`
+        setMessages(m => [...m, { role: 'assistant', content: weatherReply, name: 'JARVIS' }])
+        setLoading(false)
+        return
+      }
+      
+      if (userInput.includes('news') || userInput.includes('headlines')) {
+        // Fetch world news
+        const response = await fetch('https://newsapi.org/v2/top-headlines?country=us&pageSize=5&apiKey=demo') // You'll need a real API key
+        let newsReply = "Here are today's top headlines:\n\n"
+        
+        // Fallback news (since demo API key has limits)
+        if (!response.ok) {
+          newsReply = `I don't have access to live news feeds right now, ${user}. For the latest updates, I'd recommend:\n\n• BBC News (bbc.com/news)\n• Reuters (reuters.com)\n• AP News (apnews.com)\n• NPR (npr.org)\n\nIs there anything specific you'd like to know about?`
+        } else {
+          const data = await response.json()
+          if (data.articles && data.articles.length > 0) {
+            data.articles.slice(0, 4).forEach((article, i) => {
+              newsReply += `${i + 1}. ${article.title}\n`
+            })
+            newsReply += "\nFor full articles, check your preferred news app or website."
+          }
+        }
+        
+        setMessages(m => [...m, { role: 'assistant', content: newsReply, name: 'JARVIS' }])
+        setLoading(false)
+        return
+      }
+      
+      // Default chat response
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
