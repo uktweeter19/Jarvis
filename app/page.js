@@ -739,15 +739,15 @@ export default function Home() {
                 
                 {/* Mini Calendar Widget */}
                 <iframe 
-                  src="https://calendar.google.com/calendar/embed?height=140&wkst=1&bgcolor=%23091018&ctz=America%2FNew_York&src=uktweeter19%40gmail.com&src=family021430976716499641216%40group.calendar.google.com&src=98vibj87ujjb3cm68lo4jatcghv2dq16%40import.calendar.google.com&color=%230056b3&color=%2300b4ff&color=%23ff6b35&mode=AGENDA&showTitle=0&showNav=0&showDate=0&showPrint=0&showTabs=0&showCalendars=0&showTz=0" 
+                  src="https://calendar.google.com/calendar/embed?height=140&wkst=1&bgcolor=%23000000&ctz=America%2FNew_York&src=uktweeter19%40gmail.com&src=family021430976716499641216%40group.calendar.google.com&src=98vibj87ujjb3cm68lo4jatcghv2dq16%40import.calendar.google.com&color=%23039BE5&color=%2333B679&color=%23F4511E&mode=AGENDA&showTitle=0&showNav=0&showDate=0&showPrint=0&showTabs=0&showCalendars=0&showTz=0" 
                   style={{ 
                     width: '100%', 
                     height: '120px', 
-                    border: '1px solid rgba(255,255,255,0.08)', 
+                    border: '1px solid rgba(0,86,179,0.2)', 
                     borderRadius: '8px',
-                    background: 'rgba(9,16,24,0.8)',
-                    filter: 'brightness(0.85) contrast(1.1)',
-                    opacity: '0.9'
+                    background: '#0a0f1a',
+                    filter: 'invert(0.9) hue-rotate(180deg) brightness(0.3) contrast(1.2)',
+                    opacity: '0.8'
                   }}
                   title="Today's Events"
                 />
