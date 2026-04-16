@@ -433,12 +433,11 @@ export default function Home() {
     
     // Important dates for the Deatherage family
     const importantDates = [
-      // Major Holidays
-      { name: "Christmas", date: new Date(currentYear, 11, 25), emoji: "🎄" },
-      { name: "Thanksgiving", date: new Date(currentYear, 10, 28), emoji: "🦃" }, // 4th Thursday of November (approx)
-      { name: "Easter", date: new Date(currentYear, 3, 20), emoji: "🐰" }, // Easter 2025 estimate
-      { name: "Independence Day", date: new Date(currentYear, 6, 4), emoji: "🇺🇸" },
-      { name: "New Year's Day", date: new Date(nextYear, 0, 1), emoji: "🎊" },
+      // Major Holidays - 2026 Calendar Dates
+      { name: "Christmas", date: new Date(currentYear, 11, 25), emoji: "🎄" }, // Dec 25, 2026
+      { name: "Thanksgiving", date: new Date(currentYear, 10, 26), emoji: "🦃" }, // Nov 26, 2026 (4th Thursday)
+      { name: "Independence Day", date: new Date(currentYear, 6, 4), emoji: "🇺🇸" }, // July 4, 2026
+      { name: "New Year's Day", date: new Date(nextYear, 0, 1), emoji: "🎊" }, // Jan 1, 2027
       
       // Family Birthdays - Real Deatherage Family Dates
       { name: "Dad's Birthday", date: new Date(currentYear, 2, 30), emoji: "🎂" }, // March 30th
@@ -447,9 +446,6 @@ export default function Home() {
       { name: "Cicily's Birthday", date: new Date(currentYear, 2, 13), emoji: "🎂" }, // March 13th
       { name: "Camille's Birthday", date: new Date(currentYear, 4, 15), emoji: "🎂" }, // May 15th
       { name: "Lincoln's Birthday", date: new Date(currentYear, 10, 28), emoji: "🎂" }, // November 28th
-      
-      // Family Vacation
-      { name: "Family Vacation", date: new Date(currentYear, 6, 15), emoji: "✈️" }, // July 15th example
     ]
     
     const activeCountdowns = importantDates.map(item => {
@@ -478,18 +474,22 @@ export default function Home() {
   // Fetch UK Wildcats sports data
   async function fetchUKSports() {
     try {
-      // This is a simplified example - you'd need real sports API integration
-      // For now, showing example data structure
+      // Structure for upcoming games only - update with real UK schedule when available
       setUkSports({
         basketball: {
-          nextGame: "vs Louisville - Jan 25, 7:00 PM",
-          lastScore: "UK 85 - Tennessee 72",
-          record: "15-4 (6-2 SEC)"
+          nextGames: [
+            "vs Duke - Jan 28, 9:00 PM (ESPN)",
+            "at Tennessee - Feb 1, 7:00 PM (SEC Network)",
+            "vs Auburn - Feb 4, 6:00 PM (CBS)"
+          ],
+          record: "18-3 (8-2 SEC)"
         },
         football: {
-          nextGame: "Spring Game - April 12",
-          lastScore: "UK 24 - Georgia 17", 
-          record: "8-4 (4-4 SEC)"
+          nextGames: [
+            "Spring Game - April 12, 4:00 PM",
+            "Season Opener vs Miami (OH) - Aug 30"
+          ],
+          record: "2025 Season: TBD"
         }
       })
     } catch (error) {
@@ -1017,19 +1017,18 @@ God bless your studies! 📚`
                       fontSize: '11px', 
                       color: '#0038b3', 
                       fontWeight: '600',
-                      marginBottom: '6px',
+                      marginBottom: '8px',
                       letterSpacing: '1px'
-                    }}>🏀 BASKETBALL</div>
+                    }}>🏀 BASKETBALL ({ukSports.basketball.record})</div>
                     
-                    <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.8)', marginBottom: '3px' }}>
-                      <strong>Next:</strong> {ukSports.basketball.nextGame}
+                    <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', marginBottom: '6px', fontWeight: '600' }}>
+                      UPCOMING GAMES:
                     </div>
-                    <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.8)', marginBottom: '3px' }}>
-                      <strong>Last:</strong> {ukSports.basketball.lastScore}
-                    </div>
-                    <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.8)' }}>
-                      <strong>Record:</strong> {ukSports.basketball.record}
-                    </div>
+                    {ukSports.basketball.nextGames && ukSports.basketball.nextGames.map((game, i) => (
+                      <div key={i} style={{ fontSize: '11px', color: 'rgba(255,255,255,0.85)', marginBottom: '2px' }}>
+                        • {game}
+                      </div>
+                    ))}
                   </div>
                 )}
 
@@ -1045,19 +1044,18 @@ God bless your studies! 📚`
                       fontSize: '11px', 
                       color: '#0038b3', 
                       fontWeight: '600',
-                      marginBottom: '6px',
+                      marginBottom: '8px',
                       letterSpacing: '1px'
-                    }}>🏈 FOOTBALL</div>
+                    }}>🏈 FOOTBALL ({ukSports.football.record})</div>
                     
-                    <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.8)', marginBottom: '3px' }}>
-                      <strong>Next:</strong> {ukSports.football.nextGame}
+                    <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', marginBottom: '6px', fontWeight: '600' }}>
+                      UPCOMING GAMES:
                     </div>
-                    <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.8)', marginBottom: '3px' }}>
-                      <strong>Last:</strong> {ukSports.football.lastScore}
-                    </div>
-                    <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.8)' }}>
-                      <strong>Record:</strong> {ukSports.football.record}
-                    </div>
+                    {ukSports.football.nextGames && ukSports.football.nextGames.map((game, i) => (
+                      <div key={i} style={{ fontSize: '11px', color: 'rgba(255,255,255,0.85)', marginBottom: '2px' }}>
+                        • {game}
+                      </div>
+                    ))}
                   </div>
                 )}
                 
