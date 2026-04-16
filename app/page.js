@@ -5,7 +5,7 @@ const PASSWORD = 'deatherage2024'
 
 const FAMILY_CONTEXT = `You are JARVIS, the intelligent family assistant for the Deatherage family in Lexington, Kentucky. You are helpful, warm, and efficient — like a trusted household AI. 
 
-Family members: Kevin (Dad, works in logistics/freight), Mom, Cicily, Camille, Carter (plays football at Lincoln), Emily, Millie, Kevo.
+Family members: Kevin (Dad, works in logistics/freight), Mom, Lincoln, Camille, Cicily, and Carter.
 
 You have access to family tools: a chores tracker for the kids, a shared shopping list, and a daily briefing system. When users ask about chores or shopping, remind them they can use the Chores and Shopping tabs.
 
@@ -179,18 +179,33 @@ const styles = `
   .clear-checked-btn{background:none;border:1px solid rgba(255,80,80,0.2);color:rgba(255,80,80,0.4);font-family:'Share Tech Mono',monospace;font-size:8px;padding:4px 10px;cursor:pointer;letter-spacing:1px;}
   .clear-checked-btn:hover{border-color:rgba(255,80,80,0.5);color:rgba(255,80,80,0.7);}
   .empty-state{font-size:10px;color:rgba(0,180,255,0.3);text-align:center;padding:20px;letter-spacing:2px;}
+
+  /* CALENDAR */
+  .calendar-panel{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:14px;}
+  .gcal-connect{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;flex:1;opacity:0.8;}
+  .gcal-connect p{font-size:10px;color:rgba(0,180,255,0.5);letter-spacing:2px;text-align:center;max-width:260px;line-height:1.8;}
+  .gcal-btn{background:linear-gradient(135deg,#003399,#0099ff);border:none;padding:10px 24px;color:white;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:3px;cursor:pointer;clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px));box-shadow:0 0 20px rgba(0,150,255,0.3);transition:box-shadow 0.2s;}
+  .gcal-btn:hover{box-shadow:0 0 30px rgba(0,180,255,0.6);}
+  .gcal-disconnect{background:none;border:1px solid rgba(255,80,80,0.2);color:rgba(255,80,80,0.4);font-family:'Share Tech Mono',monospace;font-size:8px;padding:4px 10px;cursor:pointer;letter-spacing:1px;}
+  .gcal-disconnect:hover{border-color:rgba(255,80,80,0.5);color:rgba(255,80,80,0.7);}
+  .cal-event{display:flex;gap:10px;padding:8px 10px;background:rgba(0,20,50,0.5);border:1px solid rgba(0,180,255,0.1);border-left:2px solid #00b4ff;margin-bottom:4px;}
+  .cal-event-time{font-size:9px;color:rgba(0,180,255,0.5);letter-spacing:1px;white-space:nowrap;padding-top:1px;}
+  .cal-event-title{font-size:11px;color:#a8d4f0;flex:1;}
+  .cal-day-header{font-family:'Rajdhani',sans-serif;font-size:11px;letter-spacing:3px;color:#00b4ff;margin:10px 0 6px;padding-bottom:4px;border-bottom:1px solid rgba(0,180,255,0.15);}
+  .cal-loading{font-size:10px;color:rgba(0,180,255,0.4);letter-spacing:2px;text-align:center;padding:20px;animation:blink 1s ease-in-out infinite;}
 `
 
-const KIDS = ['Cicily', 'Camille', 'Carter', 'Emily', 'Millie', 'Kevo']
+const GOOGLE_CLIENT_ID = '523937270224-lum8mrkbggm92pi1.apps.googleusercontent.com'
+const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/calendar.readonly'
+
+const KIDS = ['Lincoln', 'Camille', 'Cicily', 'Carter']
 const SHOP_CATS = ['ALL', 'PRODUCE', 'DAIRY', 'MEAT', 'PANTRY', 'HOUSEHOLD', 'OTHER']
 
 const DEFAULT_CHORES = {
-  Cicily: ['Clean bathroom', 'Vacuum living room'],
+  Lincoln: ['Clean bathroom', 'Vacuum living room'],
   Camille: ['Wash dishes', 'Take out trash'],
-  Carter: ['Mow lawn', 'Clean garage'],
-  Emily: ['Feed pets', 'Tidy bedroom'],
-  Millie: ['Set/clear table', 'Sweep kitchen'],
-  Kevo: ['Laundry', 'Vacuum upstairs'],
+  Cicily: ['Feed pets', 'Tidy bedroom'],
+  Carter: ['Mow lawn', 'Sweep kitchen'],
 }
 
 function loadLS(key, fallback) {
@@ -210,6 +225,10 @@ export default function Home() {
   const [time, setTime] = useState('')
   const [tab, setTab] = useState('dashboard')
   const [weather, setWeather] = useState(null)
+  const [calEvents, setCalEvents] = useState([])
+  const [calAuthed, setCalAuthed] = useState(false)
+  const [calLoading, setCalLoading] = useState(false)
+  const [tokenClient, setTokenClient] = useState(null)
   const [chores, setChores] = useState({})
   const [shopping, setShopping] = useState([])
   const [shopFilter, setShopFilter] = useState('ALL')
@@ -217,7 +236,7 @@ export default function Home() {
   const [newShopItem, setNewShopItem] = useState('')
   const [newShopCat, setNewShopCat] = useState('OTHER')
   const bottomRef = useRef(null)
-  const family = ['Dad', 'Mom', 'Cicily', 'Camille', 'Carter', 'Emily', 'Millie', 'Kevo']
+  const family = ['Dad', 'Mom', 'Lincoln', 'Camille', 'Cicily', 'Carter']
 
   // Load persisted data
   useEffect(() => {
@@ -254,7 +273,82 @@ export default function Home() {
       }).catch(() => setWeather({ temp: '--', icon: '🌡️', desc: 'Unavailable', wind: '--' }))
   }, [authed])
 
-  function saveChores(updated) { setChores(updated); saveLS('jarvis_chores', updated) }
+  // Load Google Identity Services
+  useEffect(() => {
+    if (!authed) return
+    const script = document.createElement('script')
+    script.src = 'https://accounts.google.com/gsi/client'
+    script.async = true
+    script.onload = () => {
+      const client = window.google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID,
+        scope: GOOGLE_SCOPES,
+        callback: (resp) => {
+          if (resp.access_token) {
+            fetchCalendarEvents(resp.access_token)
+          }
+        }
+      })
+      setTokenClient(client)
+    }
+    document.body.appendChild(script)
+    return () => document.body.removeChild(script)
+  }, [authed])
+
+  async function fetchCalendarEvents(token) {
+    setCalLoading(true)
+    try {
+      const now = new Date().toISOString()
+      const future = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
+      const res = await fetch(
+        `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${now}&timeMax=${future}&singleEvents=true&orderBy=startTime&maxResults=30`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      const data = await res.json()
+      if (data.items) {
+        setCalEvents(data.items)
+        setCalAuthed(true)
+      }
+    } catch (e) { console.error(e) }
+    setCalLoading(false)
+  }
+
+  function connectCalendar() {
+    if (tokenClient) tokenClient.requestAccessToken()
+  }
+
+  function disconnectCalendar() {
+    setCalAuthed(false)
+    setCalEvents([])
+  }
+
+  // Group events by day
+  function groupEventsByDay(events) {
+    const groups = {}
+    events.forEach(ev => {
+      const start = ev.start?.dateTime || ev.start?.date
+      if (!start) return
+      const day = start.split('T')[0]
+      if (!groups[day]) groups[day] = []
+      groups[day].push(ev)
+    })
+    return groups
+  }
+
+  function formatDay(dateStr) {
+    const d = new Date(dateStr + 'T12:00:00')
+    const today = new Date()
+    const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1)
+    if (dateStr === today.toISOString().split('T')[0]) return 'TODAY'
+    if (dateStr === tomorrow.toISOString().split('T')[0]) return 'TOMORROW'
+    return d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }).toUpperCase()
+  }
+
+  function formatEventTime(ev) {
+    if (ev.start?.date && !ev.start?.dateTime) return 'ALL DAY'
+    const d = new Date(ev.start.dateTime)
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  }
   function saveShopping(updated) { setShopping(updated); saveLS('jarvis_shopping', updated) }
 
   function toggleChore(kid, id) {
@@ -368,9 +462,9 @@ export default function Home() {
 
         {/* NAV */}
         <div className="nav-tabs">
-          {['dashboard', 'chat', 'chores', 'shopping'].map(t => (
+          {['dashboard', 'chat', 'chores', 'shopping', 'calendar'].map(t => (
             <button key={t} className={`nav-tab${tab === t ? ' active' : ''}`} onClick={() => setTab(t)}>
-              {t === 'dashboard' ? '⬡ HOME' : t === 'chat' ? '◈ CHAT' : t === 'chores' ? '✦ CHORES' : '⊕ SHOPPING'}
+              {t === 'dashboard' ? '⬡ HOME' : t === 'chat' ? '◈ CHAT' : t === 'chores' ? '✦ CHORES' : t === 'shopping' ? '⊕ SHOPPING' : '◷ CALENDAR'}
             </button>
           ))}
         </div>
@@ -498,7 +592,56 @@ export default function Home() {
           </>
         )}
 
-        {/* ── CHORES TAB ── */}
+            {/* Upcoming Events */}
+            {calAuthed && calEvents.length > 0 && (
+              <div className="dash-card">
+                <div className="dash-card-label">UPCOMING EVENTS</div>
+                <div className="briefing-list">
+                  {calEvents.slice(0, 4).map(ev => (
+                    <div key={ev.id} className="briefing-item">
+                      {ev.summary} <span style={{ color: 'rgba(0,180,255,0.3)' }}>· {formatEventTime(ev)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── CALENDAR TAB ── */}
+        {tab === 'calendar' && (
+          <div className="calendar-panel">
+            <div className="section-header">
+              <div className="section-title">GOOGLE CALENDAR</div>
+              <div className="section-line" />
+              {calAuthed && <button className="gcal-disconnect" onClick={disconnectCalendar}>DISCONNECT</button>}
+            </div>
+            {!calAuthed && !calLoading && (
+              <div className="gcal-connect">
+                <div style={{ fontSize: 32 }}>📅</div>
+                <p>CONNECT YOUR GOOGLE CALENDAR TO VIEW UPCOMING EVENTS</p>
+                <button className="gcal-btn" onClick={connectCalendar}>CONNECT CALENDAR</button>
+              </div>
+            )}
+            {calLoading && <div className="cal-loading">SYNCING CALENDAR DATA...</div>}
+            {calAuthed && !calLoading && (
+              <>
+                {calEvents.length === 0 && <div className="empty-state">NO UPCOMING EVENTS IN THE NEXT 14 DAYS</div>}
+                {Object.entries(groupEventsByDay(calEvents)).map(([day, events]) => (
+                  <div key={day}>
+                    <div className="cal-day-header">{formatDay(day)}</div>
+                    {events.map(ev => (
+                      <div key={ev.id} className="cal-event">
+                        <div className="cal-event-time">{formatEventTime(ev)}</div>
+                        <div className="cal-event-title">{ev.summary}</div>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
+        )}
         {tab === 'chores' && (
           <div className="chores-panel">
             <div className="section-header">
