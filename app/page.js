@@ -110,7 +110,7 @@ const styles = `
 
   /* ── LOCK SCREEN ── */
   .lock-screen{position:fixed;inset:0;display:flex;align-items:flex-end;justify-content:center;z-index:100;padding-bottom:60px;}
-  .lock-photo{position:absolute;inset:0;background-image:url('/family.png');background-size:cover;background-position:center top;}
+  .lock-photo{position:absolute;inset:0;background-image:url('https://i.postimg.cc/3NLC68RY/family-(1).jpg');background-size:cover;background-position:center top;}
   .lock-photo::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,20,60,0.5) 50%, rgba(0,10,40,0.92) 100%);}
   .lock-card{position:relative;z-index:1;width:100%;max-width:360px;text-align:center;padding:0 24px;}
   .lock-title{font-family:'Rajdhani',sans-serif;font-size:32px;font-weight:700;letter-spacing:6px;color:#fff;text-shadow:0 2px 20px rgba(0,0,0,0.8);margin-bottom:4px;}
