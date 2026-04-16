@@ -777,52 +777,11 @@ God bless your studies! 📚`
         {tab === 'dashboard' && (
           <div className="dashboard">
             <div className="dash-row cols-3">
-              {/* Date + Today's Events */}
+              {/* Date + Weather + Chores */}
               <div className="dash-card">
                 <div className="dash-card-label">TODAY'S SCHEDULE</div>
                 <div className="dash-date">{today.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).toUpperCase()}</div>
-                <div className="dash-sub" style={{ marginBottom: 12 }}>{today.getFullYear()} · LEXINGTON KY</div>
-                
-                {/* Today's Events - Mobile Friendly Calendar */}
-                <div style={{ 
-                  background: 'rgba(0,86,179,0.08)', 
-                  border: '1px solid rgba(0,86,179,0.15)', 
-                  borderRadius: '8px', 
-                  padding: '12px',
-                  minHeight: '140px'
-                }}>
-                  <div style={{ 
-                    fontSize: '11px', 
-                    color: 'rgba(0,86,179,0.6)', 
-                    marginBottom: '8px',
-                    fontWeight: '600',
-                    letterSpacing: '1px'
-                  }}>
-                    TODAY'S EVENTS
-                  </div>
-                  
-                  {/* Simplified Calendar Embed */}
-                  <iframe 
-                    src="https://calendar.google.com/calendar/embed?mode=AGENDA&height=120&wkst=1&bgcolor=%23FFFFFF&src=uktweeter19%40gmail.com&src=family021430976716499641216%40group.calendar.google.com&src=98vibj87ujjb3cm68lo4jatcghv2dq16%40import.calendar.google.com&color=%23039BE5&color=%2333B679&color=%23F4511E&ctz=America%2FNew_York&showTitle=0&showNav=0&showDate=0&showPrint=0&showTabs=0&showCalendars=0&showTz=0"
-                    style={{
-                      width: '100%',
-                      height: '100px',
-                      border: 'none',
-                      borderRadius: '6px',
-                      backgroundColor: '#fff'
-                    }}
-                    title="Today's Events"
-                  />
-                  
-                  <div style={{ 
-                    fontSize: '9px', 
-                    color: 'rgba(255,255,255,0.3)', 
-                    textAlign: 'center',
-                    marginTop: '6px'
-                  }}>
-                    Tap to view full calendar details
-                  </div>
-                </div>
+                <div className="dash-sub">{today.getFullYear()} · LEXINGTON KY</div>
               </div>
               {/* Weather */}
               <div className="dash-card">
@@ -870,6 +829,25 @@ God bless your studies! 📚`
               }}>
                 — {dailyVerse.reference}
               </div>
+            </div>
+
+            {/* Today's Events - Separate Large Card */}
+            <div className="dash-card">
+              <div className="dash-card-label">TODAY'S EVENTS</div>
+              
+              {/* Large Calendar Widget - Mobile Optimized */}
+              <iframe 
+                src="https://calendar.google.com/calendar/embed?mode=AGENDA&height=300&wkst=1&bgcolor=%23FFFFFF&src=uktweeter19%40gmail.com&src=family021430976716499641216%40group.calendar.google.com&src=98vibj87ujjb3cm68lo4jatcghv2dq16%40import.calendar.google.com&color=%23039BE5&color=%2333B679&color=%23F4511E&ctz=America%2FNew_York&showTitle=0&showNav=0&showDate=0&showPrint=0&showTabs=0&showCalendars=0&showTz=0"
+                style={{
+                  width: '100%',
+                  height: window.innerWidth <= 768 ? '300px' : '180px',
+                  border: 'none',
+                  borderRadius: '8px',
+                  backgroundColor: '#fff',
+                  display: 'block'
+                }}
+                title="Today's Calendar Events"
+              />
             </div>
 
             {/* Family Bulletin Board */}
