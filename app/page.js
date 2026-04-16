@@ -627,21 +627,36 @@ export default function Home() {
               )}
             </div>
 
-            {/* Calendar Integration Note */}
-            {!calAuthed && (
-              <div className="dash-card">
-                <div className="dash-card-label">CALENDAR INTEGRATION</div>
-                <div className="gcal-connect" style={{ padding: '0', minHeight: 'auto' }}>
-                  <p style={{ fontSize: 11, color: 'rgba(0,180,255,0.4)', margin: 0 }}>
-                    Connect Google Calendar to see today's events and upcoming schedule on this dashboard.
-                    Anyone can still view the full calendar in the Calendar tab.
-                  </p>
-                  <button className="gcal-btn" style={{ padding: '8px 16px', fontSize: 11, marginTop: 8 }} onClick={connectCalendar}>
-                    CONNECT FOR DASHBOARD PREVIEWS
+            {/* Calendar Debug Section */}
+            <div className="dash-card">
+              <div className="dash-card-label">CALENDAR DEBUG</div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                {!calAuthed ? (
+                  <button className="gcal-btn" style={{ padding: '8px 16px', fontSize: 11 }} onClick={connectCalendar}>
+                    CONNECT GOOGLE CALENDAR
                   </button>
+                ) : (
+                  <>
+                    <button className="reset-btn" onClick={() => {
+                      console.log('Manual refresh clicked')
+                      const saved = loadLS('jarvis_cal_token', null)
+                      if (saved && saved.exp > Date.now()) {
+                        console.log('Using saved token to refresh')
+                        fetchCalendarEvents(saved.token)
+                      } else {
+                        console.log('No valid token found')
+                      }
+                    }} style={{ fontSize: 10, padding: '4px 8px' }}>
+                      REFRESH EVENTS
+                    </button>
+                    <button className="gcal-disconnect" onClick={disconnectCalendar}>Disconnect</button>
+                  </>
+                )}
+                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)' }}>
+                  Status: {calAuthed ? 'Connected' : 'Not connected'} | Events: {calEvents.length}
                 </div>
               </div>
-            )}
+            </div>
 
             {/* Today's Events + Upcoming Events (only show if calendar connected) */}
             {calAuthed && (() => {
@@ -752,7 +767,7 @@ export default function Home() {
               <div className="section-title">Family Calendar</div>
             </div>
             <iframe 
-              src="https://calendar.google.com/calendar/embed?src=98vibj87ujjb3cm68lo4jatcghv2dq16%40import.calendar.google.com&ctz=America%2FNew_York" 
+              src="https://calendar.google.com/calendar/embed?src=uktweeter19%40gmail.com&src=family021430976716499641216%40group.calendar.google.com&src=98vibj87ujjb3cm68lo4jatcghv2dq16%40import.calendar.google.com&ctz=America%2FNew_York" 
               className="calendar-iframe"
               title="Family Calendar"
             />
