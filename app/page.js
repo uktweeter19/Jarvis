@@ -194,6 +194,7 @@ const styles = `
   .add-shop-input:focus{border-color:rgba(0,86,179,0.5);}
   .add-shop-input::placeholder{color:rgba(255,255,255,0.2);}
   .shop-cat-select{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.7);font-family:'Inter',sans-serif;font-size:11px;padding:9px 8px;outline:none;cursor:pointer;border-radius:8px;}
+  .shop-cat-select option{background:#1a2332;color:#fff;padding:8px;}
   .clear-checked-btn{background:none;border:1px solid rgba(255,80,80,0.2);color:rgba(255,80,80,0.5);font-family:'Inter',sans-serif;font-size:10px;padding:5px 12px;cursor:pointer;border-radius:6px;}
   .clear-checked-btn:hover{border-color:rgba(255,80,80,0.5);color:rgba(255,80,80,0.8);}
 
