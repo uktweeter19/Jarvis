@@ -200,7 +200,21 @@ const styles = `
   /* ── CALENDAR ── */
   .calendar-panel{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:12px;}
   .calendar-iframe{width:100%;height:calc(100vh - 160px);border:0;border-radius:12px;background:rgba(255,255,255,0.95);}
+  .gcal-connect{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;flex:1;}
+  .gcal-connect p{font-size:13px;color:rgba(255,255,255,0.4);text-align:center;max-width:260px;line-height:1.7;}
+  .gcal-btn{background:linear-gradient(135deg,#0056b3,#003580);border:none;padding:13px 28px;color:white;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer;border-radius:12px;box-shadow:0 4px 20px rgba(0,86,179,0.4);transition:all 0.2s;}
+  .gcal-btn:hover{box-shadow:0 6px 28px rgba(0,86,179,0.6);}
+  .gcal-disconnect{background:none;border:1px solid rgba(255,80,80,0.2);color:rgba(255,80,80,0.5);font-family:'Inter',sans-serif;font-size:10px;padding:4px 12px;cursor:pointer;border-radius:6px;}
+  .gcal-disconnect:hover{border-color:rgba(255,80,80,0.5);color:rgba(255,80,80,0.8);}
+  .cal-event{display:flex;gap:12px;padding:10px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-left:3px solid #0056b3;border-radius:0 10px 10px 0;margin-bottom:5px;}
+  .cal-event-time{font-size:10px;color:rgba(255,255,255,0.4);white-space:nowrap;padding-top:2px;font-weight:600;}
+  .cal-event-title{font-size:13px;color:rgba(255,255,255,0.85);flex:1;}
+  .cal-day-header{font-size:11px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:2px;text-transform:uppercase;margin:12px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.07);}
+  .cal-loading{font-size:12px;color:rgba(255,255,255,0.3);text-align:center;padding:20px;animation:blink 1s ease-in-out infinite;}
 `
+
+const GOOGLE_CLIENT_ID = '523937270224-lum8mrkbggm92pi15037v78r8ed0v4qo.apps.googleusercontent.com'
+const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/calendar.readonly'
 
 const KIDS = ['Lincoln', 'Camille', 'Cicily', 'Carter']
 const SHOP_CATS = ['ALL', 'PRODUCE', 'DAIRY', 'MEAT', 'PANTRY', 'HOUSEHOLD', 'OTHER']
@@ -230,6 +244,10 @@ export default function Home() {
   const [time, setTime] = useState('')
   const [tab, setTab] = useState('dashboard')
   const [weather, setWeather] = useState(null)
+  const [calEvents, setCalEvents] = useState([])
+  const [calAuthed, setCalAuthed] = useState(false)
+  const [calLoading, setCalLoading] = useState(false)
+  const [tokenClient, setTokenClient] = useState(null)
   const [chores, setChores] = useState({})
   const [shopping, setShopping] = useState([])
   const [shopFilter, setShopFilter] = useState('ALL')
@@ -273,6 +291,133 @@ export default function Home() {
         })
       }).catch(() => setWeather({ temp: '--', icon: '🌡️', desc: 'Unavailable', wind: '--' }))
   }, [authed])
+
+  // Load Google Identity Services for dashboard calendar previews only
+  useEffect(() => {
+    if (!authed) return
+    const script = document.createElement('script')
+    script.src = 'https://accounts.google.com/gsi/client'
+    script.async = true
+    script.onload = () => {
+      const client = window.google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID,
+        scope: GOOGLE_SCOPES,
+        callback: (resp) => {
+          if (resp.access_token) {
+            saveLS('jarvis_cal_token', { token: resp.access_token, exp: Date.now() + 3500000 })
+            fetchCalendarEvents(resp.access_token)
+          }
+        }
+      })
+      setTokenClient(client)
+      // Auto-reconnect if we have a saved non-expired token
+      const saved = loadLS('jarvis_cal_token', null)
+      if (saved && saved.exp > Date.now()) {
+        fetchCalendarEvents(saved.token)
+      }
+    }
+    document.body.appendChild(script)
+    return () => document.body.removeChild(script)
+  }, [authed])
+
+  async function fetchCalendarEvents(token) {
+    setCalLoading(true)
+    try {
+      const now = new Date().toISOString()
+      const future = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+      
+      // Fetch from all calendars
+      const listRes = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      const listData = await listRes.json()
+      
+      // Get all calendar IDs, but prioritize primary and imported calendars
+      const allCalendars = listData.items || []
+      console.log('Available calendars:', allCalendars.map(c => ({ id: c.id, summary: c.summary })))
+      
+      const calendarIds = allCalendars
+        .filter(c => !c.hidden && c.accessRole !== 'freeBusyReader') // Only calendars we can read events from
+        .map(c => c.id)
+      
+      if (calendarIds.length === 0) calendarIds.push('primary')
+      console.log('Reading from calendars:', calendarIds)
+
+      let allEvents = []
+      for (const calId of calendarIds) {
+        try {
+          const encoded = encodeURIComponent(calId)
+          const res = await fetch(
+            `https://www.googleapis.com/calendar/v3/calendars/${encoded}/events?timeMin=${now}&timeMax=${future}&singleEvents=true&orderBy=startTime&maxResults=50`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          )
+          const data = await res.json()
+          if (data.items) {
+            console.log(`Found ${data.items.length} events in calendar ${calId}`)
+            allEvents = allEvents.concat(data.items)
+          }
+        } catch (err) {
+          console.warn(`Failed to fetch events from calendar ${calId}:`, err)
+        }
+      }
+      
+      // Remove duplicates and sort
+      const uniqueEvents = allEvents.filter((event, index, self) => 
+        index === self.findIndex(e => e.id === event.id)
+      )
+      
+      uniqueEvents.sort((a, b) => {
+        const aTime = a.start?.dateTime || a.start?.date || ''
+        const bTime = b.start?.dateTime || b.start?.date || ''
+        return aTime.localeCompare(bTime)
+      })
+      
+      console.log(`Total unique events found: ${uniqueEvents.length}`)
+      setCalEvents(uniqueEvents)
+      setCalAuthed(true)
+    } catch (e) {
+      console.error('Calendar fetch error:', e)
+    }
+    setCalLoading(false)
+  }
+
+  function connectCalendar() {
+    if (tokenClient) tokenClient.requestAccessToken({ prompt: '' })
+  }
+
+  function disconnectCalendar() {
+    setCalAuthed(false)
+    setCalEvents([])
+    saveLS('jarvis_cal_token', null)
+  }
+
+  // Group events by day
+  function groupEventsByDay(events) {
+    const groups = {}
+    events.forEach(ev => {
+      const start = ev.start?.dateTime || ev.start?.date
+      if (!start) return
+      const day = start.split('T')[0]
+      if (!groups[day]) groups[day] = []
+      groups[day].push(ev)
+    })
+    return groups
+  }
+
+  function formatDay(dateStr) {
+    const d = new Date(dateStr + 'T12:00:00')
+    const today = new Date()
+    const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1)
+    if (dateStr === today.toISOString().split('T')[0]) return 'TODAY'
+    if (dateStr === tomorrow.toISOString().split('T')[0]) return 'TOMORROW'
+    return d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }).toUpperCase()
+  }
+
+  function formatEventTime(ev) {
+    if (ev.start?.date && !ev.start?.dateTime) return 'ALL DAY'
+    const d = new Date(ev.start.dateTime)
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  }
 
   function saveShopping(updated) { setShopping(updated); saveLS('jarvis_shopping', updated) }
 
@@ -481,6 +626,77 @@ export default function Home() {
                 </div>
               )}
             </div>
+
+            {/* Calendar Integration Note */}
+            {!calAuthed && (
+              <div className="dash-card">
+                <div className="dash-card-label">CALENDAR INTEGRATION</div>
+                <div className="gcal-connect" style={{ padding: '0', minHeight: 'auto' }}>
+                  <p style={{ fontSize: 11, color: 'rgba(0,180,255,0.4)', margin: 0 }}>
+                    Connect Google Calendar to see today's events and upcoming schedule on this dashboard.
+                    Anyone can still view the full calendar in the Calendar tab.
+                  </p>
+                  <button className="gcal-btn" style={{ padding: '8px 16px', fontSize: 11, marginTop: 8 }} onClick={connectCalendar}>
+                    CONNECT FOR DASHBOARD PREVIEWS
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Today's Events + Upcoming Events (only show if calendar connected) */}
+            {calAuthed && (() => {
+              const todayStr = new Date().toISOString().split('T')[0]
+              const todayEvents = calEvents.filter(ev => {
+                const start = ev.start?.dateTime || ev.start?.date || ''
+                return start.startsWith(todayStr)
+              })
+              const upcomingEvents = calEvents.filter(ev => {
+                const start = ev.start?.dateTime || ev.start?.date || ''
+                return !start.startsWith(todayStr)
+              })
+              return (
+                <>
+                  <div className="dash-card">
+                    <div className="dash-card-label">
+                      TODAY&apos;S EVENTS
+                      <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                        <button className="reset-btn" onClick={() => {
+                          const saved = loadLS('jarvis_cal_token', null)
+                          if (saved && saved.exp > Date.now()) {
+                            fetchCalendarEvents(saved.token)
+                          }
+                        }} style={{ fontSize: 9, padding: '2px 8px' }}>
+                          REFRESH
+                        </button>
+                        <button className="gcal-disconnect" onClick={disconnectCalendar}>Disconnect</button>
+                      </div>
+                    </div>
+                    {todayEvents.length === 0
+                      ? <div style={{ fontSize: 10, color: 'rgba(0,180,255,0.3)', letterSpacing: 2 }}>NOTHING SCHEDULED TODAY</div>
+                      : <div className="briefing-list">
+                          {todayEvents.map(ev => (
+                            <div key={ev.id} className="briefing-item">
+                              {ev.summary} <span style={{ color: 'rgba(0,180,255,0.3)' }}>· {formatEventTime(ev)}</span>
+                            </div>
+                          ))}
+                        </div>
+                    }
+                  </div>
+                  {upcomingEvents.length > 0 && (
+                    <div className="dash-card">
+                      <div className="dash-card-label">UPCOMING EVENTS</div>
+                      <div className="briefing-list">
+                        {upcomingEvents.slice(0, 5).map(ev => (
+                          <div key={ev.id} className="briefing-item">
+                            {ev.summary} <span style={{ color: 'rgba(0,180,255,0.3)' }}>· {formatDay(ev.start?.dateTime?.split('T')[0] || ev.start?.date)} · {formatEventTime(ev)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )
+            })()}
           </div>
         )}
 
