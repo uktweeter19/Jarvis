@@ -110,14 +110,13 @@ const styles = `
 
   /* ── LOCK SCREEN ── */
   .lock-screen{position:fixed;inset:0;display:flex;align-items:flex-end;justify-content:center;z-index:100;padding-bottom:40px;}
-  .lock-photo{position:absolute;inset:0;background-image:url('https://i.postimg.cc/3NLC68RY/family-(1).jpg');background-size:contain;background-position:center top;background-repeat:no-repeat;background-color:#0a1428;}
-  .lock-photo::before{content:'';position:absolute;inset:0;background-image:url('https://i.postimg.cc/3NLC68RY/family-(1).jpg');background-size:contain;background-position:center top;background-repeat:no-repeat;z-index:0;}
-  .lock-sides{position:absolute;inset:0;display:flex;z-index:0;}
-  .lock-side{flex:1;overflow:hidden;display:flex;flex-wrap:wrap;align-content:flex-start;padding:8px;gap:8px;opacity:0.25;}
-  .lock-side-right{flex:1;overflow:hidden;display:flex;flex-wrap:wrap;align-content:flex-start;justify-content:flex-end;padding:8px;gap:8px;opacity:0.25;}
-  .lock-center{width:550px;flex-shrink:0;}
-  .uk-logo-tile{width:80px;height:80px;object-fit:contain;filter:brightness(0) invert(1);}
-  .lock-photo::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom, rgba(0,0,0,0.0) 0%, rgba(0,10,40,0.2) 35%, rgba(0,10,40,0.85) 65%, rgba(0,10,40,0.97) 100%);z-index:1;}
+  .lock-photo{position:absolute;inset:0;background-image:url('https://i.postimg.cc/3NLC68RY/family-(1).jpg');background-size:contain;background-position:center top;background-repeat:no-repeat;background-color:#050d1f;}
+  .lock-photo::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom, rgba(0,0,0,0.0) 0%, rgba(5,13,31,0.2) 35%, rgba(5,13,31,0.85) 65%, rgba(5,13,31,0.97) 100%);z-index:1;}
+  .lock-sides{position:absolute;inset:0;display:flex;pointer-events:none;z-index:0;}
+  .lock-side-panel{width:calc(50% - 265px);height:100%;overflow:hidden;display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));align-content:start;gap:4px;padding:6px;}
+  .lock-side-panel.right{margin-left:auto;}
+  .uk-tile{width:78px;height:78px;display:flex;align-items:center;justify-content:center;opacity:0.18;color:white;font-weight:900;font-family:'Rajdhani',sans-serif;font-size:11px;letter-spacing:1px;text-align:center;line-height:1.2;border:1px solid rgba(255,255,255,0.08);border-radius:4px;}
+  .lock-center-spacer{width:530px;flex-shrink:0;}
   .lock-card{position:relative;z-index:2;width:100%;max-width:360px;text-align:center;padding:0 24px;}
   .lock-title{font-family:'Rajdhani',sans-serif;font-size:32px;font-weight:700;letter-spacing:6px;color:#fff;text-shadow:0 2px 20px rgba(0,0,0,0.8);margin-bottom:4px;}
   .lock-sub{font-size:11px;color:rgba(255,255,255,0.6);letter-spacing:3px;margin-bottom:28px;text-shadow:0 1px 8px rgba(0,0,0,0.8);}
@@ -454,28 +453,57 @@ export default function Home() {
   const totalChores = Object.values(chores).flat().length
 
   if (!authed) {
-    const ukLogos = [
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Kentucky_Wildcats_logo.svg/120px-Kentucky_Wildcats_logo.svg.png',
-      'https://upload.wikimedia.org/wikipedia/en/thumb/1/13/Kentucky_Wildcats_wordmark.svg/120px-Kentucky_Wildcats_wordmark.svg.png',
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Kentucky_Wildcats_logo.svg/120px-Kentucky_Wildcats_logo.svg.png',
-      'https://upload.wikimedia.org/wikipedia/en/thumb/1/13/Kentucky_Wildcats_wordmark.svg/120px-Kentucky_Wildcats_wordmark.svg.png',
+    // UK Kentucky Wildcats logos through history as text representations
+    const ukEras = [
+      { text: 'UK', sub: '1890s' },
+      { text: 'Ʊ K', sub: '1910s' },
+      { text: 'UK', sub: '1920s' },
+      { text: 'ĸ', sub: '1930s' },
+      { text: 'UK', sub: '1940s' },
+      { text: 'UK', sub: '1950s' },
+      { text: '🐾', sub: '1960s' },
+      { text: 'UK', sub: '1970s' },
+      { text: 'UK', sub: '1980s' },
+      { text: 'UK', sub: '1990s' },
+      { text: 'ÜK', sub: '2000s' },
+      { text: 'UK', sub: '2005' },
+      { text: 'UK', sub: '2010s' },
+      { text: 'UK', sub: 'Current' },
+      { text: 'KY', sub: 'Alt' },
+      { text: '🐱', sub: 'Wildcat' },
+      { text: 'UK', sub: 'Football' },
+      { text: 'BBN', sub: 'Nation' },
+      { text: 'UK', sub: 'Basketball' },
+      { text: 'GO\nCATS', sub: '' },
     ]
-    const tiles = Array(24).fill(null).map((_, i) => ukLogos[i % ukLogos.length])
+    const totalTiles = 60
+    const tiles = Array(totalTiles).fill(null).map((_, i) => ukEras[i % ukEras.length])
+
     return (
     <>
       <style>{styles}</style>
       <div className="lock-screen">
         <div className="lock-photo" />
         <div className="lock-sides">
-          <div className="lock-side">
-            {tiles.map((src, i) => (
-              <img key={i} src={src} alt="UK" style={{width:65,height:65,objectFit:'contain',filter:'brightness(0) invert(1)',opacity:0.35}} />
+          <div className="lock-side-panel">
+            {tiles.map((t, i) => (
+              <div key={i} className="uk-tile">
+                <div>
+                  <div style={{fontSize: t.text.length > 3 ? 13 : 20, fontWeight:900, whiteSpace:'pre'}}>{t.text}</div>
+                  {t.sub && <div style={{fontSize:7, opacity:0.6}}>{t.sub}</div>}
+                </div>
+              </div>
             ))}
           </div>
-          <div className="lock-center" />
-          <div className="lock-side-right">
-            {tiles.map((src, i) => (
-              <img key={i} src={src} alt="UK" style={{width:65,height:65,objectFit:'contain',filter:'brightness(0) invert(1)',opacity:0.35}} />
+          <div className="lock-center-spacer" />
+          <div className="lock-side-panel right">
+            {tiles.map((t, i) => (
+              <div key={i} className="uk-tile">
+                <div>
+                  <div style={{fontSize: t.text.length > 3 ? 13 : 20, fontWeight:900, whiteSpace:'pre'}}>{t.text}</div>
+                  {t.sub && <div style={{fontSize:7, opacity:0.6}}>{t.sub}</div>}
+                </div>
+              </div>
             ))}
           </div>
         </div>
