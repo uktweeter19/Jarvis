@@ -571,19 +571,47 @@ export default function Home() {
               )}
             </div>
 
-            {/* Upcoming Events */}
-            {calAuthed && calEvents.length > 0 && (
-              <div className="dash-card">
-                <div className="dash-card-label">UPCOMING EVENTS</div>
-                <div className="briefing-list">
-                  {calEvents.slice(0, 4).map(ev => (
-                    <div key={ev.id} className="briefing-item">
-                      {ev.summary} <span style={{ color: 'rgba(0,180,255,0.3)' }}>· {formatEventTime(ev)}</span>
+            {/* Today's Events + Upcoming Events */}
+            {calAuthed && (() => {
+              const todayStr = new Date().toISOString().split('T')[0]
+              const todayEvents = calEvents.filter(ev => {
+                const start = ev.start?.dateTime || ev.start?.date || ''
+                return start.startsWith(todayStr)
+              })
+              const upcomingEvents = calEvents.filter(ev => {
+                const start = ev.start?.dateTime || ev.start?.date || ''
+                return !start.startsWith(todayStr)
+              })
+              return (
+                <>
+                  <div className="dash-card">
+                    <div className="dash-card-label">TODAY&apos;S EVENTS</div>
+                    {todayEvents.length === 0
+                      ? <div style={{ fontSize: 10, color: 'rgba(0,180,255,0.3)', letterSpacing: 2 }}>NOTHING SCHEDULED TODAY</div>
+                      : <div className="briefing-list">
+                          {todayEvents.map(ev => (
+                            <div key={ev.id} className="briefing-item">
+                              {ev.summary} <span style={{ color: 'rgba(0,180,255,0.3)' }}>· {formatEventTime(ev)}</span>
+                            </div>
+                          ))}
+                        </div>
+                    }
+                  </div>
+                  {upcomingEvents.length > 0 && (
+                    <div className="dash-card">
+                      <div className="dash-card-label">UPCOMING EVENTS</div>
+                      <div className="briefing-list">
+                        {upcomingEvents.slice(0, 5).map(ev => (
+                          <div key={ev.id} className="briefing-item">
+                            {ev.summary} <span style={{ color: 'rgba(0,180,255,0.3)' }}>· {formatDay(ev.start?.dateTime?.split('T')[0] || ev.start?.date)} · {formatEventTime(ev)}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
+                  )}
+                </>
+              )
+            })()}
           </div>
         )}
 
