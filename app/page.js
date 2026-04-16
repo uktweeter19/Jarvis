@@ -746,8 +746,8 @@ export default function Home() {
                     border: '1px solid rgba(0,86,179,0.2)', 
                     borderRadius: '8px',
                     background: '#0a0f1a',
-                    filter: 'invert(0.9) hue-rotate(180deg) brightness(0.3) contrast(1.2)',
-                    opacity: '0.8'
+                    filter: 'invert(0.85) hue-rotate(180deg) brightness(0.6) contrast(1.5)',
+                    opacity: '0.9'
                   }}
                   title="Today's Events"
                 />
