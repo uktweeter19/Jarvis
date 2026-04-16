@@ -340,8 +340,69 @@ export default function Home() {
   const [bulletins, setBulletins] = useState([])
   const [newBulletin, setNewBulletin] = useState('')
   const [notification, setNotification] = useState('')
+  const [dailyVerse, setDailyVerse] = useState('')
   const bottomRef = useRef(null)
   const family = ['Dad', 'Mom', 'Lincoln', 'Camille', 'Cicily', 'Carter']
+
+  // Daily Bible verses - large collection for daily variety
+  const bibleVerses = [
+    { verse: "For I know the plans I have for you, declares the Lord, plans to prosper you and not to harm you, to give you hope and a future.", reference: "Jeremiah 29:11" },
+    { verse: "Trust in the Lord with all your heart and lean not on your own understanding.", reference: "Proverbs 3:5" },
+    { verse: "I can do all things through Christ who strengthens me.", reference: "Philippians 4:13" },
+    { verse: "And we know that in all things God works for the good of those who love him.", reference: "Romans 8:28" },
+    { verse: "Be strong and courageous! Do not be afraid or discouraged, for the Lord your God is with you wherever you go.", reference: "Joshua 1:9" },
+    { verse: "The Lord is my shepherd; I shall not want.", reference: "Psalm 23:1" },
+    { verse: "Love is patient, love is kind. It does not envy, it does not boast, it is not proud.", reference: "1 Corinthians 13:4" },
+    { verse: "Cast all your anxiety on him because he cares for you.", reference: "1 Peter 5:7" },
+    { verse: "But seek first his kingdom and his righteousness, and all these things will be given to you as well.", reference: "Matthew 6:33" },
+    { verse: "The Lord your God is with you, the Mighty Warrior who saves.", reference: "Zephaniah 3:17" },
+    { verse: "Give thanks to the Lord, for he is good; his love endures forever.", reference: "Psalm 107:1" },
+    { verse: "Train up a child in the way he should go; even when he is old he will not depart from it.", reference: "Proverbs 22:6" },
+    { verse: "Have I not commanded you? Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go.", reference: "Joshua 1:9" },
+    { verse: "The Lord will fight for you; you need only to be still.", reference: "Exodus 14:14" },
+    { verse: "Delight yourself in the Lord, and he will give you the desires of your heart.", reference: "Psalm 37:4" },
+    { verse: "Do not be anxious about anything, but in every situation, by prayer and petition, with thanksgiving, present your requests to God.", reference: "Philippians 4:6" },
+    { verse: "The Lord is close to the brokenhearted and saves those who are crushed in spirit.", reference: "Psalm 34:18" },
+    { verse: "Commit to the Lord whatever you do, and he will establish your plans.", reference: "Proverbs 16:3" },
+    { verse: "But those who hope in the Lord will renew their strength. They will soar on wings like eagles.", reference: "Isaiah 40:31" },
+    { verse: "Be joyful in hope, patient in affliction, faithful in prayer.", reference: "Romans 12:12" },
+    { verse: "The Lord bless you and keep you; the Lord make his face shine on you and be gracious to you.", reference: "Numbers 6:24-25" },
+    { verse: "He gives strength to the weary and increases the power of the weak.", reference: "Isaiah 40:29" },
+    { verse: "Let us not become weary in doing good, for at the proper time we will reap a harvest if we do not give up.", reference: "Galatians 6:9" },
+    { verse: "Above all else, guard your heart, for everything you do flows from it.", reference: "Proverbs 4:23" },
+    { verse: "The name of the Lord is a fortified tower; the righteous run to it and are safe.", reference: "Proverbs 18:10" },
+    { verse: "In their hearts humans plan their course, but the Lord establishes their steps.", reference: "Proverbs 16:9" },
+    { verse: "Fear not, for I am with you; be not dismayed, for I am your God.", reference: "Isaiah 41:10" },
+    { verse: "Therefore do not worry about tomorrow, for tomorrow will worry about itself.", reference: "Matthew 6:34" },
+    { verse: "The joy of the Lord is your strength.", reference: "Nehemiah 8:10" },
+    { verse: "God is our refuge and strength, an ever-present help in trouble.", reference: "Psalm 46:1" },
+    { verse: "Trust in the Lord forever, for the Lord, the Lord himself, is the Rock eternal.", reference: "Isaiah 26:4" },
+    { verse: "The Lord your God is in your midst, a mighty one who will save.", reference: "Zephaniah 3:17" },
+    { verse: "Come to me, all you who are weary and burdened, and I will give you rest.", reference: "Matthew 11:28" },
+    { verse: "Wait for the Lord; be strong and take heart and wait for the Lord.", reference: "Psalm 27:14" },
+    { verse: "May the God of hope fill you with all joy and peace as you trust in him.", reference: "Romans 15:13" },
+    { verse: "She is clothed with strength and dignity; she can laugh at the days to come.", reference: "Proverbs 31:25" },
+    { verse: "Do everything in love.", reference: "1 Corinthians 16:14" },
+    { verse: "Whatever you do, work at it with all your heart, as working for the Lord.", reference: "Colossians 3:23" },
+    { verse: "Be kind and compassionate to one another, forgiving each other, just as in Christ God forgave you.", reference: "Ephesians 4:32" },
+    { verse: "And my God will meet all your needs according to the riches of his glory in Christ Jesus.", reference: "Philippians 4:19" },
+    { verse: "The Lord is good, a refuge in times of trouble. He cares for those who trust in him.", reference: "Nahum 1:7" },
+    { verse: "This is the day the Lord has made; let us rejoice and be glad in it.", reference: "Psalm 118:24" },
+    { verse: "Children are a heritage from the Lord, offspring a reward from him.", reference: "Psalm 127:3" },
+    { verse: "As for me and my household, we will serve the Lord.", reference: "Joshua 24:15" },
+    { verse: "Honor your father and mother, so that you may live long in the land the Lord your God is giving you.", reference: "Exodus 20:12" },
+    { verse: "A cheerful heart is good medicine, but a crushed spirit dries up the bones.", reference: "Proverbs 17:22" },
+    { verse: "Love never fails.", reference: "1 Corinthians 13:8" },
+    { verse: "The Lord is my light and my salvation—whom shall I fear?", reference: "Psalm 27:1" },
+    { verse: "You are the salt of the earth and the light of the world.", reference: "Matthew 5:13-14" },
+    { verse: "Weeping may stay for the night, but rejoicing comes in the morning.", reference: "Psalm 30:5" }
+  ]
+
+  function getDailyVerse() {
+    const today = new Date()
+    const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24)
+    return bibleVerses[dayOfYear % bibleVerses.length]
+  }
 
   // Load persisted data and set up Firebase sync
   useEffect(() => {
@@ -360,6 +421,9 @@ export default function Home() {
     }
 
     loadInitialData()
+
+    // Set daily Bible verse
+    setDailyVerse(getDailyVerse())
 
     // Real-time sync - check for updates every 3 seconds
     const syncInterval = setInterval(async () => {
@@ -675,13 +739,15 @@ export default function Home() {
                 
                 {/* Mini Calendar Widget */}
                 <iframe 
-                  src="https://calendar.google.com/calendar/embed?height=140&wkst=1&bgcolor=%23ffffff&ctz=America%2FNew_York&src=uktweeter19%40gmail.com&src=family021430976716499641216%40group.calendar.google.com&src=98vibj87ujjb3cm68lo4jatcghv2dq16%40import.calendar.google.com&color=%23039BE5&color=%2333B679&color=%23F4511E&mode=AGENDA&showTitle=0&showNav=0&showDate=0&showPrint=0&showTabs=0&showCalendars=0&showTz=0" 
+                  src="https://calendar.google.com/calendar/embed?height=140&wkst=1&bgcolor=%23091018&ctz=America%2FNew_York&src=uktweeter19%40gmail.com&src=family021430976716499641216%40group.calendar.google.com&src=98vibj87ujjb3cm68lo4jatcghv2dq16%40import.calendar.google.com&color=%230056b3&color=%2300b4ff&color=%23ff6b35&mode=AGENDA&showTitle=0&showNav=0&showDate=0&showPrint=0&showTabs=0&showCalendars=0&showTz=0" 
                   style={{ 
                     width: '100%', 
                     height: '120px', 
-                    border: '0', 
+                    border: '1px solid rgba(255,255,255,0.08)', 
                     borderRadius: '8px',
-                    background: 'rgba(255,255,255,0.95)'
+                    background: 'rgba(9,16,24,0.8)',
+                    filter: 'brightness(0.85) contrast(1.1)',
+                    opacity: '0.9'
                   }}
                   title="Today's Events"
                 />
@@ -705,7 +771,36 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Family Bulletin Board - TOP PRIORITY */}
+            {/* Daily Bible Verse - TOP PRIORITY POSITION */}
+            <div className="dash-card">
+              <div className="dash-card-label">
+                DAILY WORD
+                <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', marginLeft: 8 }}>
+                  ({new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})
+                </span>
+              </div>
+              <div style={{ 
+                fontSize: 13, 
+                color: 'rgba(255,255,255,0.9)', 
+                lineHeight: 1.6, 
+                fontStyle: 'italic',
+                marginBottom: 8,
+                padding: '8px 0'
+              }}>
+                "{dailyVerse.verse}"
+              </div>
+              <div style={{ 
+                fontSize: 11, 
+                color: '#0056b3', 
+                fontWeight: 600,
+                letterSpacing: 1,
+                textAlign: 'right'
+              }}>
+                — {dailyVerse.reference}
+              </div>
+            </div>
+
+            {/* Family Bulletin Board */}
             <div className="dash-card">
               <div className="dash-card-label">
                 FAMILY BULLETIN BOARD
