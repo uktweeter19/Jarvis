@@ -195,7 +195,7 @@ const styles = `
   .cal-loading{font-size:10px;color:rgba(0,180,255,0.4);letter-spacing:2px;text-align:center;padding:20px;animation:blink 1s ease-in-out infinite;}
 `
 
-const GOOGLE_CLIENT_ID = '523937270224-lum8mrkbggm92pi1.apps.googleusercontent.com'
+const GOOGLE_CLIENT_ID = '523937270224-lum8mrkbggm92pi15037v78r8ed0v4qo.apps.googleusercontent.com'
 const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/calendar.readonly'
 
 const KIDS = ['Lincoln', 'Camille', 'Cicily', 'Carter']
