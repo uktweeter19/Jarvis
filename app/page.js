@@ -345,7 +345,6 @@ export default function Home() {
   const [dailyVerse, setDailyVerse] = useState('')
   const [uploadedImage, setUploadedImage] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
-  const [todaysEvents, setTodaysEvents] = useState([])
   const bottomRef = useRef(null)
   const family = ['Dad', 'Mom', 'Lincoln', 'Camille', 'Cicily', 'Carter']
 
@@ -506,71 +505,6 @@ export default function Home() {
           wind: Math.round(d.current.windspeed_10m)
         })
       }).catch(() => setWeather({ temp: '--', icon: '🌡️', desc: 'Unavailable', wind: '--' }))
-  }, [authed])
-
-  // Fetch today's calendar events
-  useEffect(() => {
-    if (!authed) return
-    
-    async function fetchTodaysEvents() {
-      try {
-        // Get today's date range
-        const today = new Date()
-        const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate())
-        const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1)
-        
-        const timeMin = startOfDay.toISOString()
-        const timeMax = endOfDay.toISOString()
-        
-        // Your calendar IDs
-        const calendarIds = [
-          'uktweeter19@gmail.com',
-          'family021430976716499641216@group.calendar.google.com',
-          '98vibj87ujjb3cm68lo4jatcghv2dq16@import.calendar.google.com'
-        ]
-        
-        let allEvents = []
-        
-        // Try to fetch from each calendar
-        for (const calendarId of calendarIds) {
-          try {
-            const response = await fetch(
-              `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?` +
-              `key=AIzaSyBt8Z8Za_VX6qF_UH3WlKVKj9qZX_8VzYs&` +
-              `timeMin=${timeMin}&timeMax=${timeMax}&` +
-              `singleEvents=true&orderBy=startTime&maxResults=10`
-            )
-            
-            if (response.ok) {
-              const data = await response.json()
-              if (data.items) {
-                allEvents = [...allEvents, ...data.items]
-              }
-            }
-          } catch (calError) {
-            console.log(`Calendar ${calendarId} not accessible:`, calError)
-          }
-        }
-        
-        // Sort events by start time
-        const sortedEvents = allEvents.sort((a, b) => {
-          const aStart = a.start?.dateTime || a.start?.date || ''
-          const bStart = b.start?.dateTime || b.start?.date || ''
-          return new Date(aStart) - new Date(bStart)
-        })
-        
-        setTodaysEvents(sortedEvents)
-      } catch (error) {
-        console.log('Calendar fetch error:', error)
-        setTodaysEvents([])
-      }
-    }
-    
-    fetchTodaysEvents()
-    
-    // Refresh events every 10 minutes
-    const eventInterval = setInterval(fetchTodaysEvents, 10 * 60 * 1000)
-    return () => clearInterval(eventInterval)
   }, [authed])
 
   function showNotification(message) {
@@ -849,13 +783,13 @@ God bless your studies! 📚`
                 <div className="dash-date">{today.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).toUpperCase()}</div>
                 <div className="dash-sub" style={{ marginBottom: 12 }}>{today.getFullYear()} · LEXINGTON KY</div>
                 
-                {/* Today's Events - Mobile Friendly */}
+                {/* Today's Events - Mobile Friendly Calendar */}
                 <div style={{ 
                   background: 'rgba(0,86,179,0.08)', 
                   border: '1px solid rgba(0,86,179,0.15)', 
                   borderRadius: '8px', 
                   padding: '12px',
-                  minHeight: '100px'
+                  minHeight: '140px'
                 }}>
                   <div style={{ 
                     fontSize: '11px', 
@@ -867,60 +801,26 @@ God bless your studies! 📚`
                     TODAY'S EVENTS
                   </div>
                   
-                  {/* Events from Google Calendar */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    {todaysEvents.length === 0 ? (
-                      <div style={{ 
-                        fontSize: '11px', 
-                        color: 'rgba(255,255,255,0.4)', 
-                        textAlign: 'center',
-                        fontStyle: 'italic',
-                        padding: '12px 0'
-                      }}>
-                        Loading today's events...
-                      </div>
-                    ) : (
-                      todaysEvents.slice(0, 4).map((event, i) => {
-                        const startTime = event.start?.dateTime || event.start?.date
-                        let timeStr = 'All Day'
-                        
-                        if (startTime && event.start?.dateTime) {
-                          const eventDate = new Date(startTime)
-                          timeStr = eventDate.toLocaleTimeString([], { 
-                            hour: '2-digit', 
-                            minute: '2-digit',
-                            hour12: true 
-                          })
-                        }
-                        
-                        return (
-                          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <div style={{ 
-                              fontSize: '12px', 
-                              color: '#0056b3', 
-                              fontWeight: '600',
-                              minWidth: '70px'
-                            }}>{timeStr}</div>
-                            <div style={{ 
-                              fontSize: '12px', 
-                              color: 'rgba(255,255,255,0.85)',
-                              lineHeight: '1.3'
-                            }}>{event.summary || 'Untitled Event'}</div>
-                          </div>
-                        )
-                      })
-                    )}
-                    
-                    {todaysEvents.length > 4 && (
-                      <div style={{ 
-                        fontSize: '10px', 
-                        color: 'rgba(0,86,179,0.4)', 
-                        textAlign: 'center',
-                        marginTop: '4px'
-                      }}>
-                        +{todaysEvents.length - 4} more events
-                      </div>
-                    )}
+                  {/* Simplified Calendar Embed */}
+                  <iframe 
+                    src="https://calendar.google.com/calendar/embed?mode=AGENDA&height=120&wkst=1&bgcolor=%23FFFFFF&src=uktweeter19%40gmail.com&src=family021430976716499641216%40group.calendar.google.com&src=98vibj87ujjb3cm68lo4jatcghv2dq16%40import.calendar.google.com&color=%23039BE5&color=%2333B679&color=%23F4511E&ctz=America%2FNew_York&showTitle=0&showNav=0&showDate=0&showPrint=0&showTabs=0&showCalendars=0&showTz=0"
+                    style={{
+                      width: '100%',
+                      height: '100px',
+                      border: 'none',
+                      borderRadius: '6px',
+                      backgroundColor: '#fff'
+                    }}
+                    title="Today's Events"
+                  />
+                  
+                  <div style={{ 
+                    fontSize: '9px', 
+                    color: 'rgba(255,255,255,0.3)', 
+                    textAlign: 'center',
+                    marginTop: '6px'
+                  }}>
+                    Tap to view full calendar details
                   </div>
                 </div>
               </div>
