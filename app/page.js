@@ -79,6 +79,8 @@ Family members: Kevin (Dad, works in logistics/freight), Mom, Lincoln, Camille, 
 
 Your personality: You love America, appreciate traditional family values, and have a positive outlook rooted in faith and patriotism. You're respectful, hardworking, and believe in personal responsibility. You occasionally reference American pride, the importance of family, and conservative values in a natural, family-friendly way.
 
+SPECIAL CAPABILITY: You can analyze images of math problems and provide detailed, step-by-step solutions. When someone uploads a math problem image, examine it carefully and break down the solution into clear, educational steps that help the student understand the process. Be encouraging and supportive, especially with children learning math.
+
 You have access to family tools: a chores tracker for the kids, a shared shopping list, and a daily briefing system. When users ask about chores or shopping, remind them they can use the Chores and Shopping tabs.
 
 Kevin is saving for his daughter's college at University of Kentucky. Keep responses concise and conversational. Address family members by name when you know who's asking. Occasionally add a "God bless" or reference to American values when appropriate.`
@@ -341,6 +343,8 @@ export default function Home() {
   const [newBulletin, setNewBulletin] = useState('')
   const [notification, setNotification] = useState('')
   const [dailyVerse, setDailyVerse] = useState('')
+  const [uploadedImage, setUploadedImage] = useState(null)
+  const [imagePreview, setImagePreview] = useState(null)
   const bottomRef = useRef(null)
   const family = ['Dad', 'Mom', 'Lincoln', 'Camille', 'Cicily', 'Carter']
 
@@ -402,6 +406,21 @@ export default function Home() {
     const today = new Date()
     const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24)
     return bibleVerses[dayOfYear % bibleVerses.length]
+  }
+
+  function handleImageUpload(event) {
+    const file = event.target.files[0]
+    if (file && file.type.startsWith('image/')) {
+      setUploadedImage(file)
+      const reader = new FileReader()
+      reader.onload = (e) => setImagePreview(e.target.result)
+      reader.readAsDataURL(file)
+    }
+  }
+
+  function clearImage() {
+    setUploadedImage(null)
+    setImagePreview(null)
   }
 
   // Load persisted data and set up Firebase sync
@@ -566,8 +585,16 @@ export default function Home() {
   function clearChecked() { saveShopping(shopping.filter(i => !i.done)) }
 
   async function send() {
-    if (!input.trim() || loading) return
-    const userMsg = { role: 'user', content: input, name: user }
+    if ((!input.trim() && !uploadedImage) || loading) return
+    
+    // Create user message with optional image
+    const userMsg = { 
+      role: 'user', 
+      content: input || (uploadedImage ? "Can you help me solve this math problem step by step?" : ""), 
+      name: user,
+      image: imagePreview 
+    }
+    
     const newMessages = [...messages, userMsg]
     setMessages(newMessages)
     const userInput = input.toLowerCase()
@@ -575,9 +602,9 @@ export default function Home() {
     setLoading(true)
     
     try {
-      // Check for special commands first
+      // Check for special commands first (weather/news)
       if (userInput.includes('weather') && (userInput.includes('tomorrow') || userInput.includes('forecast'))) {
-        // Fetch tomorrow's weather
+        // Weather forecast code stays the same...
         const response = await fetch('https://api.open-meteo.com/v1/forecast?latitude=38.0406&longitude=-84.5037&daily=temperature_2m_max,temperature_2m_min,weathercode&temperature_unit=fahrenheit&forecast_days=2')
         const data = await response.json()
         const tomorrowData = data.daily
@@ -595,11 +622,10 @@ export default function Home() {
       }
       
       if (userInput.includes('news') || userInput.includes('headlines')) {
-        // Fetch world news
-        const response = await fetch('https://newsapi.org/v2/top-headlines?country=us&pageSize=5&apiKey=demo') // You'll need a real API key
+        // News code stays the same...
+        const response = await fetch('https://newsapi.org/v2/top-headlines?country=us&pageSize=5&apiKey=demo')
         let newsReply = "Here are today's top headlines:\n\n"
         
-        // Fallback news (since demo API key has limits)
         if (!response.ok) {
           newsReply = `I don't have access to live news feeds right now, ${user}. For the latest updates, I'd recommend:\n\n• BBC News (bbc.com/news)\n• Reuters (reuters.com)\n• AP News (apnews.com)\n• NPR (npr.org)\n\nIs there anything specific you'd like to know about?`
         } else {
@@ -617,18 +643,50 @@ export default function Home() {
         return
       }
       
-      // Default chat response
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: newMessages, user, context: FAMILY_CONTEXT })
-      })
-      const data = await res.json()
-      setMessages(m => [...m, { role: 'assistant', content: data.reply, name: 'JARVIS' }])
+      // Prepare API call with potential image
+      const apiBody = { messages: newMessages, user, context: FAMILY_CONTEXT }
+      
+      // If there's an uploaded image, convert to base64 and add to API call
+      if (uploadedImage) {
+        const reader = new FileReader()
+        reader.onload = async () => {
+          const base64Image = reader.result.split(',')[1]
+          apiBody.image = {
+            type: 'image',
+            source: {
+              type: 'base64',
+              media_type: uploadedImage.type,
+              data: base64Image
+            }
+          }
+          
+          // Make API call with image
+          const res = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(apiBody)
+          })
+          const data = await res.json()
+          setMessages(m => [...m, { role: 'assistant', content: data.reply, name: 'JARVIS' }])
+          setLoading(false)
+          clearImage() // Clear the uploaded image after sending
+        }
+        reader.readAsDataURL(uploadedImage)
+      } else {
+        // Regular text-only API call
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(apiBody)
+        })
+        const data = await res.json()
+        setMessages(m => [...m, { role: 'assistant', content: data.reply, name: 'JARVIS' }])
+        setLoading(false)
+      }
     } catch (e) {
       setMessages(m => [...m, { role: 'assistant', content: 'System error. Please try again.', name: 'JARVIS' }])
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   const today = new Date()
@@ -916,7 +974,21 @@ export default function Home() {
                 <div key={i} className={`msg ${m.role}`}>
                   <div className="msg-icon">{m.role === 'user' ? m.name.substring(0, 2).toUpperCase() : 'J·A·I'}</div>
                   <div className="msg-body">
-                    <div className="msg-bubble">{m.content}</div>
+                    <div className="msg-bubble">
+                      {m.image && (
+                        <img 
+                          src={m.image} 
+                          alt="Uploaded math problem" 
+                          style={{ 
+                            maxWidth: '100%', 
+                            borderRadius: '8px', 
+                            marginBottom: '8px',
+                            border: '1px solid rgba(0,180,255,0.3)'
+                          }} 
+                        />
+                      )}
+                      {m.content}
+                    </div>
                     <div className="msg-meta">{m.name} · {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                   </div>
                 </div>
@@ -934,7 +1006,66 @@ export default function Home() {
               <div ref={bottomRef} />
             </div>
             <div className="input-area">
+              {/* Image preview */}
+              {imagePreview && (
+                <div style={{ padding: '10px 16px', borderBottom: '1px solid rgba(0,180,255,0.15)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <img 
+                      src={imagePreview} 
+                      alt="Upload preview" 
+                      style={{ 
+                        width: '60px', 
+                        height: '60px', 
+                        objectFit: 'cover', 
+                        borderRadius: '8px',
+                        border: '1px solid rgba(0,180,255,0.3)'
+                      }} 
+                    />
+                    <div style={{ flex: 1, fontSize: '11px', color: 'rgba(0,180,255,0.6)' }}>
+                      Math problem ready to solve
+                    </div>
+                    <button 
+                      onClick={clearImage}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'rgba(255,80,80,0.6)',
+                        cursor: 'pointer',
+                        fontSize: '16px',
+                        padding: '4px'
+                      }}
+                    >×</button>
+                  </div>
+                </div>
+              )}
+              
               <div className="input-row">
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={handleImageUpload}
+                  style={{ display: 'none' }}
+                  id="image-upload"
+                />
+                <button 
+                  onClick={() => document.getElementById('image-upload').click()}
+                  style={{
+                    width: '40px',
+                    height: '40px',
+                    background: 'linear-gradient(135deg,#003366,#0066cc)',
+                    border: 'none',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    clipPath: 'polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%)',
+                    color: 'white',
+                    fontSize: '16px',
+                    boxShadow: '0 0 15px rgba(0,150,255,0.3)',
+                    marginRight: '8px'
+                  }}
+                  title="Upload math problem image"
+                >📷</button>
                 <div className="input-wrap">
                   <textarea value={input} onChange={e => setInput(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }}
