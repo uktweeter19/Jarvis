@@ -783,22 +783,51 @@ God bless your studies! 📚`
                 <div className="dash-date">{today.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).toUpperCase()}</div>
                 <div className="dash-sub" style={{ marginBottom: 12 }}>{today.getFullYear()} · LEXINGTON KY</div>
                 
-                {/* Mini Calendar Widget */}
-                <iframe 
-                  src="https://calendar.google.com/calendar/embed?height=200&wkst=1&bgcolor=%23ffffff&ctz=America%2FNew_York&src=uktweeter19%40gmail.com&src=family021430976716499641216%40group.calendar.google.com&src=98vibj87ujjb3cm68lo4jatcghv2dq16%40import.calendar.google.com&color=%23039BE5&color=%2333B679&color=%23F4511E&mode=AGENDA&showTitle=0&showNav=0&showDate=0&showPrint=0&showTabs=0&showCalendars=0&showTz=0" 
-                  style={{ 
-                    width: '100%', 
-                    height: window.innerWidth <= 768 ? '200px' : '120px',
-                    border: '1px solid rgba(0,86,179,0.2)', 
-                    borderRadius: '8px',
-                    background: window.innerWidth <= 768 ? 'rgba(255,255,255,0.95)' : '#0a0f1a',
-                    filter: window.innerWidth <= 768 ? 
-                      'none' : 
-                      'invert(0.85) hue-rotate(180deg) brightness(0.6) contrast(1.5)',
-                    opacity: '1'
-                  }}
-                  title="Today's Events"
-                />
+                {/* Today's Events - Mobile Friendly */}
+                <div style={{ 
+                  background: 'rgba(0,86,179,0.08)', 
+                  border: '1px solid rgba(0,86,179,0.15)', 
+                  borderRadius: '8px', 
+                  padding: '12px',
+                  minHeight: '100px'
+                }}>
+                  <div style={{ 
+                    fontSize: '11px', 
+                    color: 'rgba(0,86,179,0.6)', 
+                    marginBottom: '8px',
+                    fontWeight: '600',
+                    letterSpacing: '1px'
+                  }}>
+                    TODAY'S EVENTS
+                  </div>
+                  
+                  {/* Sample events - replace with your actual events */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ 
+                        fontSize: '12px', 
+                        color: '#0056b3', 
+                        fontWeight: '600',
+                        minWidth: '60px'
+                      }}>6:30 PM</div>
+                      <div style={{ 
+                        fontSize: '12px', 
+                        color: 'rgba(255,255,255,0.85)'
+                      }}>Dinner at Carson's</div>
+                    </div>
+                    
+                    {/* Add more events as needed */}
+                    <div style={{ 
+                      fontSize: '11px', 
+                      color: 'rgba(255,255,255,0.4)', 
+                      textAlign: 'center',
+                      marginTop: '8px',
+                      fontStyle: 'italic'
+                    }}>
+                      Update events in Google Calendar
+                    </div>
+                  </div>
+                </div>
               </div>
               {/* Weather */}
               <div className="dash-card">
