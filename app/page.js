@@ -544,6 +544,20 @@ export default function Home() {
                 </div>
               )}
             </div>
+
+            {/* Upcoming Events */}
+            {calAuthed && calEvents.length > 0 && (
+              <div className="dash-card">
+                <div className="dash-card-label">UPCOMING EVENTS</div>
+                <div className="briefing-list">
+                  {calEvents.slice(0, 4).map(ev => (
+                    <div key={ev.id} className="briefing-item">
+                      {ev.summary} <span style={{ color: 'rgba(0,180,255,0.3)' }}>· {formatEventTime(ev)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -590,22 +604,6 @@ export default function Home() {
               </div>
             </div>
           </>
-        )}
-
-            {/* Upcoming Events */}
-            {calAuthed && calEvents.length > 0 && (
-              <div className="dash-card">
-                <div className="dash-card-label">UPCOMING EVENTS</div>
-                <div className="briefing-list">
-                  {calEvents.slice(0, 4).map(ev => (
-                    <div key={ev.id} className="briefing-item">
-                      {ev.summary} <span style={{ color: 'rgba(0,180,255,0.3)' }}>· {formatEventTime(ev)}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
         )}
 
         {/* ── CALENDAR TAB ── */}
