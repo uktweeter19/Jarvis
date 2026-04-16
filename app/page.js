@@ -47,7 +47,8 @@ const styles = `
   .user-bar{padding:8px 20px;border-bottom:1px solid rgba(0,86,179,0.12);display:flex;gap:6px;overflow-x:auto;background:rgba(10,15,26,0.8);scrollbar-width:none;flex-shrink:0;}
   .user-bar::-webkit-scrollbar{display:none;}
   .user-btn{padding:4px 12px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:rgba(255,255,255,0.4);font-family:'Inter',sans-serif;font-size:10px;font-weight:600;cursor:pointer;letter-spacing:1px;border-radius:20px;transition:all 0.2s;white-space:nowrap;}
-  .user-btn:hover,.user-btn.active{border-color:#0056b3;color:#fff;background:rgba(0,86,179,0.2);}
+  .user-btn:hover{border-color:#0056b3;color:rgba(255,255,255,0.8);background:rgba(0,86,179,0.1);}
+  .user-btn.active{border-color:#0056b3;color:#fff;background:rgba(0,86,179,0.4);box-shadow:0 0 8px rgba(0,86,179,0.3);}
 
   /* ── CHAT (keep original Jarvis feel) ── */
   .arc-bg{position:fixed;inset:0;background:radial-gradient(ellipse at 50% 50%, #0a1f35 0%, #020b18 70%);z-index:0;}
@@ -554,7 +555,11 @@ export default function Home() {
         {tab === 'chat' && (
           <div className="user-bar">
             {family.map(f => (
-              <button key={f} className={`user-btn${user === f ? ' active' : ''}`} onClick={() => setUser(f)}>
+              <button key={f} className={`user-btn${user === f ? ' active' : ''}`} onClick={() => {
+                console.log('User button clicked:', f, 'Current user:', user)
+                setUser(f)
+                console.log('User should now be:', f)
+              }}>
                 {f.toUpperCase()}
               </button>
             ))}
