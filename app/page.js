@@ -101,7 +101,7 @@ export default function Home() {
   const [pass, setPass] = useState('')
   const [time, setTime] = useState('')
   const bottomRef = useRef(null)
-  const family = ['Dad','Mom','Cicily','Camille','Carter','Emily','Millie','Kevo']
+  const family = ['Dad','Mom','Cicily','Camille','Carter','Lincoln']
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
   useEffect(() => {
