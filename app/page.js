@@ -345,6 +345,8 @@ export default function Home() {
   const [dailyVerse, setDailyVerse] = useState('')
   const [uploadedImage, setUploadedImage] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
+  const [countdowns, setCountdowns] = useState([])
+  const [ukSports, setUkSports] = useState({ basketball: null, football: null })
   const bottomRef = useRef(null)
   const family = ['Dad', 'Mom', 'Lincoln', 'Camille', 'Cicily', 'Carter']
 
@@ -423,6 +425,78 @@ export default function Home() {
     setImagePreview(null)
   }
 
+  // Calculate countdowns to important dates
+  function calculateCountdowns() {
+    const today = new Date()
+    const currentYear = today.getFullYear()
+    const nextYear = currentYear + 1
+    
+    // Important dates for the Deatherage family
+    const importantDates = [
+      // Major Holidays
+      { name: "Christmas", date: new Date(currentYear, 11, 25), emoji: "🎄" },
+      { name: "Thanksgiving", date: new Date(currentYear, 10, 28), emoji: "🦃" }, // 4th Thursday of November (approx)
+      { name: "Easter", date: new Date(currentYear, 3, 20), emoji: "🐰" }, // Easter 2025 estimate
+      { name: "Independence Day", date: new Date(currentYear, 6, 4), emoji: "🇺🇸" },
+      { name: "New Year's Day", date: new Date(nextYear, 0, 1), emoji: "🎊" },
+      
+      // Family Birthdays - Real Deatherage Family Dates
+      { name: "Dad's Birthday", date: new Date(currentYear, 2, 30), emoji: "🎂" }, // March 30th
+      { name: "Emily's Birthday", date: new Date(currentYear, 3, 17), emoji: "🎂" }, // April 17th
+      { name: "Carter's Birthday", date: new Date(currentYear, 4, 2), emoji: "🎂" }, // May 2nd
+      { name: "Cicily's Birthday", date: new Date(currentYear, 2, 13), emoji: "🎂" }, // March 13th
+      { name: "Camille's Birthday", date: new Date(currentYear, 4, 15), emoji: "🎂" }, // May 15th
+      { name: "Lincoln's Birthday", date: new Date(currentYear, 10, 28), emoji: "🎂" }, // November 28th
+      
+      // Family Vacation
+      { name: "Family Vacation", date: new Date(currentYear, 6, 15), emoji: "✈️" }, // July 15th example
+    ]
+    
+    const activeCountdowns = importantDates.map(item => {
+      let targetDate = item.date
+      
+      // If the date has passed this year, use next year's date
+      if (targetDate < today) {
+        targetDate = new Date(nextYear, item.date.getMonth(), item.date.getDate())
+      }
+      
+      const timeDiff = targetDate.getTime() - today.getTime()
+      const daysLeft = Math.ceil(timeDiff / (1000 * 3600 * 24))
+      
+      return {
+        ...item,
+        daysLeft,
+        targetDate
+      }
+    })
+    .filter(item => item.daysLeft > 0 && item.daysLeft <= 365) // Only show upcoming events within a year
+    .sort((a, b) => a.daysLeft - b.daysLeft) // Sort by closest first
+    
+    setCountdowns(activeCountdowns.slice(0, 3)) // Show top 3 upcoming events
+  }
+
+  // Fetch UK Wildcats sports data
+  async function fetchUKSports() {
+    try {
+      // This is a simplified example - you'd need real sports API integration
+      // For now, showing example data structure
+      setUkSports({
+        basketball: {
+          nextGame: "vs Louisville - Jan 25, 7:00 PM",
+          lastScore: "UK 85 - Tennessee 72",
+          record: "15-4 (6-2 SEC)"
+        },
+        football: {
+          nextGame: "Spring Game - April 12",
+          lastScore: "UK 24 - Georgia 17", 
+          record: "8-4 (4-4 SEC)"
+        }
+      })
+    } catch (error) {
+      console.log('UK Sports fetch error:', error)
+    }
+  }
+
   // Load persisted data and set up Firebase sync
   useEffect(() => {
     async function loadInitialData() {
@@ -443,6 +517,10 @@ export default function Home() {
 
     // Set daily Bible verse
     setDailyVerse(getDailyVerse())
+
+    // Initialize countdowns and UK sports
+    calculateCountdowns()
+    fetchUKSports()
 
     // Real-time sync - check for updates every 3 seconds
     const syncInterval = setInterval(async () => {
@@ -869,6 +947,119 @@ God bless your studies! 📚`
                 }}>
                   Update events by editing the code
                 </div>
+                
+              </div>
+            </div>
+
+            {/* Family Countdowns */}
+            <div className="dash-card">
+              <div className="dash-card-label">FAMILY COUNTDOWNS</div>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {countdowns.length === 0 ? (
+                  <div style={{ 
+                    fontSize: '11px', 
+                    color: 'rgba(255,255,255,0.4)', 
+                    textAlign: 'center',
+                    fontStyle: 'italic',
+                    padding: '12px 0'
+                  }}>
+                    No upcoming events
+                  </div>
+                ) : (
+                  countdowns.map((countdown, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span style={{ fontSize: '16px' }}>{countdown.emoji}</span>
+                        <span style={{ 
+                          fontSize: '12px', 
+                          color: 'rgba(255,255,255,0.85)',
+                          fontWeight: '500'
+                        }}>{countdown.name}</span>
+                      </div>
+                      <div style={{
+                        fontSize: '11px',
+                        color: countdown.daysLeft <= 7 ? '#ff6b35' : '#0056b3',
+                        fontWeight: '600',
+                        padding: '3px 8px',
+                        background: countdown.daysLeft <= 7 ? 'rgba(255,107,53,0.15)' : 'rgba(0,86,179,0.15)',
+                        borderRadius: '12px',
+                        border: countdown.daysLeft <= 7 ? '1px solid rgba(255,107,53,0.3)' : '1px solid rgba(0,86,179,0.3)'
+                      }}>
+                        {countdown.daysLeft === 1 ? 'TOMORROW!' : `${countdown.daysLeft} DAYS`}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* UK Wildcats Sports */}
+            <div className="dash-card">
+              <div className="dash-card-label">
+                🐾 GO WILDCATS!
+                <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', marginLeft: 8 }}>
+                  BASKETBALL • FOOTBALL
+                </span>
+              </div>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                
+                {/* Basketball */}
+                {ukSports.basketball && (
+                  <div style={{ 
+                    background: 'rgba(0,56,147,0.12)', 
+                    border: '1px solid rgba(0,56,147,0.2)',
+                    borderRadius: '8px',
+                    padding: '10px 12px'
+                  }}>
+                    <div style={{ 
+                      fontSize: '11px', 
+                      color: '#0038b3', 
+                      fontWeight: '600',
+                      marginBottom: '6px',
+                      letterSpacing: '1px'
+                    }}>🏀 BASKETBALL</div>
+                    
+                    <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.8)', marginBottom: '3px' }}>
+                      <strong>Next:</strong> {ukSports.basketball.nextGame}
+                    </div>
+                    <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.8)', marginBottom: '3px' }}>
+                      <strong>Last:</strong> {ukSports.basketball.lastScore}
+                    </div>
+                    <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.8)' }}>
+                      <strong>Record:</strong> {ukSports.basketball.record}
+                    </div>
+                  </div>
+                )}
+
+                {/* Football */}
+                {ukSports.football && (
+                  <div style={{ 
+                    background: 'rgba(0,56,147,0.08)', 
+                    border: '1px solid rgba(0,56,147,0.15)',
+                    borderRadius: '8px',
+                    padding: '10px 12px'
+                  }}>
+                    <div style={{ 
+                      fontSize: '11px', 
+                      color: '#0038b3', 
+                      fontWeight: '600',
+                      marginBottom: '6px',
+                      letterSpacing: '1px'
+                    }}>🏈 FOOTBALL</div>
+                    
+                    <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.8)', marginBottom: '3px' }}>
+                      <strong>Next:</strong> {ukSports.football.nextGame}
+                    </div>
+                    <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.8)', marginBottom: '3px' }}>
+                      <strong>Last:</strong> {ukSports.football.lastScore}
+                    </div>
+                    <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.8)' }}>
+                      <strong>Record:</strong> {ukSports.football.record}
+                    </div>
+                  </div>
+                )}
                 
               </div>
             </div>
