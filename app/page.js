@@ -1,6 +1,76 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
 
+// Firebase configuration - Kevin's actual Firebase project
+const firebaseConfig = {
+  apiKey: "AIzaSyBCmRVCCXDiM6Uk8C6PWsazCQmJ3eDutMo",
+  authDomain: "jarvis-family-7e8c9.firebaseapp.com",
+  databaseURL: "https://jarvis-family-7e8c9-default-rtdb.firebaseio.com",
+  projectId: "jarvis-family-7e8c9",
+  storageBucket: "jarvis-family-7e8c9.firebasestorage.app",
+  messagingSenderId: "923628710126",
+  appId: "1:923628710126:web:ba579c26b24c2198056bff"
+}
+
+// Simple Firebase client (no SDK needed for basic REST API calls)
+class SimpleFirebase {
+  constructor(databaseURL) {
+    this.databaseURL = databaseURL
+  }
+
+  async get(path) {
+    try {
+      const response = await fetch(`${this.databaseURL}/${path}.json`)
+      return await response.json()
+    } catch (error) {
+      console.error('Firebase get error:', error)
+      return null
+    }
+  }
+
+  async set(path, data) {
+    try {
+      const response = await fetch(`${this.databaseURL}/${path}.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      return await response.json()
+    } catch (error) {
+      console.error('Firebase set error:', error)
+      return null
+    }
+  }
+
+  async push(path, data) {
+    try {
+      const response = await fetch(`${this.databaseURL}/${path}.json`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      return await response.json()
+    } catch (error) {
+      console.error('Firebase push error:', error)
+      return null
+    }
+  }
+
+  async delete(path) {
+    try {
+      const response = await fetch(`${this.databaseURL}/${path}.json`, {
+        method: 'DELETE'
+      })
+      return await response.json()
+    } catch (error) {
+      console.error('Firebase delete error:', error)
+      return null
+    }
+  }
+}
+
+const firebase = new SimpleFirebase(firebaseConfig.databaseURL)
+
 const PASSWORD = 'deatherage2024'
 
 const FAMILY_CONTEXT = `You are JARVIS, the intelligent family assistant for the Deatherage family in Lexington, Kentucky. You are helpful, warm, and efficient — like a trusted household AI. 
@@ -239,6 +309,16 @@ function saveLS(key, val) {
   try { localStorage.setItem(key, JSON.stringify(val)) } catch {}
 }
 
+// Firebase sync functions
+async function loadFromFirebase(path, fallback = []) {
+  const data = await firebase.get(path)
+  return data || fallback
+}
+
+async function saveToFirebase(path, data) {
+  await firebase.set(path, data)
+}
+
 export default function Home() {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
@@ -261,30 +341,53 @@ export default function Home() {
   const bottomRef = useRef(null)
   const family = ['Dad', 'Mom', 'Lincoln', 'Camille', 'Cicily', 'Carter']
 
-  // Load persisted data and set up notification system
+  // Load persisted data and set up Firebase sync
   useEffect(() => {
-    setChores(loadLS('jarvis_chores', DEFAULT_CHORES.Cicily ? 
-      Object.fromEntries(KIDS.map(k => [k, (DEFAULT_CHORES[k] || []).map((t, i) => ({ id: i, text: t, done: false }))])) : {}
-    ))
-    setShopping(loadLS('jarvis_shopping', []))
-    setBulletins(loadLS('jarvis_bulletins', []))
-
-    // Simple notification system - check for new bulletins every 2 seconds
-    const interval = setInterval(() => {
-      const stored = loadLS('jarvis_bulletins', [])
-      const current = JSON.parse(localStorage.getItem('jarvis_bulletins_temp') || '[]')
+    async function loadInitialData() {
+      // Load from Firebase
+      const firebaseChores = await loadFromFirebase('chores')
+      const firebaseShopping = await loadFromFirebase('shopping')
+      const firebaseBulletins = await loadFromFirebase('bulletins')
       
-      if (stored.length > current.length) {
-        const newBulletin = stored[0] // newest is first
-        if (newBulletin && newBulletin.author !== user) { // don't notify self
-          showNotification(`New bulletin from ${newBulletin.author}: ${newBulletin.text.substring(0, 50)}...`)
+      // Set state with Firebase data or fallbacks
+      setChores(firebaseChores || DEFAULT_CHORES.Cicily ? 
+        Object.fromEntries(KIDS.map(k => [k, (DEFAULT_CHORES[k] || []).map((t, i) => ({ id: i, text: t, done: false }))])) : {}
+      )
+      setShopping(firebaseShopping || [])
+      setBulletins(firebaseBulletins || [])
+    }
+
+    loadInitialData()
+
+    // Real-time sync - check for updates every 3 seconds
+    const syncInterval = setInterval(async () => {
+      const firebaseBulletins = await loadFromFirebase('bulletins')
+      const firebaseShopping = await loadFromFirebase('shopping')
+      const firebaseChores = await loadFromFirebase('chores')
+      
+      // Update state if Firebase has newer data
+      if (firebaseBulletins && firebaseBulletins.length !== bulletins.length) {
+        setBulletins(firebaseBulletins)
+        // Show notification if new bulletin from someone else
+        if (firebaseBulletins.length > bulletins.length) {
+          const newBulletin = firebaseBulletins[0]
+          if (newBulletin && newBulletin.author !== user) {
+            showNotification(`New bulletin from ${newBulletin.author}: ${newBulletin.text.substring(0, 50)}...`)
+          }
         }
       }
-      localStorage.setItem('jarvis_bulletins_temp', JSON.stringify(stored))
-    }, 2000)
+      
+      if (firebaseShopping && JSON.stringify(firebaseShopping) !== JSON.stringify(shopping)) {
+        setShopping(firebaseShopping)
+      }
+      
+      if (firebaseChores && JSON.stringify(firebaseChores) !== JSON.stringify(chores)) {
+        setChores(firebaseChores)
+      }
+    }, 3000)
 
-    return () => clearInterval(interval)
-  }, [user])
+    return () => clearInterval(syncInterval)
+  }, [user, bulletins.length, shopping, chores])
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
 
@@ -346,18 +449,25 @@ export default function Home() {
     }
     const updated = [bulletin, ...bulletins]
     setBulletins(updated)
-    saveLS('jarvis_bulletins', updated)
+    saveToFirebase('bulletins', updated)
     setNewBulletin('')
   }
   
   function deleteBulletin(id) {
     const updated = bulletins.filter(b => b.id !== id)
     setBulletins(updated)
-    saveLS('jarvis_bulletins', updated)
+    saveToFirebase('bulletins', updated)
   }
 
-  function saveShopping(updated) { setShopping(updated); saveLS('jarvis_shopping', updated) }
-  function saveChores(updated) { setChores(updated); saveLS('jarvis_chores', updated) }
+  function saveShopping(updated) { 
+    setShopping(updated)
+    saveToFirebase('shopping', updated)
+  }
+  
+  function saveChores(updated) { 
+    setChores(updated)
+    saveToFirebase('chores', updated)
+  }
 
   function toggleChore(kid, id) {
     const updated = { ...chores, [kid]: chores[kid].map(c => c.id === id ? { ...c, done: !c.done } : c) }
