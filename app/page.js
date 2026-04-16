@@ -113,10 +113,9 @@ const styles = `
   .lock-photo{position:absolute;inset:0;background-image:url('https://i.postimg.cc/3NLC68RY/family-(1).jpg');background-size:contain;background-position:center top;background-repeat:no-repeat;background-color:#050d1f;}
   .lock-photo::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom, rgba(0,0,0,0.0) 0%, rgba(5,13,31,0.2) 35%, rgba(5,13,31,0.85) 65%, rgba(5,13,31,0.97) 100%);z-index:1;}
   .lock-sides{position:absolute;inset:0;display:flex;pointer-events:none;z-index:0;}
-  .lock-side-panel{width:calc(50% - 265px);height:100%;overflow:hidden;display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));align-content:start;gap:4px;padding:6px;}
-  .lock-side-panel.right{margin-left:auto;}
-  .uk-tile{width:78px;height:78px;display:flex;align-items:center;justify-content:center;opacity:0.18;color:white;font-weight:900;font-family:'Rajdhani',sans-serif;font-size:11px;letter-spacing:1px;text-align:center;line-height:1.2;border:1px solid rgba(255,255,255,0.08);border-radius:4px;}
-  .lock-center-spacer{width:530px;flex-shrink:0;}
+  .lock-side-panel{position:absolute;top:0;bottom:0;width:calc(50% - 265px);overflow:hidden;opacity:0.3;}
+  .lock-side-panel.left{left:0;background-image:url('https://i.postimg.cc/KvDwQBxR/ky1.webp');background-size:280px auto;background-repeat:repeat;}
+  .lock-side-panel.right{right:0;background-image:url('https://i.postimg.cc/fTCqYsfL/ky2.webp');background-size:280px auto;background-repeat:repeat;}
   .lock-card{position:relative;z-index:2;width:100%;max-width:360px;text-align:center;padding:0 24px;}
   .lock-title{font-family:'Rajdhani',sans-serif;font-size:32px;font-weight:700;letter-spacing:6px;color:#fff;text-shadow:0 2px 20px rgba(0,0,0,0.8);margin-bottom:4px;}
   .lock-sub{font-size:11px;color:rgba(255,255,255,0.6);letter-spacing:3px;margin-bottom:28px;text-shadow:0 1px 8px rgba(0,0,0,0.8);}
@@ -452,60 +451,14 @@ export default function Home() {
   const totalChoresDone = Object.values(chores).flat().filter(c => c.done).length
   const totalChores = Object.values(chores).flat().length
 
-  if (!authed) {
-    // UK Kentucky Wildcats logos through history as text representations
-    const ukEras = [
-      { text: 'UK', sub: '1890s' },
-      { text: 'Ʊ K', sub: '1910s' },
-      { text: 'UK', sub: '1920s' },
-      { text: 'ĸ', sub: '1930s' },
-      { text: 'UK', sub: '1940s' },
-      { text: 'UK', sub: '1950s' },
-      { text: '🐾', sub: '1960s' },
-      { text: 'UK', sub: '1970s' },
-      { text: 'UK', sub: '1980s' },
-      { text: 'UK', sub: '1990s' },
-      { text: 'ÜK', sub: '2000s' },
-      { text: 'UK', sub: '2005' },
-      { text: 'UK', sub: '2010s' },
-      { text: 'UK', sub: 'Current' },
-      { text: 'KY', sub: 'Alt' },
-      { text: '🐱', sub: 'Wildcat' },
-      { text: 'UK', sub: 'Football' },
-      { text: 'BBN', sub: 'Nation' },
-      { text: 'UK', sub: 'Basketball' },
-      { text: 'GO\nCATS', sub: '' },
-    ]
-    const totalTiles = 60
-    const tiles = Array(totalTiles).fill(null).map((_, i) => ukEras[i % ukEras.length])
-
-    return (
+  if (!authed) return (
     <>
       <style>{styles}</style>
       <div className="lock-screen">
         <div className="lock-photo" />
         <div className="lock-sides">
-          <div className="lock-side-panel">
-            {tiles.map((t, i) => (
-              <div key={i} className="uk-tile">
-                <div>
-                  <div style={{fontSize: t.text.length > 3 ? 13 : 20, fontWeight:900, whiteSpace:'pre'}}>{t.text}</div>
-                  {t.sub && <div style={{fontSize:7, opacity:0.6}}>{t.sub}</div>}
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="lock-center-spacer" />
-          <div className="lock-side-panel right">
-            {tiles.map((t, i) => (
-              <div key={i} className="uk-tile">
-                <div>
-                  <div style={{fontSize: t.text.length > 3 ? 13 : 20, fontWeight:900, whiteSpace:'pre'}}>{t.text}</div>
-                  {t.sub && <div style={{fontSize:7, opacity:0.6}}>{t.sub}</div>}
-                </div>
-              </div>
-            ))}
-          </div>
+          <div className="lock-side-panel left" />
+          <div className="lock-side-panel right" />
         </div>
         <div className="lock-card">
           <div className="lock-title">DEATHERAGE</div>
@@ -518,7 +471,7 @@ export default function Home() {
         </div>
       </div>
     </>
-  )}
+  )
 
   return (
     <>
