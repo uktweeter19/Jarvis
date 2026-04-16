@@ -785,17 +785,17 @@ God bless your studies! 📚`
                 
                 {/* Mini Calendar Widget */}
                 <iframe 
-                  src="https://calendar.google.com/calendar/embed?height=140&wkst=1&bgcolor=%23000000&ctz=America%2FNew_York&src=uktweeter19%40gmail.com&src=family021430976716499641216%40group.calendar.google.com&src=98vibj87ujjb3cm68lo4jatcghv2dq16%40import.calendar.google.com&color=%23039BE5&color=%2333B679&color=%23F4511E&mode=AGENDA&showTitle=0&showNav=0&showDate=0&showPrint=0&showTabs=0&showCalendars=0&showTz=0" 
+                  src="https://calendar.google.com/calendar/embed?height=200&wkst=1&bgcolor=%23ffffff&ctz=America%2FNew_York&src=uktweeter19%40gmail.com&src=family021430976716499641216%40group.calendar.google.com&src=98vibj87ujjb3cm68lo4jatcghv2dq16%40import.calendar.google.com&color=%23039BE5&color=%2333B679&color=%23F4511E&mode=AGENDA&showTitle=0&showNav=0&showDate=0&showPrint=0&showTabs=0&showCalendars=0&showTz=0" 
                   style={{ 
                     width: '100%', 
-                    height: '120px', 
+                    height: window.innerWidth <= 768 ? '200px' : '120px',
                     border: '1px solid rgba(0,86,179,0.2)', 
                     borderRadius: '8px',
-                    background: '#0a0f1a',
+                    background: window.innerWidth <= 768 ? 'rgba(255,255,255,0.95)' : '#0a0f1a',
                     filter: window.innerWidth <= 768 ? 
-                      'invert(0.95) brightness(0.8) contrast(2.0) saturate(0.5)' : 
+                      'none' : 
                       'invert(0.85) hue-rotate(180deg) brightness(0.6) contrast(1.5)',
-                    opacity: '0.9'
+                    opacity: '1'
                   }}
                   title="Today's Events"
                 />
