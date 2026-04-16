@@ -643,46 +643,34 @@ export default function Home() {
         return
       }
       
-      // Prepare API call with potential image
-      const apiBody = { messages: newMessages, user, context: FAMILY_CONTEXT }
-      
-      // If there's an uploaded image, convert to base64 and add to API call
+      // If image uploaded, encourage typing it out instead
       if (uploadedImage) {
-        const reader = new FileReader()
-        reader.onload = async () => {
-          const base64Image = reader.result.split(',')[1]
-          apiBody.image = {
-            type: 'image',
-            source: {
-              type: 'base64',
-              media_type: uploadedImage.type,
-              data: base64Image
-            }
-          }
-          
-          // Make API call with image
-          const res = await fetch('/api/chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(apiBody)
-          })
-          const data = await res.json()
-          setMessages(m => [...m, { role: 'assistant', content: data.reply, name: 'JARVIS' }])
-          setLoading(false)
-          clearImage() // Clear the uploaded image after sending
-        }
-        reader.readAsDataURL(uploadedImage)
-      } else {
-        // Regular text-only API call
-        const res = await fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(apiBody)
-        })
-        const data = await res.json()
-        setMessages(m => [...m, { role: 'assistant', content: data.reply, name: 'JARVIS' }])
+        const mathReply = `Hey ${user}! I can see you uploaded an image - that's the right idea! However, for the best step-by-step help, could you type out the math problem instead? 
+
+For example:
+• "Solve: 2x + 5 = 15"  
+• "Find the area of a triangle with base 8 and height 6"
+• "Factor: x² - 5x + 6"
+
+I'm excellent at breaking down math problems when they're written out, and I can give you detailed explanations that'll help you understand every step. What math problem are you working on?
+
+God bless your studies! 📚`
+
+        setMessages(m => [...m, { role: 'assistant', content: mathReply, name: 'JARVIS' }])
         setLoading(false)
+        clearImage()
+        return
       }
+
+      // Regular text-only response for math and other questions
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: newMessages, user, context: FAMILY_CONTEXT })
+      })
+      const data = await res.json()
+      setMessages(m => [...m, { role: 'assistant', content: data.reply, name: 'JARVIS' }])
+      setLoading(false)
     } catch (e) {
       setMessages(m => [...m, { role: 'assistant', content: 'System error. Please try again.', name: 'JARVIS' }])
       setLoading(false)
@@ -804,7 +792,9 @@ export default function Home() {
                     border: '1px solid rgba(0,86,179,0.2)', 
                     borderRadius: '8px',
                     background: '#0a0f1a',
-                    filter: 'invert(0.85) hue-rotate(180deg) brightness(0.6) contrast(1.5)',
+                    filter: window.innerWidth <= 768 ? 
+                      'invert(0.95) brightness(0.8) contrast(2.0) saturate(0.5)' : 
+                      'invert(0.85) hue-rotate(180deg) brightness(0.6) contrast(1.5)',
                     opacity: '0.9'
                   }}
                   title="Today's Events"
