@@ -338,7 +338,6 @@ export default function Home() {
   const [bulletins, setBulletins] = useState([])
   const [newBulletin, setNewBulletin] = useState('')
   const [notification, setNotification] = useState('')
-  const [calendarEvents, setCalendarEvents] = useState([])
   const bottomRef = useRef(null)
   const family = ['Dad', 'Mom', 'Lincoln', 'Camille', 'Cicily', 'Carter']
 
@@ -421,71 +420,6 @@ export default function Home() {
           wind: Math.round(d.current.windspeed_10m)
         })
       }).catch(() => setWeather({ temp: '--', icon: '🌡️', desc: 'Unavailable', wind: '--' }))
-  }, [authed])
-
-  // Fetch today's calendar events
-  useEffect(() => {
-    if (!authed) return
-    
-    async function fetchCalendarEvents() {
-      try {
-        // Get today's date range
-        const today = new Date()
-        const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate())
-        const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1)
-        
-        const timeMin = startOfDay.toISOString()
-        const timeMax = endOfDay.toISOString()
-        
-        // Fetch from multiple calendars (main + family + imported)
-        const calendarIds = [
-          'uktweeter19@gmail.com',
-          'family021430976716499641216@group.calendar.google.com',
-          '98vibj87ujjb3cm68lo4jatcghv2dq16@import.calendar.google.com'
-        ]
-        
-        let allEvents = []
-        
-        for (const calendarId of calendarIds) {
-          try {
-            const response = await fetch(
-              `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?` +
-              `key=AIzaSyBt8Z8Za_VX6qF_UH3WlKVKj9qZX_8VzYs&` +
-              `timeMin=${timeMin}&timeMax=${timeMax}&` +
-              `singleEvents=true&orderBy=startTime&maxResults=10`
-            )
-            
-            if (response.ok) {
-              const data = await response.json()
-              if (data.items) {
-                allEvents = [...allEvents, ...data.items]
-              }
-            }
-          } catch (calError) {
-            console.log(`Calendar ${calendarId} not accessible:`, calError)
-          }
-        }
-        
-        // Sort events by start time and take first 3 for dashboard
-        const sortedEvents = allEvents
-          .sort((a, b) => {
-            const aStart = a.start?.dateTime || a.start?.date || ''
-            const bStart = b.start?.dateTime || b.start?.date || ''
-            return new Date(aStart) - new Date(bStart)
-          })
-          .slice(0, 3)
-        
-        setCalendarEvents(sortedEvents)
-      } catch (error) {
-        console.log('Calendar fetch error:', error)
-        setCalendarEvents([])
-      }
-    }
-    
-    fetchCalendarEvents()
-    // Refresh calendar events every 5 minutes
-    const calendarInterval = setInterval(fetchCalendarEvents, 5 * 60 * 1000)
-    return () => clearInterval(calendarInterval)
   }, [authed])
 
   function showNotification(message) {
@@ -692,25 +626,18 @@ export default function Home() {
                 <div className="dash-date">{today.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).toUpperCase()}</div>
                 <div className="dash-sub" style={{ marginBottom: 12 }}>{today.getFullYear()} · LEXINGTON KY</div>
                 
-                {calendarEvents.length === 0 ? (
-                  <div style={{ fontSize: 11, color: 'rgba(0,180,255,0.3)', letterSpacing: 1 }}>
-                    NO EVENTS TODAY
-                  </div>
-                ) : (
-                  <div className="briefing-list">
-                    {calendarEvents.map((event, i) => {
-                      const startTime = event.start?.dateTime || event.start?.date
-                      const timeStr = startTime ? 
-                        new Date(startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 
-                        'All Day'
-                      return (
-                        <div key={i} className="briefing-item" style={{ fontSize: 10 }}>
-                          <strong style={{ color: '#0056b3' }}>{timeStr}</strong> {event.summary || 'Untitled Event'}
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
+                {/* Mini Calendar Widget */}
+                <iframe 
+                  src="https://calendar.google.com/calendar/embed?height=140&wkst=1&bgcolor=%23ffffff&ctz=America%2FNew_York&src=uktweeter19%40gmail.com&src=family021430976716499641216%40group.calendar.google.com&src=98vibj87ujjb3cm68lo4jatcghv2dq16%40import.calendar.google.com&color=%23039BE5&color=%2333B679&color=%23F4511E&mode=AGENDA&showTitle=0&showNav=0&showDate=0&showPrint=0&showTabs=0&showCalendars=0&showTz=0" 
+                  style={{ 
+                    width: '100%', 
+                    height: '120px', 
+                    border: '0', 
+                    borderRadius: '8px',
+                    background: 'rgba(255,255,255,0.95)'
+                  }}
+                  title="Today's Events"
+                />
               </div>
               {/* Weather */}
               <div className="dash-card">
