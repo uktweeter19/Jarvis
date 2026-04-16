@@ -199,6 +199,22 @@ const styles = `
   .clear-checked-btn{background:none;border:1px solid rgba(255,80,80,0.2);color:rgba(255,80,80,0.5);font-family:'Inter',sans-serif;font-size:10px;padding:5px 12px;cursor:pointer;border-radius:6px;}
   .clear-checked-btn:hover{border-color:rgba(255,80,80,0.5);color:rgba(255,80,80,0.8);}
 
+  /* ── MESSAGES ── */
+  .messages-panel{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:12px;}
+  .message-item{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-left:3px solid #0056b3;border-radius:0 12px 12px 0;padding:12px 16px;margin-bottom:8px;}
+  .message-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+  .message-author{font-size:12px;font-weight:700;color:#0056b3;letter-spacing:1px;}
+  .message-time{font-size:9px;color:rgba(255,255,255,0.3);letter-spacing:1px;}
+  .message-content{font-size:13px;color:rgba(255,255,255,0.85);line-height:1.6;}
+  .message-form{display:flex;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.06);}
+  .message-input{flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);padding:10px 12px;color:#fff;font-family:'Inter',sans-serif;font-size:12px;outline:none;border-radius:8px;resize:none;min-height:40px;max-height:80px;}
+  .message-input:focus{border-color:rgba(0,86,179,0.5);}
+  .message-input::placeholder{color:rgba(255,255,255,0.2);}
+  .message-send{background:#0056b3;border:none;color:white;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:10px 16px;cursor:pointer;border-radius:8px;letter-spacing:0.5px;}
+  .message-send:hover{background:#0066cc;}
+  .message-delete{background:none;border:none;color:rgba(255,80,80,0.4);cursor:pointer;font-size:12px;padding:0 4px;}
+  .message-delete:hover{color:rgba(255,80,80,0.8);}
+
   /* ── CALENDAR ── */
   .calendar-panel{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:12px;}
   .calendar-iframe{width:100%;height:calc(100vh - 160px);border:0;border-radius:12px;background:rgba(255,255,255,0.95);}
@@ -235,6 +251,7 @@ function saveLS(key, val) {
   try { localStorage.setItem(key, JSON.stringify(val)) } catch {}
 }
 function saveChores(updated) { setChores(updated); saveLS('jarvis_chores', updated) }
+function saveMessages(updated) { setMessages(updated); saveLS('jarvis_messages', updated) }
 
 export default function Home() {
   const [messages, setMessages] = useState([])
@@ -256,6 +273,8 @@ export default function Home() {
   const [newChore, setNewChore] = useState({})
   const [newShopItem, setNewShopItem] = useState('')
   const [newShopCat, setNewShopCat] = useState('OTHER')
+  const [familyMessages, setFamilyMessages] = useState([])
+  const [newMessage, setNewMessage] = useState('')
   const bottomRef = useRef(null)
   const family = ['Dad', 'Mom', 'Lincoln', 'Camille', 'Cicily', 'Carter']
 
@@ -265,6 +284,7 @@ export default function Home() {
       Object.fromEntries(KIDS.map(k => [k, (DEFAULT_CHORES[k] || []).map((t, i) => ({ id: i, text: t, done: false }))])) : {}
     ))
     setShopping(loadLS('jarvis_shopping', []))
+    setFamilyMessages(loadLS('jarvis_messages', []))
   }, [])
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
@@ -453,6 +473,27 @@ export default function Home() {
   function deleteShop(id) { saveShopping(shopping.filter(i => i.id !== id)) }
   function clearChecked() { saveShopping(shopping.filter(i => !i.done)) }
 
+  function addMessage() {
+    const text = newMessage.trim()
+    if (!text) return
+    const message = {
+      id: Date.now(),
+      text,
+      author: user,
+      timestamp: new Date().toISOString()
+    }
+    const updated = [message, ...familyMessages]
+    setFamilyMessages(updated)
+    saveLS('jarvis_messages', updated)
+    setNewMessage('')
+  }
+  
+  function deleteMessage(id) {
+    const updated = familyMessages.filter(m => m.id !== id)
+    setFamilyMessages(updated)
+    saveLS('jarvis_messages', updated)
+  }
+
   async function send() {
     if (!input.trim() || loading) return
     const userMsg = { role: 'user', content: input, name: user }
@@ -544,9 +585,9 @@ export default function Home() {
 
         {/* NAV */}
         <div className="nav-tabs">
-          {['dashboard', 'chat', 'chores', 'shopping', 'calendar'].map(t => (
+          {['dashboard', 'messages', 'chat', 'chores', 'shopping', 'calendar'].map(t => (
             <button key={t} className={`nav-tab${tab === t ? ' active' : ''}`} onClick={() => setTab(t)}>
-              {t === 'dashboard' ? '⬡ HOME' : t === 'chat' ? '◈ CHAT' : t === 'chores' ? '✦ CHORES' : t === 'shopping' ? '⊕ SHOPPING' : '◷ CALENDAR'}
+              {t === 'dashboard' ? '⬡ HOME' : t === 'messages' ? '✉ MESSAGES' : t === 'chat' ? '◈ CHAT' : t === 'chores' ? '✦ CHORES' : t === 'shopping' ? '⊕ SHOPPING' : '◷ CALENDAR'}
             </button>
           ))}
         </div>
@@ -852,6 +893,61 @@ export default function Home() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* ── MESSAGES TAB ── */}
+        {tab === 'messages' && (
+          <div className="messages-panel">
+            <div className="section-header">
+              <div className="section-title">Family Messages</div>
+              <div className="section-count">{familyMessages.length} messages</div>
+            </div>
+
+            {/* Message Input Form */}
+            <div className="dash-card">
+              <div className="dash-card-label">POST A MESSAGE</div>
+              <div className="message-form">
+                <textarea 
+                  className="message-input" 
+                  placeholder={`Write a message to the family as ${user}...`}
+                  value={newMessage}
+                  onChange={e => setNewMessage(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault()
+                      addMessage()
+                    }
+                  }}
+                />
+                <button className="message-send" onClick={addMessage}>POST</button>
+              </div>
+            </div>
+
+            {/* Messages List */}
+            {familyMessages.length === 0 ? (
+              <div className="empty-state">NO FAMILY MESSAGES YET<br />POST THE FIRST ONE ABOVE!</div>
+            ) : (
+              familyMessages.map(msg => (
+                <div key={msg.id} className="message-item">
+                  <div className="message-header">
+                    <span className="message-author">{msg.author}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span className="message-time">
+                        {new Date(msg.timestamp).toLocaleDateString('en-US', { 
+                          month: 'short', 
+                          day: 'numeric', 
+                          hour: '2-digit', 
+                          minute: '2-digit' 
+                        })}
+                      </span>
+                      <button className="message-delete" onClick={() => deleteMessage(msg.id)}>×</button>
+                    </div>
+                  </div>
+                  <div className="message-content">{msg.text}</div>
+                </div>
+              ))
+            )}
           </div>
         )}
 
