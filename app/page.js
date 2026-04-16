@@ -285,11 +285,17 @@ export default function Home() {
         scope: GOOGLE_SCOPES,
         callback: (resp) => {
           if (resp.access_token) {
+            saveLS('jarvis_cal_token', { token: resp.access_token, exp: Date.now() + 3500000 })
             fetchCalendarEvents(resp.access_token)
           }
         }
       })
       setTokenClient(client)
+      // Auto-reconnect if we have a saved non-expired token
+      const saved = loadLS('jarvis_cal_token', null)
+      if (saved && saved.exp > Date.now()) {
+        fetchCalendarEvents(saved.token)
+      }
     }
     document.body.appendChild(script)
     return () => document.body.removeChild(script)
@@ -299,27 +305,47 @@ export default function Home() {
     setCalLoading(true)
     try {
       const now = new Date().toISOString()
-      const future = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
-      const res = await fetch(
-        `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${now}&timeMax=${future}&singleEvents=true&orderBy=startTime&maxResults=30`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
-      const data = await res.json()
-      if (data.items) {
-        setCalEvents(data.items)
-        setCalAuthed(true)
+      const future = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+      // Fetch from all calendars
+      const listRes = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      const listData = await listRes.json()
+      const calendarIds = (listData.items || []).map(c => c.id)
+      if (calendarIds.length === 0) calendarIds.push('primary')
+
+      let allEvents = []
+      for (const calId of calendarIds) {
+        const encoded = encodeURIComponent(calId)
+        const res = await fetch(
+          `https://www.googleapis.com/calendar/v3/calendars/${encoded}/events?timeMin=${now}&timeMax=${future}&singleEvents=true&orderBy=startTime&maxResults=50`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        )
+        const data = await res.json()
+        if (data.items) allEvents = allEvents.concat(data.items)
       }
-    } catch (e) { console.error(e) }
+      // Sort all events by start time
+      allEvents.sort((a, b) => {
+        const aTime = a.start?.dateTime || a.start?.date || ''
+        const bTime = b.start?.dateTime || b.start?.date || ''
+        return aTime.localeCompare(bTime)
+      })
+      setCalEvents(allEvents)
+      setCalAuthed(true)
+    } catch (e) {
+      console.error('Calendar fetch error:', e)
+    }
     setCalLoading(false)
   }
 
   function connectCalendar() {
-    if (tokenClient) tokenClient.requestAccessToken()
+    if (tokenClient) tokenClient.requestAccessToken({ prompt: '' })
   }
 
   function disconnectCalendar() {
     setCalAuthed(false)
     setCalEvents([])
+    saveLS('jarvis_cal_token', null)
   }
 
   // Group events by day
