@@ -294,6 +294,88 @@ const styles = `
   /* ── CALENDAR ── */
   .calendar-panel{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:12px;}
   .calendar-iframe{width:100%;height:calc(100vh - 160px);border:0;border-radius:12px;background:rgba(255,255,255,0.95);}
+
+  /* ── MOBILE RESPONSIVE (iPhone and small screens) ── */
+  @media (max-width: 600px) {
+    /* Prevent any horizontal scroll at the root */
+    html, body { overflow-x: hidden; max-width: 100vw; }
+    .app { max-width: 100vw; overflow-x: hidden; }
+
+    /* Header — tighten padding and font sizes */
+    .header { padding: 10px 12px; }
+    .header-logo { width: 32px; height: 32px; font-size: 12px; }
+    .header-text h1 { font-size: 16px; letter-spacing: 2px; }
+    .header-text p { font-size: 9px; letter-spacing: 1px; }
+    .header-time .time { font-size: 14px; letter-spacing: 1px; }
+    .header-time .date { font-size: 9px; }
+
+    /* Nav tabs */
+    .nav-tab { font-size: 9px; padding: 10px 2px; letter-spacing: 0.5px; }
+
+    /* Dashboard — remove wide padding */
+    .dashboard { padding: 12px 10px; gap: 10px; }
+
+    /* Top row of 3 cards — stack or shrink cleanly */
+    .dash-row.cols-3 { grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+    .dash-card { padding: 10px 12px; }
+    .dash-card-label { font-size: 9px; letter-spacing: 1px; }
+    .dash-big { font-size: 24px; }
+    .dash-date { font-size: 12px; letter-spacing: 0.5px; }
+    .dash-sub { font-size: 9px; letter-spacing: 0.5px; }
+    .dash-weather-icon { font-size: 22px; }
+
+    /* Calendar iframe on dashboard and calendar tab */
+    .calendar-panel { padding: 12px 10px; }
+    .calendar-iframe { height: calc(100vh - 180px); border-radius: 8px; }
+
+    /* Chores panel */
+    .chores-panel { padding: 12px 10px; }
+    .kid-block { padding: 12px 12px; }
+
+    /* Shopping panel */
+    .shopping-panel { padding: 12px 10px; }
+    .shop-categories { gap: 4px; }
+    .cat-btn { padding: 4px 10px; font-size: 9px; }
+    .shop-cat-select { font-size: 10px; padding: 9px 4px; }
+
+    /* Bulletin items — prevent wide textareas from overflow */
+    .bulletin-form { gap: 6px; }
+    .bulletin-input { font-size: 13px; }
+
+    /* Chat interface */
+    .chat-header { padding: 8px 12px; }
+    .title-block h1 { font-size: 16px; letter-spacing: 4px; }
+    .title-block p { font-size: 7px; letter-spacing: 2px; }
+    .hud-stats { gap: 10px; font-size: 8px; }
+    .arc-reactor { width: 36px; height: 36px; }
+    .user-bar { padding: 8px 12px; }
+    .messages { padding: 12px 12px; }
+    .msg-body { max-width: 82%; }
+    .input-area { padding: 8px 10px; }
+
+    /* Notification popup — don't let it overflow */
+    .notification { top: 12px; right: 12px; left: 12px; max-width: none; font-size: 11px; padding: 10px 12px; }
+
+    /* Lock screen — simplify side panels */
+    .lock-side-panel { display: none; }
+    .lock-card { max-width: 320px; padding: 0 16px; }
+    .lock-title { font-size: 26px; letter-spacing: 4px; }
+    .lock-sub { font-size: 10px; letter-spacing: 2px; margin-bottom: 20px; }
+
+    /* Prevent any stray long words from forcing overflow */
+    .bulletin-text, .chore-text, .shop-text, .briefing-item, .dash-card, .msg-bubble {
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+  }
+
+  /* Even smaller phones (iPhone SE and similar) */
+  @media (max-width: 380px) {
+    .dash-big { font-size: 20px; }
+    .dash-card-label { font-size: 8px; }
+    .header-text h1 { font-size: 14px; }
+    .dash-card { padding: 8px 10px; }
+  }
 `
 
 const KIDS = ['Lincoln', 'Camille', 'Cicily', 'Carter']
