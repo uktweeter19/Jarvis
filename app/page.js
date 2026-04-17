@@ -485,6 +485,8 @@ export default function Home() {
   const [parentUnlocked, setParentUnlocked] = useState(false)
   const [parentPassInput, setParentPassInput] = useState('')
   const [chatLogs, setChatLogs] = useState([])
+  const [adultChatUnlocked, setAdultChatUnlocked] = useState(false)
+  const [adultChatPassInput, setAdultChatPassInput] = useState('')
   const [parentViewFilter, setParentViewFilter] = useState('ALL') // ALL, FLAGGED, or user name
   const bottomRef = useRef(null)
   const family = ['Dad', 'Mom', 'Lincoln', 'Camille', 'Cicily', 'Carter']
@@ -928,6 +930,17 @@ export default function Home() {
     }
   }, [tab])
 
+  // Auto-lock the adult chat whenever the user switches to a kid.
+  // Also clears the current message thread when switching user types so
+  // nobody sees the previous user's conversation.
+  useEffect(() => {
+    if (user !== 'Dad' && user !== 'Mom') {
+      setAdultChatUnlocked(false)
+      setAdultChatPassInput('')
+    }
+    setMessages([])
+  }, [user])
+
   // Auto-refresh chat logs while on the parent review tab (only when unlocked).
   // Polls every 5 seconds so new kid messages show up without manual refresh.
   useEffect(() => {
@@ -1078,8 +1091,12 @@ export default function Home() {
     return { flagged: hitCategories.length > 0, categories: hitCategories }
   }
 
-  // Log a chat exchange (user message + JARVIS reply) to Firebase
+  // Log a chat exchange (user message + JARVIS reply) to Firebase.
+  // ONLY logs the four kids' chats — Dad and Mom chats are NEVER logged.
   async function logChatExchange(userName, userText, assistantText, imageAttached) {
+    // Privacy: adults' conversations are not recorded.
+    if (userName === 'Dad' || userName === 'Mom') return
+
     const flagCheck = checkForFlags(userText)
     const entry = {
       id: Date.now(),
@@ -1540,7 +1557,42 @@ export default function Home() {
         )}
 
         {/* ── CHAT TAB ── */}
-        {tab === 'chat' && (
+        {tab === 'chat' && (user === 'Dad' || user === 'Mom') && !adultChatUnlocked && (
+          <div className="parent-lock">
+            <div className="parent-lock-title">🔒 {user.toUpperCase()} CHAT</div>
+            <div className="parent-lock-sub">Password required</div>
+            <input
+              className="parent-lock-input"
+              type="password"
+              placeholder="••••"
+              value={adultChatPassInput}
+              onChange={e => setAdultChatPassInput(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && adultChatPassInput === PARENT_PASSWORD) {
+                  setAdultChatUnlocked(true)
+                  setAdultChatPassInput('')
+                  setMessages([])
+                }
+              }}
+              autoFocus
+            />
+            <button
+              className="parent-lock-btn"
+              onClick={() => {
+                if (adultChatPassInput === PARENT_PASSWORD) {
+                  setAdultChatUnlocked(true)
+                  setAdultChatPassInput('')
+                  setMessages([])
+                }
+              }}
+            >UNLOCK</button>
+            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', marginTop: 8, letterSpacing: 1, textAlign: 'center', maxWidth: 260, lineHeight: 1.5 }}>
+              Your conversation is private and not logged.
+            </div>
+          </div>
+        )}
+
+        {tab === 'chat' && !((user === 'Dad' || user === 'Mom') && !adultChatUnlocked) && (
           <>
             <div className="messages">
               {messages.length === 0 && (
