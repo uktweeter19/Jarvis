@@ -72,7 +72,7 @@ class SimpleFirebase {
 const firebase = new SimpleFirebase(firebaseConfig.databaseURL)
 
 const PASSWORD = 'deatherage2024'
-const PARENT_PASSWORD = '4822'
+const PARENT_PASSWORD = '7198'
 
 // Keywords that flag a kid's message for parent review.
 // Grouped by category. Lowercase. Matched as whole-word substrings.
@@ -927,6 +927,29 @@ export default function Home() {
       setCalendarCacheBust(Date.now())
     }
   }, [tab])
+
+  // Auto-refresh chat logs while on the parent review tab (only when unlocked).
+  // Polls every 5 seconds so new kid messages show up without manual refresh.
+  useEffect(() => {
+    if (tab !== 'parents' || !parentUnlocked) return
+    const refreshLogs = async () => {
+      try {
+        const logs = await firebase.get('chatlogs')
+        if (logs) {
+          const arr = Object.values(logs).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+          setChatLogs(arr)
+        } else {
+          setChatLogs([])
+        }
+      } catch (e) {
+        console.error('Auto-refresh failed:', e)
+      }
+    }
+    // Refresh immediately on entry, then every 5 seconds
+    refreshLogs()
+    const interval = setInterval(refreshLogs, 5000)
+    return () => clearInterval(interval)
+  }, [tab, parentUnlocked])
 
   useEffect(() => {
     const t = setInterval(() => {
