@@ -1094,6 +1094,67 @@ export default function Home() {
               />
             </div>
 
+            {/* Family Bulletin Board - Directly under calendar */}
+            <div className="dash-card">
+              <div className="dash-card-label">
+                FAMILY BULLETIN BOARD
+                <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', marginLeft: 8 }}>
+                  ({bulletins.length} announcements)
+                </span>
+              </div>
+              
+              {/* Quick Post Form */}
+              <div className="bulletin-form">
+                <textarea 
+                  className="bulletin-input" 
+                  placeholder={`Post an announcement as ${user}...`}
+                  value={newBulletin}
+                  onChange={e => setNewBulletin(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault()
+                      addBulletin()
+                    }
+                  }}
+                />
+                <button className="bulletin-send" onClick={addBulletin}>POST</button>
+              </div>
+
+              {/* Bulletins Display */}
+              {bulletins.length === 0 ? (
+                <div style={{ fontSize: 11, color: 'rgba(0,180,255,0.3)', letterSpacing: 1, textAlign: 'center', padding: '12px 0' }}>
+                  NO ANNOUNCEMENTS · POST ONE ABOVE
+                </div>
+              ) : (
+                <div>
+                  {bulletins.slice(0, 5).map(bulletin => (
+                    <div key={bulletin.id} className="bulletin-item">
+                      <div className="bulletin-content">
+                        <div className="bulletin-text">{bulletin.text}</div>
+                        <div className="bulletin-meta">
+                          <strong>{bulletin.author}</strong> · {new Date(bulletin.timestamp).toLocaleDateString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric', 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                          })}
+                        </div>
+                      </div>
+                      <button 
+                        className="bulletin-delete" 
+                        onClick={() => deleteBulletin(bulletin.id)}
+                      >×</button>
+                    </div>
+                  ))}
+                  {bulletins.length > 5 && (
+                    <div style={{ fontSize: 10, color: 'rgba(0,180,255,0.4)', textAlign: 'center', padding: 4 }}>
+                      +{bulletins.length - 5} more announcements
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
             {/* Daily Bible Verse - TOP PRIORITY POSITION */}
             <div className="dash-card">
               <div className="dash-card-label">
@@ -1157,67 +1218,6 @@ export default function Home() {
               }}>
                 🇺🇸 {dailyHistoryFact}
               </div>
-            </div>
-
-            {/* Family Bulletin Board - After Bible Verse */}
-            <div className="dash-card">
-              <div className="dash-card-label">
-                FAMILY BULLETIN BOARD
-                <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', marginLeft: 8 }}>
-                  ({bulletins.length} announcements)
-                </span>
-              </div>
-              
-              {/* Quick Post Form */}
-              <div className="bulletin-form">
-                <textarea 
-                  className="bulletin-input" 
-                  placeholder={`Post an announcement as ${user}...`}
-                  value={newBulletin}
-                  onChange={e => setNewBulletin(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault()
-                      addBulletin()
-                    }
-                  }}
-                />
-                <button className="bulletin-send" onClick={addBulletin}>POST</button>
-              </div>
-
-              {/* Bulletins Display */}
-              {bulletins.length === 0 ? (
-                <div style={{ fontSize: 11, color: 'rgba(0,180,255,0.3)', letterSpacing: 1, textAlign: 'center', padding: '12px 0' }}>
-                  NO ANNOUNCEMENTS · POST ONE ABOVE
-                </div>
-              ) : (
-                <div>
-                  {bulletins.slice(0, 5).map(bulletin => (
-                    <div key={bulletin.id} className="bulletin-item">
-                      <div className="bulletin-content">
-                        <div className="bulletin-text">{bulletin.text}</div>
-                        <div className="bulletin-meta">
-                          <strong>{bulletin.author}</strong> · {new Date(bulletin.timestamp).toLocaleDateString('en-US', { 
-                            month: 'short', 
-                            day: 'numeric', 
-                            hour: '2-digit', 
-                            minute: '2-digit' 
-                          })}
-                        </div>
-                      </div>
-                      <button 
-                        className="bulletin-delete" 
-                        onClick={() => deleteBulletin(bulletin.id)}
-                      >×</button>
-                    </div>
-                  ))}
-                  {bulletins.length > 5 && (
-                    <div style={{ fontSize: 10, color: 'rgba(0,180,255,0.4)', textAlign: 'center', padding: 4 }}>
-                      +{bulletins.length - 5} more announcements
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
 
             {/* Family Countdowns */}
