@@ -497,6 +497,7 @@ export default function Home() {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [user, setUser] = useState('Dad')
+  const [userSelected, setUserSelected] = useState(false)
   const [authed, setAuthed] = useState(false)
   const [pass, setPass] = useState('')
   const [time, setTime] = useState('')
@@ -966,6 +967,17 @@ export default function Home() {
     }
   }, [tab])
 
+  // When leaving the chat tab, reset user selection so the next time someone
+  // enters chat they have to pick who they are again. Also clears the thread.
+  useEffect(() => {
+    if (tab !== 'chat') {
+      setUserSelected(false)
+      setMessages([])
+      setAdultChatUnlocked(false)
+      setAdultChatPassInput('')
+    }
+  }, [tab])
+
   // Auto-lock the adult chat whenever the user switches to a kid.
   // Also clears the current message thread when switching user types so
   // nobody sees the previous user's conversation.
@@ -1321,8 +1333,8 @@ export default function Home() {
           ))}
         </div>
 
-        {/* USER BAR (chat only) */}
-        {tab === 'chat' && (
+        {/* USER BAR (chat only — shown once a user is selected) */}
+        {tab === 'chat' && userSelected && (
           <div className="user-bar">
             <button
               className="user-btn"
@@ -1332,8 +1344,20 @@ export default function Home() {
             >
               🔒 PARENTS
             </button>
+            <button
+              className="user-btn"
+              onClick={() => { setUserSelected(false); setMessages([]); setAdultChatUnlocked(false) }}
+              title="Switch user"
+              style={{ borderColor: 'rgba(0,180,255,0.3)' }}
+            >
+              ← SWITCH
+            </button>
             {family.map(f => (
-              <button key={f} className={`user-btn${user === f ? ' active' : ''}`} onClick={() => setUser(f)}>
+              <button
+                key={f}
+                className={`user-btn${user === f ? ' active' : ''}`}
+                onClick={() => { setUser(f); setUserSelected(true) }}
+              >
                 {f.toUpperCase()}
               </button>
             ))}
@@ -1597,8 +1621,70 @@ export default function Home() {
           </div>
         )}
 
-        {/* ── CHAT TAB ── */}
-        {tab === 'chat' && (user === 'Dad' || user === 'Mom') && !adultChatUnlocked && (
+        {/* ── CHAT TAB — USER PICKER (shown before user selects who they are) ── */}
+        {tab === 'chat' && !userSelected && (
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '30px 20px', overflow: 'auto' }}>
+            <div style={{ fontFamily: "'Rajdhani',sans-serif", fontSize: 22, fontWeight: 700, letterSpacing: 4, color: '#00b4ff', textShadow: '0 0 20px rgba(0,180,255,0.5)', marginBottom: 6 }}>
+              WHO'S CHATTING?
+            </div>
+            <div style={{ fontSize: 10, color: 'rgba(0,180,255,0.5)', letterSpacing: 2, marginBottom: 28, textTransform: 'uppercase' }}>
+              Select your name to begin
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, width: '100%', maxWidth: 360 }}>
+              {family.map(f => {
+                const isAdult = f === 'Dad' || f === 'Mom'
+                return (
+                  <button
+                    key={f}
+                    onClick={() => { setUser(f); setUserSelected(true); setMessages([]) }}
+                    style={{
+                      padding: '18px 12px',
+                      background: isAdult
+                        ? 'linear-gradient(135deg, rgba(0,86,179,0.3), rgba(0,53,128,0.2))'
+                        : 'linear-gradient(135deg, rgba(0,180,255,0.12), rgba(0,86,179,0.08))',
+                      border: isAdult ? '1px solid rgba(255,180,0,0.4)' : '1px solid rgba(0,180,255,0.3)',
+                      borderRadius: 12,
+                      color: '#fff',
+                      fontFamily: "'Rajdhani',sans-serif",
+                      fontSize: 18,
+                      fontWeight: 700,
+                      letterSpacing: 2,
+                      cursor: 'pointer',
+                      textTransform: 'uppercase',
+                      transition: 'all 0.2s',
+                      boxShadow: '0 2px 12px rgba(0,86,179,0.2)'
+                    }}
+                  >
+                    {isAdult && <span style={{ display: 'block', fontSize: 10, color: 'rgba(255,200,80,0.8)', letterSpacing: 1, marginBottom: 4 }}>🔒 PASSWORD</span>}
+                    {f}
+                  </button>
+                )
+              })}
+            </div>
+            <button
+              onClick={() => setTab('parents')}
+              style={{
+                marginTop: 24,
+                background: 'transparent',
+                border: '1px solid rgba(255,180,0,0.3)',
+                color: 'rgba(255,200,80,0.8)',
+                padding: '10px 24px',
+                borderRadius: 10,
+                fontFamily: "'Inter',sans-serif",
+                fontSize: 11,
+                fontWeight: 600,
+                letterSpacing: 2,
+                cursor: 'pointer',
+                textTransform: 'uppercase'
+              }}
+            >
+              🔒 Parent Review
+            </button>
+          </div>
+        )}
+
+        {/* ── CHAT TAB — ADULT PASSWORD LOCK ── */}
+        {tab === 'chat' && userSelected && (user === 'Dad' || user === 'Mom') && !adultChatUnlocked && (
           <div className="parent-lock">
             <div className="parent-lock-title">🔒 {user.toUpperCase()} CHAT</div>
             <div className="parent-lock-sub">Password required</div>
@@ -1630,10 +1716,15 @@ export default function Home() {
             <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', marginTop: 8, letterSpacing: 1, textAlign: 'center', maxWidth: 260, lineHeight: 1.5 }}>
               Your conversation is private and not logged.
             </div>
+            <button
+              className="reset-btn"
+              onClick={() => { setUserSelected(false); setAdultChatPassInput('') }}
+              style={{ marginTop: 4 }}
+            >← Back</button>
           </div>
         )}
 
-        {tab === 'chat' && !((user === 'Dad' || user === 'Mom') && !adultChatUnlocked) && (
+        {tab === 'chat' && userSelected && !((user === 'Dad' || user === 'Mom') && !adultChatUnlocked) && (
           <>
             <div className="messages">
               {messages.length === 0 && (
