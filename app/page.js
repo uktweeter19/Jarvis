@@ -942,62 +942,22 @@ God bless your studies! 📚`
               )}
             </div>
 
-            {/* Today's Events - Smart Daily Display */}
+            {/* Today's Events - Working Calendar Widget (Rebuilt) */}
             <div className="dash-card">
               <div className="dash-card-label">TODAY'S EVENTS</div>
               
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                
-                {/* Today's Birthdays - Automatic from countdown data */}
-                {countdowns.filter(c => c.daysLeft === 0).map((birthday, i) => (
-                  <div key={`birthday-${i}`} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{ 
-                      fontSize: '12px', 
-                      color: '#ff6b35', 
-                      fontWeight: '600',
-                      minWidth: '70px'
-                    }}>🎉 All Day</div>
-                    <div style={{ 
-                      fontSize: '12px', 
-                      color: 'rgba(255,255,255,0.85)',
-                      fontWeight: '600'
-                    }}>{birthday.name}!</div>
-                  </div>
-                ))}
-                
-                {/* Manual Daily Events - Update these each day */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{ 
-                    fontSize: '12px', 
-                    color: '#0056b3', 
-                    fontWeight: '600',
-                    minWidth: '70px'
-                  }}>7:00 PM</div>
-                  <div style={{ 
-                    fontSize: '12px', 
-                    color: 'rgba(255,255,255,0.85)'
-                  }}>Family Dinner Night</div>
-                </div>
-
-                {/* Add more daily events by copying the format above */}
-                {/*
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{ fontSize: '12px', color: '#0056b3', fontWeight: '600', minWidth: '70px' }}>8:30 PM</div>
-                  <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.85)' }}>Movie Night</div>
-                </div>
-                */}
-                
-                <div style={{ 
-                  fontSize: '10px', 
-                  color: 'rgba(255,255,255,0.3)', 
-                  textAlign: 'center',
-                  marginTop: '8px',
-                  fontStyle: 'italic'
-                }}>
-                  Birthdays auto-update • Edit daily events as needed
-                </div>
-                
-              </div>
+              {/* The SAME calendar widget that worked before, but bigger */}
+              <iframe 
+                src="https://calendar.google.com/calendar/embed?mode=AGENDA&height=200&wkst=1&bgcolor=%23FFFFFF&src=uktweeter19%40gmail.com&src=family021430976716499641216%40group.calendar.google.com&src=98vibj87ujjb3cm68lo4jatcghv2dq16%40import.calendar.google.com&color=%23039BE5&color=%2333B679&color=%23F4511E&ctz=America%2FNew_York&showTitle=0&showNav=0&showDate=0&showPrint=0&showTabs=0&showCalendars=0&showTz=0"
+                style={{
+                  width: '100%',
+                  height: '180px',
+                  border: 'none',
+                  borderRadius: '8px',
+                  backgroundColor: '#fff'
+                }}
+                title="Today's Events from Calendar"
+              />
             </div>
 
             {/* Family Countdowns */}
