@@ -346,6 +346,7 @@ export default function Home() {
   const [uploadedImage, setUploadedImage] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
   const [countdowns, setCountdowns] = useState([])
+  const [calendarCacheBust, setCalendarCacheBust] = useState(Date.now())
   const bottomRef = useRef(null)
   const family = ['Dad', 'Mom', 'Lincoln', 'Camille', 'Cicily', 'Carter']
 
@@ -531,6 +532,14 @@ export default function Home() {
   }, [user, bulletins.length, shopping, chores])
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
+
+  // Force the Google Calendar iframe to reload fresh every time the user
+  // opens the dashboard or calendar tab, so updates always show on mobile.
+  useEffect(() => {
+    if (tab === 'dashboard' || tab === 'calendar') {
+      setCalendarCacheBust(Date.now())
+    }
+  }, [tab])
 
   useEffect(() => {
     const t = setInterval(() => {
@@ -954,7 +963,8 @@ God bless your studies! 📚`
               
               {/* The SAME calendar widget that worked before, but bigger */}
               <iframe 
-                src="https://calendar.google.com/calendar/embed?mode=AGENDA&height=200&wkst=1&bgcolor=%23FFFFFF&src=uktweeter19%40gmail.com&src=family021430976716499641216%40group.calendar.google.com&src=98vibj87ujjb3cm68lo4jatcghv2dq16%40import.calendar.google.com&color=%23039BE5&color=%2333B679&color=%23F4511E&ctz=America%2FNew_York&showTitle=0&showNav=0&showDate=0&showPrint=0&showTabs=0&showCalendars=0&showTz=0"
+                key={calendarCacheBust}
+                src={`https://calendar.google.com/calendar/embed?mode=AGENDA&height=200&wkst=1&bgcolor=%23FFFFFF&src=uktweeter19%40gmail.com&src=family021430976716499641216%40group.calendar.google.com&src=98vibj87ujjb3cm68lo4jatcghv2dq16%40import.calendar.google.com&color=%23039BE5&color=%2333B679&color=%23F4511E&ctz=America%2FNew_York&showTitle=0&showNav=0&showDate=0&showPrint=0&showTabs=0&showCalendars=0&showTz=0&_cb=${calendarCacheBust}`}
                 style={{
                   width: '100%',
                   height: '180px',
@@ -1174,7 +1184,8 @@ God bless your studies! 📚`
               <div className="section-title">Family Calendar</div>
             </div>
             <iframe 
-              src="https://calendar.google.com/calendar/embed?src=uktweeter19%40gmail.com&src=family021430976716499641216%40group.calendar.google.com&src=98vibj87ujjb3cm68lo4jatcghv2dq16%40import.calendar.google.com&ctz=America%2FNew_York" 
+              key={calendarCacheBust}
+              src={`https://calendar.google.com/calendar/embed?src=uktweeter19%40gmail.com&src=family021430976716499641216%40group.calendar.google.com&src=98vibj87ujjb3cm68lo4jatcghv2dq16%40import.calendar.google.com&ctz=America%2FNew_York&_cb=${calendarCacheBust}`} 
               className="calendar-iframe"
               title="Family Calendar"
             />
