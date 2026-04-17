@@ -260,6 +260,7 @@ const DEFAULT_CHORES = {
 
 export default function App() {
   const [authed, setAuthed] = useState(false)
+  const [passwordInput, setPasswordInput] = useState('')
   const [tab, setTab] = useState('home')
   const [user, setUser] = useState('Dad')
   const [input, setInput] = useState('')
@@ -349,87 +350,66 @@ export default function App() {
   // Calculate countdowns to important dates
   function calculateCountdowns() {
     const today = new Date()
-    // Set to start of day for accurate comparison
     const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate())
     const currentYear = today.getFullYear()
     const nextYear = currentYear + 1
-    
-    // Important dates for the Deatherage family
+
     const importantDates = [
-      // Major Holidays - 2026 Calendar Dates
-      { name: "Christmas", date: new Date(currentYear, 11, 25), emoji: "🎄" }, // Dec 25, 2026
-      { name: "Thanksgiving", date: new Date(currentYear, 10, 26), emoji: "🦃" }, // Nov 26, 2026 (4th Thursday)
-      { name: "Independence Day", date: new Date(currentYear, 6, 4), emoji: "🇺🇸" }, // July 4, 2026
-      { name: "New Year's Day", date: new Date(nextYear, 0, 1), emoji: "🎊" }, // Jan 1, 2027
-      
-      // Family Birthdays - Real Deatherage Family Dates
-      { name: "Dad's Birthday", date: new Date(currentYear, 2, 30), emoji: "🎂" }, // March 30th
-      { name: "Emily's Birthday", date: new Date(currentYear, 3, 17), emoji: "🎂" }, // April 17th
-      { name: "Carter's Birthday", date: new Date(currentYear, 4, 2), emoji: "🎂" }, // May 2nd
-      { name: "Cicily's Birthday", date: new Date(currentYear, 2, 13), emoji: "🎂" }, // March 13th
-      { name: "Camille's Birthday", date: new Date(currentYear, 4, 15), emoji: "🎂" }, // May 15th
-      { name: "Lincoln's Birthday", date: new Date(currentYear, 10, 28), emoji: "🎂" }, // November 28th
+      { name: "Christmas", date: new Date(currentYear, 11, 25), emoji: "🎄" },
+      { name: "Thanksgiving", date: new Date(currentYear, 10, 26), emoji: "🦃" },
+      { name: "Independence Day", date: new Date(currentYear, 6, 4), emoji: "🇺🇸" },
+      { name: "New Year's Day", date: new Date(nextYear, 0, 1), emoji: "🎊" },
+      { name: "Dad's Birthday", date: new Date(currentYear, 2, 30), emoji: "🎂" },
+      { name: "Emily's Birthday", date: new Date(currentYear, 3, 17), emoji: "🎂" },
+      { name: "Carter's Birthday", date: new Date(currentYear, 4, 2), emoji: "🎂" },
+      { name: "Cicily's Birthday", date: new Date(currentYear, 2, 13), emoji: "🎂" },
+      { name: "Camille's Birthday", date: new Date(currentYear, 4, 15), emoji: "🎂" },
+      { name: "Lincoln's Birthday", date: new Date(currentYear, 10, 28), emoji: "🎂" },
     ]
-    
+
     const activeCountdowns = importantDates.map(item => {
       let targetDate = new Date(item.date.getFullYear(), item.date.getMonth(), item.date.getDate())
-      
-      // If the date has passed this year, use next year's date
       if (targetDate < todayStart) {
         targetDate = new Date(nextYear, item.date.getMonth(), item.date.getDate())
       }
-      
       const timeDiff = targetDate.getTime() - todayStart.getTime()
       const daysLeft = Math.floor(timeDiff / (1000 * 3600 * 24))
-      
-      return {
-        ...item,
-        daysLeft,
-        targetDate
-      }
+      return { ...item, daysLeft, targetDate }
     })
-    .filter(item => item.daysLeft >= 0 && item.daysLeft <= 365) // Include today (0 days) and within a year
-    .sort((a, b) => a.daysLeft - b.daysLeft) // Sort by closest first
-    
-    setCountdowns(activeCountdowns.slice(0, 5)) // Show top 5 upcoming events
+    .filter(item => item.daysLeft >= 0 && item.daysLeft <= 365)
+    .sort((a, b) => a.daysLeft - b.daysLeft)
+
+    setCountdowns(activeCountdowns.slice(0, 5))
   }
 
   // Load persisted data and set up Firebase sync
   useEffect(() => {
     async function loadInitialData() {
-      // Load from Firebase
       const firebaseChores = await loadFromFirebase('chores')
       const firebaseShopping = await loadFromFirebase('shopping')
       const firebaseBulletins = await loadFromFirebase('bulletins')
-      
-      // Set state with Firebase data or fallbacks
-      setChores(firebaseChores || DEFAULT_CHORES.Cicily ? 
-        Object.fromEntries(KIDS.map(k => [k, (DEFAULT_CHORES[k] || []).map((t, i) => ({ id: i, text: t, done: false }))])) : {}
-      )
+
+      setChores(firebaseChores || Object.fromEntries(
+        KIDS.map(k => [k, (DEFAULT_CHORES[k] || []).map((t, i) => ({ id: i, text: t, done: false }))])
+      ))
       setShopping(firebaseShopping || [])
       setBulletins(firebaseBulletins || [])
     }
 
     loadInitialData()
-
-    // Set daily Bible verse
     setDailyVerse(getDailyVerse())
-
-    // Initialize countdowns
     calculateCountdowns()
 
-    // Real-time sync - check for updates every 3 seconds
     const syncInterval = setInterval(async () => {
       const firebaseBulletins = await loadFromFirebase('bulletins')
       const firebaseShopping = await loadFromFirebase('shopping')
       const firebaseChores = await loadFromFirebase('chores')
-      
+
       if (firebaseBulletins) setBulletins(firebaseBulletins)
       if (firebaseShopping) setShopping(firebaseShopping)
       if (firebaseChores) setChores(firebaseChores)
     }, 3000)
 
-    // Get weather for Lexington, KY
     fetch('https://api.open-meteo.com/v1/forecast?latitude=38.0407&longitude=-84.5037&current_weather=true&temperature_unit=fahrenheit&windspeed_unit=mph')
       .then(res => res.json())
       .then(data => {
@@ -448,27 +428,26 @@ export default function App() {
   // Show in-app notifications for new bulletins
   useEffect(() => {
     const interval = setInterval(() => {
-      const newBulletins = bulletins.filter(b => 
-        new Date(b.timestamp) > new Date(Date.now() - 5000) && 
+      const newBulletins = bulletins.filter(b =>
+        new Date(b.timestamp) > new Date(Date.now() - 5000) &&
         b.author !== user
       )
-      
+
       if (newBulletins.length > 0) {
         const latest = newBulletins[0]
         setNotification(`${latest.author}: ${latest.text}`)
-        
-        // Browser push notification
+
         if ('Notification' in window && Notification.permission === 'granted') {
           new Notification('Family Announcement', {
             body: `${latest.author}: ${latest.text}`,
             icon: '/favicon.ico'
           })
         }
-        
+
         setTimeout(() => setNotification(''), 5000)
       }
     }, 3000)
-    
+
     return () => clearInterval(interval)
   }, [bulletins, user])
 
@@ -487,23 +466,22 @@ export default function App() {
   // Chat functions
   async function send() {
     if (!input.trim() && !uploadedImage) return
-    
+
     setLoading(true)
-    
-    // Handle image uploads
+
     if (uploadedImage) {
       const reader = new FileReader()
       reader.onload = async (e) => {
         const base64Data = e.target.result.split(',')[1]
-        
-        setMessages(prev => [...prev, { 
-          role: 'user', 
+
+        setMessages(prev => [...prev, {
+          role: 'user',
           content: [
             ...(input.trim() ? [{ type: 'text', text: input }] : []),
             { type: 'image', source: { type: 'base64', media_type: uploadedImage.type, data: base64Data } }
           ]
         }])
-        
+
         try {
           const response = await fetch("https://api.anthropic.com/v1/messages", {
             method: "POST",
@@ -514,8 +492,8 @@ export default function App() {
               system: FAMILY_CONTEXT,
               messages: [
                 ...messages,
-                { 
-                  role: 'user', 
+                {
+                  role: 'user',
                   content: [
                     ...(input.trim() ? [{ type: 'text', text: input }] : []),
                     { type: 'image', source: { type: 'base64', media_type: uploadedImage.type, data: base64Data } }
@@ -524,15 +502,15 @@ export default function App() {
               ]
             })
           })
-          
+
           const data = await response.json()
           const text = data.content?.map(item => item.text || '').join('\n') || 'Sorry, I had trouble processing that.'
-          
+
           setMessages(prev => [...prev, { role: 'assistant', content: text }])
         } catch (error) {
           setMessages(prev => [...prev, { role: 'assistant', content: "I'm having technical difficulties. Please try again." }])
         }
-        
+
         setInput('')
         clearImage()
         setLoading(false)
@@ -541,7 +519,6 @@ export default function App() {
       return
     }
 
-    // Handle text-only messages
     setMessages(prev => [...prev, { role: 'user', content: input }])
 
     try {
@@ -555,10 +532,10 @@ export default function App() {
           messages: [...messages, { role: 'user', content: input }]
         })
       })
-      
+
       const data = await response.json()
       const text = data.content?.map(item => item.text || '').join('\n') || 'Sorry, I had trouble with that request.'
-      
+
       setMessages(prev => [...prev, { role: 'assistant', content: text }])
     } catch (error) {
       setMessages(prev => [...prev, { role: 'assistant', content: "I'm having technical difficulties. Please try again." }])
@@ -571,7 +548,7 @@ export default function App() {
   // Chore functions
   function toggleChore(kid, choreId) {
     const newChores = { ...chores }
-    newChores[kid] = newChores[kid].map(c => 
+    newChores[kid] = newChores[kid].map(c =>
       c.id === choreId ? { ...c, done: !c.done } : c
     )
     setChores(newChores)
@@ -581,13 +558,13 @@ export default function App() {
   function addChore(kid) {
     const text = newChore[kid]?.trim()
     if (!text) return
-    
+
     const newChores = { ...chores }
     if (!newChores[kid]) newChores[kid] = []
-    
+
     const newId = Math.max(0, ...newChores[kid].map(c => c.id)) + 1
     newChores[kid].push({ id: newId, text, done: false })
-    
+
     setChores(newChores)
     setNewChore({ ...newChore, [kid]: '' })
     saveToFirebase('chores', newChores)
@@ -611,8 +588,396 @@ export default function App() {
   function addShopItem() {
     const text = newShopItem.trim()
     if (!text) return
-    
-    const newShopping = [...shopping, { 
-      id: Date.now(), 
-      text, 
-      cat: new
+
+    const newShopping = [...shopping, {
+      id: Date.now(),
+      text,
+      cat: newShopCat,
+      done: false,
+      addedBy: user,
+      timestamp: new Date().toISOString()
+    }]
+
+    setShopping(newShopping)
+    setNewShopItem('')
+    saveToFirebase('shopping', newShopping)
+  }
+
+  function toggleShopItem(id) {
+    const newShopping = shopping.map(item =>
+      item.id === id ? { ...item, done: !item.done } : item
+    )
+    setShopping(newShopping)
+    saveToFirebase('shopping', newShopping)
+  }
+
+  function deleteShopItem(id) {
+    const newShopping = shopping.filter(item => item.id !== id)
+    setShopping(newShopping)
+    saveToFirebase('shopping', newShopping)
+  }
+
+  function clearCheckedShopping() {
+    const newShopping = shopping.filter(item => !item.done)
+    setShopping(newShopping)
+    saveToFirebase('shopping', newShopping)
+  }
+
+  // Bulletin functions
+  function addBulletin() {
+    const text = newBulletin.trim()
+    if (!text) return
+
+    const bulletin = {
+      id: Date.now(),
+      text,
+      author: user,
+      timestamp: new Date().toISOString()
+    }
+    const newBulletins = [bulletin, ...bulletins]
+    setBulletins(newBulletins)
+    setNewBulletin('')
+    saveToFirebase('bulletins', newBulletins)
+  }
+
+  function deleteBulletin(id) {
+    const newBulletins = bulletins.filter(b => b.id !== id)
+    setBulletins(newBulletins)
+    saveToFirebase('bulletins', newBulletins)
+  }
+
+  // Login handler
+  function handleLogin() {
+    if (passwordInput === PASSWORD) {
+      setAuthed(true)
+      setPasswordInput('')
+    } else {
+      alert('Incorrect password')
+      setPasswordInput('')
+    }
+  }
+
+  // Password gate
+  if (!authed) {
+    return (
+      <>
+        <style>{styles}</style>
+        <div className="app-bg" />
+        <div className="app" style={{justifyContent:'center', alignItems:'center'}}>
+          <div style={{padding:'40px', background:'rgba(255,255,255,0.02)', border:'1px solid rgba(0,86,179,0.3)', borderRadius:'12px', width:'90%', maxWidth:'400px'}}>
+            <div style={{textAlign:'center', marginBottom:'24px'}}>
+              <div style={{width:'60px', height:'60px', margin:'0 auto 16px', background:'linear-gradient(135deg,#0056b3,#003580)', borderRadius:'12px', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:"'Rajdhani',sans-serif", fontWeight:700, color:'white', fontSize:'16px', letterSpacing:'2px'}}>JARVIS</div>
+              <h1 style={{fontFamily:"'Rajdhani',sans-serif", color:'#fff', fontSize:'24px', letterSpacing:'4px'}}>FAMILY HQ</h1>
+              <p style={{color:'rgba(255,255,255,0.5)', fontSize:'11px', marginTop:'8px', letterSpacing:'2px'}}>DEATHERAGE FAMILY</p>
+            </div>
+            <input
+              type="password"
+              value={passwordInput}
+              onChange={(e) => setPasswordInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleLogin() }}
+              placeholder="Enter family password"
+              style={{width:'100%', padding:'12px', background:'rgba(0,180,255,0.05)', border:'1px solid rgba(0,180,255,0.2)', borderRadius:'8px', color:'#fff', fontSize:'14px', marginBottom:'12px'}}
+              autoFocus
+            />
+            <button
+              onClick={handleLogin}
+              style={{width:'100%', padding:'12px', background:'linear-gradient(135deg,#0066cc,#003d7a)', border:'none', borderRadius:'8px', color:'white', fontSize:'12px', fontWeight:600, cursor:'pointer', letterSpacing:'2px'}}
+            >SIGN IN</button>
+          </div>
+        </div>
+      </>
+    )
+  }
+
+  return (
+    <>
+      <style>{styles}</style>
+      <div className="app-bg" />
+
+      {notification && (
+        <div style={{position:'fixed', top:'20px', left:'50%', transform:'translateX(-50%)', padding:'12px 20px', background:'rgba(0,86,179,0.95)', border:'1px solid #00b4ff', borderRadius:'8px', color:'#fff', fontSize:'12px', zIndex:100, boxShadow:'0 4px 20px rgba(0,180,255,0.3)'}}>
+          📢 {notification}
+        </div>
+      )}
+
+      <div className="app">
+        {tab === 'chat' ? (
+          <>
+            <div className="arc-bg" />
+            <div className="corner tl" /><div className="corner tr" /><div className="corner bl" /><div className="corner br" />
+            <div className="scan" />
+            <div className="chat-header">
+              <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
+                <div className="arc-reactor">
+                  <div className="arc-outer" /><div className="arc-mid" /><div className="arc-core" />
+                </div>
+                <div className="title-block">
+                  <h1>JARVIS</h1>
+                  <p>FAMILY AI</p>
+                </div>
+              </div>
+              <div style={{fontFamily:"'Share Tech Mono',monospace", color:'#00b4ff', fontSize:'14px'}}>{currentTime}</div>
+            </div>
+          </>
+        ) : (
+          <div className="header">
+            <div className="header-brand">
+              <div className="header-logo">JARVIS</div>
+              <div className="header-text">
+                <h1>FAMILY HQ</h1>
+                <p>Deatherage Family</p>
+              </div>
+            </div>
+            <div className="header-time">
+              <div className="time">{currentTime}</div>
+              <div className="date">{today.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' })}</div>
+            </div>
+          </div>
+        )}
+
+        <div className="nav-tabs">
+          <button className={`nav-tab ${tab==='home'?'active':''}`} onClick={()=>setTab('home')}>Home</button>
+          <button className={`nav-tab ${tab==='chat'?'active':''}`} onClick={()=>setTab('chat')}>JARVIS</button>
+          <button className={`nav-tab ${tab==='chores'?'active':''}`} onClick={()=>setTab('chores')}>Chores</button>
+          <button className={`nav-tab ${tab==='shopping'?'active':''}`} onClick={()=>setTab('shopping')}>Shopping</button>
+          <button className={`nav-tab ${tab==='calendar'?'active':''}`} onClick={()=>setTab('calendar')}>Calendar</button>
+        </div>
+
+        {tab !== 'home' && (
+          <div className="user-bar">
+            {['Dad','Mom','Lincoln','Camille','Cicily','Carter'].map(u => (
+              <button key={u} className={`user-btn ${user===u?'active':''}`} onClick={()=>setUser(u)}>{u}</button>
+            ))}
+          </div>
+        )}
+
+        {tab === 'home' && (
+          <div className="dash-panel">
+            <div className="dash-row">
+              <div className="dash-card" style={{flex:1}}>
+                <div className="dash-card-label">TODAY</div>
+                <div className="dash-date">{today.toLocaleDateString('en-US', { weekday:'long' })}</div>
+                <div className="dash-sub">{today.toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' })}</div>
+              </div>
+              <div className="dash-card" style={{flex:1}}>
+                <div className="dash-card-label">WEATHER</div>
+                <div className="temp">{weather.icon} {weather.temp}°</div>
+                <div className="weather-desc">{weather.desc} · {weather.wind} MPH</div>
+              </div>
+            </div>
+
+            <div className="dash-row">
+              <div className="dash-card" style={{flex:1}}>
+                <div className="dash-card-label">CHORE PROGRESS</div>
+                <div className="chore-progress">{totalChoresDone}/{totalChores}</div>
+                <div className="chore-label">COMPLETED TODAY</div>
+              </div>
+              <div className="dash-card" style={{flex:1}}>
+                <div className="dash-card-label">SHOPPING LIST</div>
+                <div className="chore-progress">{shopping.filter(s=>!s.done).length}</div>
+                <div className="chore-label">ITEMS NEEDED</div>
+              </div>
+            </div>
+
+            {dailyVerse && (
+              <div className="dash-card">
+                <div className="dash-card-label">VERSE OF THE DAY</div>
+                <p style={{color:'rgba(255,255,255,0.85)', fontSize:'13px', lineHeight:1.5, fontStyle:'italic', marginTop:'4px'}}>"{dailyVerse.verse}"</p>
+                <p style={{color:'#0086ff', fontSize:'11px', marginTop:'8px', fontWeight:600}}>— {dailyVerse.reference}</p>
+              </div>
+            )}
+
+            {countdowns.length > 0 && (
+              <div className="dash-card">
+                <div className="dash-card-label">UPCOMING</div>
+                <div style={{display:'flex', flexDirection:'column', gap:'8px', marginTop:'8px'}}>
+                  {countdowns.map((c, i) => (
+                    <div key={i} style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'8px 10px', background:'rgba(0,180,255,0.05)', borderRadius:'6px'}}>
+                      <span style={{color:'rgba(255,255,255,0.85)', fontSize:'12px'}}>{c.emoji} {c.name}</span>
+                      <span style={{color:'#00d4ff', fontSize:'12px', fontWeight:700}}>
+                        {c.daysLeft === 0 ? 'TODAY!' : `${c.daysLeft} day${c.daysLeft===1?'':'s'}`}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="dash-card">
+              <div className="dash-card-label">FAMILY BULLETIN</div>
+              <div className="bulletin-form" style={{marginTop:'8px'}}>
+                <textarea
+                  className="bulletin-input"
+                  value={newBulletin}
+                  onChange={(e)=>setNewBulletin(e.target.value)}
+                  placeholder="Post a family announcement..."
+                  rows={1}
+                />
+                <button className="bulletin-send" onClick={addBulletin}>POST</button>
+              </div>
+              <div>
+                {bulletins.length === 0 ? (
+                  <div className="empty-state">No announcements yet</div>
+                ) : (
+                  bulletins.slice(0, 10).map(b => (
+                    <div key={b.id} className="bulletin-item">
+                      <div className="bulletin-content">
+                        <div className="bulletin-text">{b.text}</div>
+                        <div className="bulletin-meta">
+                          {b.author} · {new Date(b.timestamp).toLocaleString('en-US', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' })}
+                        </div>
+                      </div>
+                      <button className="bulletin-delete" onClick={()=>deleteBulletin(b.id)}>×</button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {tab === 'chat' && (
+          <div className="chat-panel">
+            <div className="messages">
+              {messages.length === 0 && (
+                <div className="msg assistant">Hello {user}! I'm JARVIS, your family AI. How can I help today? You can also upload a math problem photo and I'll walk through it step by step.</div>
+              )}
+              {messages.map((m, i) => (
+                <div key={i} className={`msg ${m.role}`}>
+                  {typeof m.content === 'string' ? m.content : m.content.map((part, j) =>
+                    part.type === 'text' ? <div key={j}>{part.text}</div> :
+                    part.type === 'image' ? <div key={j} style={{fontSize:'11px', opacity:0.7}}>📷 Image attached</div> : null
+                  )}
+                </div>
+              ))}
+              {loading && <div className="msg assistant">Thinking...</div>}
+              <div ref={bottomRef} />
+            </div>
+            <div className="input-container">
+              {imagePreview && (
+                <div style={{marginBottom:'8px', display:'flex', alignItems:'center', gap:'8px'}}>
+                  <img src={imagePreview} alt="upload preview" style={{maxHeight:'60px', borderRadius:'6px', border:'1px solid rgba(0,180,255,0.3)'}} />
+                  <button onClick={clearImage} style={{background:'none', border:'none', color:'rgba(255,80,80,0.8)', cursor:'pointer', fontSize:'20px'}}>×</button>
+                </div>
+              )}
+              <div className="input-row">
+                <label style={{cursor:'pointer', padding:'10px', background:'rgba(0,180,255,0.1)', border:'1px solid rgba(0,180,255,0.2)', borderRadius:'8px', fontSize:'16px'}}>
+                  📎
+                  <input type="file" accept="image/*" onChange={handleImageUpload} style={{display:'none'}} />
+                </label>
+                <div className="input-wrap">
+                  <textarea
+                    value={input}
+                    onChange={(e)=>setInput(e.target.value)}
+                    onKeyDown={(e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); send() } }}
+                    placeholder="Ask JARVIS anything..."
+                    rows={1}
+                  />
+                </div>
+                <button className="send-btn" onClick={send} disabled={loading || (!input.trim() && !uploadedImage)}>→</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {tab === 'chores' && (
+          <div className="chores-panel">
+            <div className="section-header">
+              <div className="section-title">CHORES</div>
+              <div className="section-count">{totalChoresDone}/{totalChores} DONE</div>
+            </div>
+            {KIDS.map(kid => {
+              const kidChores = chores[kid] || []
+              const done = kidChores.filter(c => c.done).length
+              return (
+                <div key={kid} className="kid-block">
+                  <div className="kid-name">
+                    <span>{kid} <span className="kid-badge">{done}/{kidChores.length}</span></span>
+                    <button className="reset-btn" onClick={()=>resetChores(kid)}>RESET</button>
+                  </div>
+                  {kidChores.length === 0 ? (
+                    <div className="empty-state">No chores yet</div>
+                  ) : (
+                    kidChores.map(c => (
+                      <div key={c.id} className="chore-item">
+                        <div className={`chore-check ${c.done?'done':''}`} onClick={()=>toggleChore(kid, c.id)} />
+                        <div className={`chore-text ${c.done?'done':''}`}>{c.text}</div>
+                        <button className="chore-del" onClick={()=>deleteChore(kid, c.id)}>×</button>
+                      </div>
+                    ))
+                  )}
+                  <div className="add-chore-row">
+                    <input
+                      className="add-chore-input"
+                      value={newChore[kid] || ''}
+                      onChange={(e)=>setNewChore({...newChore, [kid]: e.target.value})}
+                      onKeyDown={(e)=>{ if(e.key==='Enter') addChore(kid) }}
+                      placeholder="Add a chore..."
+                    />
+                    <button className="add-btn" onClick={()=>addChore(kid)}>ADD</button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {tab === 'shopping' && (
+          <div className="shopping-panel">
+            <div className="section-header">
+              <div className="section-title">SHOPPING LIST</div>
+              {shopping.some(s => s.done) && (
+                <button className="clear-checked-btn" onClick={clearCheckedShopping}>CLEAR CHECKED</button>
+              )}
+            </div>
+            <div className="shop-categories">
+              {SHOP_CATS.map(cat => (
+                <button key={cat} className={`cat-btn ${shopFilter===cat?'active':''}`} onClick={()=>setShopFilter(cat)}>{cat}</button>
+              ))}
+            </div>
+            <div className="add-shop-row">
+              <input
+                className="add-shop-input"
+                value={newShopItem}
+                onChange={(e)=>setNewShopItem(e.target.value)}
+                onKeyDown={(e)=>{ if(e.key==='Enter') addShopItem() }}
+                placeholder="Add an item..."
+              />
+              <select className="shop-cat-select" value={newShopCat} onChange={(e)=>setNewShopCat(e.target.value)}>
+                {SHOP_CATS.filter(c => c !== 'ALL').map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <button className="add-btn" onClick={addShopItem}>ADD</button>
+            </div>
+            <div className="shop-list">
+              {filteredShopping.length === 0 ? (
+                <div className="empty-state">No items{shopFilter !== 'ALL' ? ` in ${shopFilter}` : ''}</div>
+              ) : (
+                filteredShopping.map(item => (
+                  <div key={item.id} className={`shop-item ${item.done?'checked':''}`}>
+                    <div className={`shop-check ${item.done?'done':''}`} onClick={()=>toggleShopItem(item.id)} />
+                    <div className="shop-text" style={{textDecoration: item.done ? 'line-through' : 'none'}}>{item.text}</div>
+                    <span className="shop-cat-tag">{item.cat}</span>
+                    <button className="shop-del" onClick={()=>deleteShopItem(item.id)}>×</button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
+        {tab === 'calendar' && (
+          <div className="calendar-panel">
+            <div className="section-header">
+              <div className="section-title">FAMILY CALENDAR</div>
+            </div>
+            <iframe
+              className="calendar-iframe"
+              src="https://calendar.google.com/calendar/embed?mode=MONTH&showTitle=0"
+              title="Family Calendar"
+            />
+          </div>
+        )}
+      </div>
+    </>
+  )
+}
