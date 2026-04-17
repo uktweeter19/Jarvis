@@ -708,26 +708,7 @@ export default function Home() {
         return
       }
       
-      // If image uploaded, encourage typing it out instead
-      if (uploadedImage) {
-        const mathReply = `Hey ${user}! I can see you uploaded an image - that's the right idea! However, for the best step-by-step help, could you type out the math problem instead? 
-
-For example:
-• "Solve: 2x + 5 = 15"  
-• "Find the area of a triangle with base 8 and height 6"
-• "Factor: x² - 5x + 6"
-
-I'm excellent at breaking down math problems when they're written out, and I can give you detailed explanations that'll help you understand every step. What math problem are you working on?
-
-God bless your studies! 📚`
-
-        setMessages(m => [...m, { role: 'assistant', content: mathReply, name: 'JARVIS' }])
-        setLoading(false)
-        clearImage()
-        return
-      }
-
-      // Regular text-only response for math and other questions
+      // Send to Claude API (handles both text and image messages)
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -736,6 +717,7 @@ God bless your studies! 📚`
       const data = await res.json()
       setMessages(m => [...m, { role: 'assistant', content: data.reply, name: 'JARVIS' }])
       setLoading(false)
+      if (uploadedImage) clearImage()
     } catch (e) {
       setMessages(m => [...m, { role: 'assistant', content: 'System error. Please try again.', name: 'JARVIS' }])
       setLoading(false)
