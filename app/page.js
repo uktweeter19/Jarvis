@@ -1338,29 +1338,35 @@ export default function Home() {
           <div className="user-bar">
             <button
               className="user-btn"
+              onClick={() => { setUserSelected(false); setMessages([]); setAdultChatUnlocked(false) }}
+              title="Switch user"
+              style={{ borderColor: 'rgba(0,180,255,0.3)' }}
+            >
+              ← SWITCH USER
+            </button>
+            <button
+              className="user-btn"
               onClick={() => setTab('parents')}
               style={{ borderColor: 'rgba(255,180,0,0.4)', color: 'rgba(255,200,80,0.9)' }}
               title="Parent review (password required)"
             >
               🔒 PARENTS
             </button>
-            <button
-              className="user-btn"
-              onClick={() => { setUserSelected(false); setMessages([]); setAdultChatUnlocked(false) }}
-              title="Switch user"
-              style={{ borderColor: 'rgba(0,180,255,0.3)' }}
-            >
-              ← SWITCH
-            </button>
-            {family.map(f => (
-              <button
-                key={f}
-                className={`user-btn${user === f ? ' active' : ''}`}
-                onClick={() => { setUser(f); setUserSelected(true) }}
-              >
-                {f.toUpperCase()}
-              </button>
-            ))}
+            <div style={{
+              flex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-end',
+              paddingRight: 4,
+              fontSize: 11,
+              color: 'rgba(0,180,255,0.6)',
+              letterSpacing: 1,
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              whiteSpace: 'nowrap'
+            }}>
+              Chatting as <span style={{ color: '#00d4ff', marginLeft: 6 }}>{user}</span>
+            </div>
           </div>
         )}
 
