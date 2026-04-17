@@ -1075,6 +1075,25 @@ export default function Home() {
               </div>
             </div>
 
+            {/* Today's Events - Working Calendar Widget (Rebuilt) */}
+            <div className="dash-card">
+              <div className="dash-card-label">TODAY'S EVENTS</div>
+              
+              {/* The SAME calendar widget that worked before, but bigger */}
+              <iframe 
+                key={calendarCacheBust}
+                src={`https://calendar.google.com/calendar/embed?mode=AGENDA&height=200&wkst=1&bgcolor=%23FFFFFF&src=uktweeter19%40gmail.com&src=family021430976716499641216%40group.calendar.google.com&src=98vibj87ujjb3cm68lo4jatcghv2dq16%40import.calendar.google.com&color=%23039BE5&color=%2333B679&color=%23F4511E&ctz=America%2FNew_York&showTitle=0&showNav=0&showDate=0&showPrint=0&showTabs=0&showCalendars=0&showTz=0&_cb=${calendarCacheBust}`}
+                style={{
+                  width: '100%',
+                  height: '180px',
+                  border: 'none',
+                  borderRadius: '8px',
+                  backgroundColor: '#fff'
+                }}
+                title="Today's Events from Calendar"
+              />
+            </div>
+
             {/* Daily Bible Verse - TOP PRIORITY POSITION */}
             <div className="dash-card">
               <div className="dash-card-label">
@@ -1199,25 +1218,6 @@ export default function Home() {
                   )}
                 </div>
               )}
-            </div>
-
-            {/* Today's Events - Working Calendar Widget (Rebuilt) */}
-            <div className="dash-card">
-              <div className="dash-card-label">TODAY'S EVENTS</div>
-              
-              {/* The SAME calendar widget that worked before, but bigger */}
-              <iframe 
-                key={calendarCacheBust}
-                src={`https://calendar.google.com/calendar/embed?mode=AGENDA&height=200&wkst=1&bgcolor=%23FFFFFF&src=uktweeter19%40gmail.com&src=family021430976716499641216%40group.calendar.google.com&src=98vibj87ujjb3cm68lo4jatcghv2dq16%40import.calendar.google.com&color=%23039BE5&color=%2333B679&color=%23F4511E&ctz=America%2FNew_York&showTitle=0&showNav=0&showDate=0&showPrint=0&showTabs=0&showCalendars=0&showTz=0&_cb=${calendarCacheBust}`}
-                style={{
-                  width: '100%',
-                  height: '180px',
-                  border: 'none',
-                  borderRadius: '8px',
-                  backgroundColor: '#fff'
-                }}
-                title="Today's Events from Calendar"
-              />
             </div>
 
             {/* Family Countdowns */}
