@@ -426,10 +426,13 @@ export default function Home() {
 
   // Calculate countdowns to important dates
   function calculateCountdowns() {
-    const today = new Date()
-    const currentYear = today.getFullYear()
+    const now = new Date()
+    // Normalize "today" to start of day so the event still shows as TODAY
+    // for the full day it occurs, and only rolls off the following calendar day.
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const currentYear = now.getFullYear()
     const nextYear = currentYear + 1
-    
+
     // Important dates for the Deatherage family
     const importantDates = [
       // Major Holidays - 2026 Calendar Dates
@@ -437,7 +440,7 @@ export default function Home() {
       { name: "Thanksgiving", date: new Date(currentYear, 10, 26), emoji: "🦃" }, // Nov 26, 2026 (4th Thursday)
       { name: "Independence Day", date: new Date(currentYear, 6, 4), emoji: "🇺🇸" }, // July 4, 2026
       { name: "New Year's Day", date: new Date(nextYear, 0, 1), emoji: "🎊" }, // Jan 1, 2027
-      
+
       // Family Birthdays - Real Deatherage Family Dates
       { name: "Dad's Birthday", date: new Date(currentYear, 2, 30), emoji: "🎂" }, // March 30th
       { name: "Emily's Birthday", date: new Date(currentYear, 3, 17), emoji: "🎂" }, // April 17th
@@ -446,18 +449,21 @@ export default function Home() {
       { name: "Camille's Birthday", date: new Date(currentYear, 4, 15), emoji: "🎂" }, // May 15th
       { name: "Lincoln's Birthday", date: new Date(currentYear, 10, 28), emoji: "🎂" }, // November 28th
     ]
-    
+
     const activeCountdowns = importantDates.map(item => {
-      let targetDate = item.date
-      
-      // If the date has passed this year, use next year's date
-      if (targetDate < today) {
+      // Normalize event date to start of day so comparisons are date-only
+      let targetDate = new Date(item.date.getFullYear(), item.date.getMonth(), item.date.getDate())
+
+      // Only roll to next year once we're PAST the event (i.e. the day after),
+      // not on the day of itself. This lets "TODAY!" show for the full day.
+      if (targetDate < todayStart) {
         targetDate = new Date(nextYear, item.date.getMonth(), item.date.getDate())
       }
-      
-      const timeDiff = targetDate.getTime() - today.getTime()
-      const daysLeft = Math.ceil(timeDiff / (1000 * 3600 * 24))
-      
+
+      const timeDiff = targetDate.getTime() - todayStart.getTime()
+      // Round to the nearest whole day to avoid DST drift
+      const daysLeft = Math.round(timeDiff / (1000 * 3600 * 24))
+
       return {
         ...item,
         daysLeft,
@@ -466,7 +472,7 @@ export default function Home() {
     })
     .filter(item => item.daysLeft >= 0 && item.daysLeft <= 365) // Include today (0 days) and within a year
     .sort((a, b) => a.daysLeft - b.daysLeft) // Sort by closest first
-    
+
     setCountdowns(activeCountdowns.slice(0, 5)) // Show top 5 upcoming events
   }
 
