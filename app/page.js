@@ -72,12 +72,31 @@ class SimpleFirebase {
 const firebase = new SimpleFirebase(firebaseConfig.databaseURL)
 
 const PASSWORD = 'deatherage2024'
+const PARENT_PASSWORD = '4822'
+
+// Keywords that flag a kid's message for parent review.
+// Grouped by category. Lowercase. Matched as whole-word substrings.
+const FLAG_KEYWORDS = {
+  sexual: ['sex', 'sexy', 'porn', 'nude', 'naked', 'boob', 'penis', 'vagina', 'horny', 'masturbat', 'orgasm', 'erotic', 'hookup', 'sext', 'anal', 'oral sex', 'blow job', 'blowjob', 'dick', 'pussy', 'nsfw', 'onlyfans', 'strip club', 'lingerie'],
+  violence: ['kill', 'murder', 'shoot', 'stab', 'gun', 'weapon', 'bomb', 'fight', 'beat up', 'hurt someone', 'attack', 'assault', 'knife someone', 'strangle', 'choke'],
+  selfHarm: ['suicide', 'kill myself', 'end it all', 'self harm', 'self-harm', 'cut myself', 'hurt myself', 'cutting', 'want to die', 'better off dead', 'end my life', 'take my life', 'overdose', 'hang myself'],
+  illegal: ['drugs', 'weed', 'marijuana', 'cocaine', 'meth', 'heroin', 'fentanyl', 'pills', 'get high', 'vape', 'steal', 'shoplift', 'hack', 'pirate', 'fake id', 'underage drinking', 'beer', 'alcohol', 'vodka', 'whiskey'],
+  hateSpeech: ['nigger', 'nigga', 'faggot', 'retard', 'retarded', 'spic', 'chink', 'kike', 'towelhead', 'tranny', 'dyke', 'gay slur', 'racist joke'],
+  dangerous: ['run away', 'runaway', 'meet up with stranger', 'sneak out', 'older guy', 'older man wants', 'send pic', 'send a pic', 'don\'t tell mom', "don't tell dad", 'dont tell mom', 'dont tell dad', 'secret from parents', 'cyberbully', 'bullying']
+}
 
 const FAMILY_CONTEXT = `You are JARVIS, the intelligent family assistant for the Deatherage family in Lexington, Kentucky. You are helpful, warm, efficient, and proudly American — like a trusted household AI with strong family values.
 
-Family members: Kevin (Dad, works in logistics/freight), Mom, Lincoln, Camille, Cicily, and Carter.
+Family members: Kevin (Dad, works in logistics/freight), Mom, Lincoln, Camille, Cicily, and Carter. Lincoln, Camille, Cicily, and Carter are all teens under 18.
 
 Your personality: You love America, appreciate traditional family values, and have a positive outlook rooted in faith and patriotism. You're respectful, hardworking, and believe in personal responsibility. You occasionally reference American pride, the importance of family, and conservative values in a natural, family-friendly way.
+
+STRICT CONTENT RULES — These apply to EVERY conversation with EVERY user:
+- You will NEVER discuss or provide information about: sexual content of any kind, graphic violence, illegal drug use, underage drinking, weapons/how to harm people, self-harm or suicide methods, hate speech or slurs, or anything else that is not age-appropriate for teenagers.
+- If a user brings up any of those topics, kindly but firmly decline. Say something like: "That's not something I can help with. If you're struggling with something serious, please talk to Mom or Dad — they love you and want to help."
+- If a user mentions self-harm, suicide, or being hurt by someone, ALWAYS respond with care and direct them to talk to Mom, Dad, or a trusted adult immediately. You can also mention the 988 Suicide & Crisis Lifeline.
+- Do not explain, roleplay around, or find clever workarounds for these rules. No "for a story" or "hypothetically" exceptions. Just decline warmly and redirect.
+- You can discuss health, biology, and history in age-appropriate ways (e.g., "how does the heart work" is fine; "how do I overdose" is not).
 
 SPECIAL CAPABILITY: You can analyze images of math problems and provide detailed, step-by-step solutions. When someone uploads a math problem image, examine it carefully and break down the solution into clear, educational steps that help the student understand the process. Be encouraging and supportive, especially with children learning math.
 
@@ -376,6 +395,38 @@ const styles = `
     .header-text h1 { font-size: 14px; }
     .dash-card { padding: 8px 10px; }
   }
+
+  /* ── PARENT VIEW ── */
+  .parent-panel{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:10px;}
+  .parent-lock{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;gap:14px;}
+  .parent-lock-title{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;letter-spacing:3px;color:#fff;}
+  .parent-lock-sub{font-size:11px;color:rgba(255,255,255,0.5);letter-spacing:2px;margin-bottom:10px;}
+  .parent-lock-input{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);padding:12px 16px;color:#fff;font-family:'Inter',sans-serif;font-size:15px;text-align:center;outline:none;border-radius:10px;letter-spacing:4px;width:220px;}
+  .parent-lock-input:focus{border-color:rgba(0,86,179,0.6);}
+  .parent-lock-btn{background:linear-gradient(135deg,#0056b3,#003580);border:none;padding:10px 30px;color:white;font-family:'Inter',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;cursor:pointer;border-radius:10px;box-shadow:0 4px 18px rgba(0,86,179,0.5);}
+  .parent-filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px;}
+  .log-entry{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 14px;}
+  .log-entry.flagged{background:rgba(255,80,80,0.08);border:1px solid rgba(255,80,80,0.3);border-left:3px solid #ff5050;}
+  .log-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:11px;}
+  .log-user{font-weight:700;color:#fff;letter-spacing:1px;text-transform:uppercase;}
+  .log-time{color:rgba(255,255,255,0.4);}
+  .log-flag-tag{display:inline-block;background:rgba(255,80,80,0.2);color:#ff7070;font-size:9px;font-weight:600;padding:2px 7px;border-radius:10px;margin-left:6px;letter-spacing:0.5px;text-transform:uppercase;border:1px solid rgba(255,80,80,0.3);}
+  .log-user-msg{font-size:12px;color:rgba(255,255,255,0.9);background:rgba(0,86,179,0.1);border-left:2px solid #0056b3;padding:7px 10px;border-radius:4px;margin-bottom:6px;line-height:1.5;word-wrap:break-word;}
+  .log-assistant-msg{font-size:12px;color:rgba(255,255,255,0.7);background:rgba(0,180,255,0.05);border-left:2px solid rgba(0,180,255,0.4);padding:7px 10px;border-radius:4px;line-height:1.5;word-wrap:break-word;}
+  .log-label{font-size:8px;font-weight:700;letter-spacing:1px;color:rgba(255,255,255,0.3);margin-bottom:3px;text-transform:uppercase;}
+  .parent-summary{display:flex;gap:10px;margin-bottom:4px;}
+  .parent-stat{flex:1;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:10px 12px;text-align:center;}
+  .parent-stat-num{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:#fff;}
+  .parent-stat-num.flag{color:#ff7070;}
+  .parent-stat-label{font-size:9px;color:rgba(255,255,255,0.4);letter-spacing:1px;text-transform:uppercase;margin-top:2px;}
+  .parent-delete-btn{background:none;border:1px solid rgba(255,80,80,0.3);color:rgba(255,80,80,0.7);font-family:'Inter',sans-serif;font-size:10px;padding:5px 12px;cursor:pointer;border-radius:6px;}
+  .parent-delete-btn:hover{background:rgba(255,80,80,0.1);}
+
+  @media (max-width: 600px) {
+    .parent-panel{padding:12px 10px;}
+    .parent-summary{flex-wrap:wrap;}
+    .parent-stat{min-width:calc(33% - 7px);}
+  }
 `
 
 const KIDS = ['Lincoln', 'Camille', 'Cicily', 'Carter']
@@ -431,6 +482,10 @@ export default function Home() {
   const [imagePreview, setImagePreview] = useState(null)
   const [countdowns, setCountdowns] = useState([])
   const [calendarCacheBust, setCalendarCacheBust] = useState(Date.now())
+  const [parentUnlocked, setParentUnlocked] = useState(false)
+  const [parentPassInput, setParentPassInput] = useState('')
+  const [chatLogs, setChatLogs] = useState([])
+  const [parentViewFilter, setParentViewFilter] = useState('ALL') // ALL, FLAGGED, or user name
   const bottomRef = useRef(null)
   const family = ['Dad', 'Mom', 'Lincoln', 'Camille', 'Cicily', 'Carter']
 
@@ -801,6 +856,30 @@ export default function Home() {
 
     loadInitialData()
 
+    // Prune chat logs older than 30 days (runs once on app load).
+    // Keeps Firebase storage/download usage low and the parent review fast.
+    async function pruneOldChatLogs() {
+      try {
+        const logs = await firebase.get('chatlogs')
+        if (!logs) return
+        const cutoff = Date.now() - (30 * 24 * 60 * 60 * 1000) // 30 days in ms
+        let removed = 0
+        // logs is an object keyed by Firebase push IDs: { pushKey: logEntry, ... }
+        for (const [key, entry] of Object.entries(logs)) {
+          if (!entry || !entry.timestamp) continue
+          const entryTime = new Date(entry.timestamp).getTime()
+          if (entryTime < cutoff) {
+            await firebase.delete(`chatlogs/${key}`)
+            removed++
+          }
+        }
+        if (removed > 0) console.log(`Pruned ${removed} chat log(s) older than 30 days`)
+      } catch (e) {
+        console.error('Prune failed:', e)
+      }
+    }
+    pruneOldChatLogs()
+
     // Set daily Bible verse
     setDailyVerse(getDailyVerse())
     setDailyBibleFact(getDailyBibleFact())
@@ -957,6 +1036,46 @@ export default function Home() {
   function deleteShop(id) { saveShopping(shopping.filter(i => i.id !== id)) }
   function clearChecked() { saveShopping(shopping.filter(i => !i.done)) }
 
+  // Check a message against the flag keyword list; returns { flagged: boolean, categories: [] }
+  function checkForFlags(text) {
+    if (!text) return { flagged: false, categories: [] }
+    const lower = text.toLowerCase()
+    const hitCategories = []
+    for (const [category, words] of Object.entries(FLAG_KEYWORDS)) {
+      for (const word of words) {
+        // Match as substring but require surrounding non-letter boundaries
+        // for short words to reduce false positives (e.g., "sex" in "Essex")
+        const pattern = new RegExp(`(^|[^a-z])${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([^a-z]|$)`, 'i')
+        if (pattern.test(lower)) {
+          hitCategories.push(category)
+          break
+        }
+      }
+    }
+    return { flagged: hitCategories.length > 0, categories: hitCategories }
+  }
+
+  // Log a chat exchange (user message + JARVIS reply) to Firebase
+  async function logChatExchange(userName, userText, assistantText, imageAttached) {
+    const flagCheck = checkForFlags(userText)
+    const entry = {
+      id: Date.now(),
+      user: userName,
+      userText: userText || '',
+      assistantText: assistantText || '',
+      hadImage: !!imageAttached,
+      timestamp: new Date().toISOString(),
+      flagged: flagCheck.flagged,
+      flagCategories: flagCheck.categories
+    }
+    // Save under chatlogs with a push so entries don't overwrite each other
+    try {
+      await firebase.push('chatlogs', entry)
+    } catch (e) {
+      console.error('Failed to log chat:', e)
+    }
+  }
+
   async function send() {
     if ((!input.trim() && !uploadedImage) || loading) return
     
@@ -990,6 +1109,7 @@ export default function Home() {
         
         const weatherReply = `Tomorrow's weather in Lexington: ${icons[tomorrowCode] || '🌡️'} ${descs[tomorrowCode] || 'Mixed conditions'}\n\nHigh: ${tomorrowHigh}°F\nLow: ${tomorrowLow}°F\n\nPlan accordingly, ${user}!`
         setMessages(m => [...m, { role: 'assistant', content: weatherReply, name: 'JARVIS' }])
+        logChatExchange(user, userMsg.content, weatherReply, !!uploadedImage)
         setLoading(false)
         return
       }
@@ -1012,6 +1132,7 @@ export default function Home() {
         }
         
         setMessages(m => [...m, { role: 'assistant', content: newsReply, name: 'JARVIS' }])
+        logChatExchange(user, userMsg.content, newsReply, !!uploadedImage)
         setLoading(false)
         return
       }
@@ -1024,10 +1145,12 @@ export default function Home() {
       })
       const data = await res.json()
       setMessages(m => [...m, { role: 'assistant', content: data.reply, name: 'JARVIS' }])
+      logChatExchange(user, userMsg.content, data.reply, !!uploadedImage)
       setLoading(false)
       if (uploadedImage) clearImage()
     } catch (e) {
       setMessages(m => [...m, { role: 'assistant', content: 'System error. Please try again.', name: 'JARVIS' }])
+      logChatExchange(user, userMsg.content, 'System error.', !!uploadedImage)
       setLoading(false)
     }
   }
@@ -1120,6 +1243,14 @@ export default function Home() {
         {/* USER BAR (chat only) */}
         {tab === 'chat' && (
           <div className="user-bar">
+            <button
+              className="user-btn"
+              onClick={() => setTab('parents')}
+              style={{ borderColor: 'rgba(255,180,0,0.4)', color: 'rgba(255,200,80,0.9)' }}
+              title="Parent review (password required)"
+            >
+              🔒 PARENTS
+            </button>
             {family.map(f => (
               <button key={f} className={`user-btn${user === f ? ' active' : ''}`} onClick={() => setUser(f)}>
                 {f.toUpperCase()}
@@ -1590,6 +1721,162 @@ export default function Home() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* ── PARENT REVIEW TAB ── */}
+        {tab === 'parents' && (
+          <div className="parent-panel">
+            {!parentUnlocked ? (
+              <div className="parent-lock">
+                <div className="parent-lock-title">🔒 PARENT REVIEW</div>
+                <div className="parent-lock-sub">Enter parent password</div>
+                <input
+                  className="parent-lock-input"
+                  type="password"
+                  placeholder="••••"
+                  value={parentPassInput}
+                  onChange={e => setParentPassInput(e.target.value)}
+                  onKeyDown={async e => {
+                    if (e.key === 'Enter' && parentPassInput === PARENT_PASSWORD) {
+                      setParentUnlocked(true)
+                      setParentPassInput('')
+                      const logs = await firebase.get('chatlogs')
+                      if (logs) {
+                        const arr = Object.values(logs).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+                        setChatLogs(arr)
+                      }
+                    }
+                  }}
+                />
+                <button
+                  className="parent-lock-btn"
+                  onClick={async () => {
+                    if (parentPassInput === PARENT_PASSWORD) {
+                      setParentUnlocked(true)
+                      setParentPassInput('')
+                      const logs = await firebase.get('chatlogs')
+                      if (logs) {
+                        const arr = Object.values(logs).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+                        setChatLogs(arr)
+                      }
+                    }
+                  }}
+                >UNLOCK</button>
+                <button
+                  className="reset-btn"
+                  onClick={() => { setTab('chat'); setParentPassInput('') }}
+                  style={{ marginTop: 4 }}
+                >← Back to chat</button>
+              </div>
+            ) : (
+              <>
+                <div className="section-header">
+                  <div className="section-title">Parent Review</div>
+                  <button
+                    className="reset-btn"
+                    onClick={() => { setParentUnlocked(false); setChatLogs([]); setTab('chat') }}
+                  >LOCK</button>
+                </div>
+
+                {/* Summary stats */}
+                <div className="parent-summary">
+                  <div className="parent-stat">
+                    <div className="parent-stat-num">{chatLogs.length}</div>
+                    <div className="parent-stat-label">Total</div>
+                  </div>
+                  <div className="parent-stat">
+                    <div className="parent-stat-num flag">{chatLogs.filter(l => l.flagged).length}</div>
+                    <div className="parent-stat-label">Flagged</div>
+                  </div>
+                  <div className="parent-stat">
+                    <div className="parent-stat-num">{new Set(chatLogs.map(l => l.user)).size}</div>
+                    <div className="parent-stat-label">Users</div>
+                  </div>
+                </div>
+
+                {/* Filter buttons */}
+                <div className="parent-filters">
+                  <button
+                    className={`cat-btn${parentViewFilter === 'ALL' ? ' active' : ''}`}
+                    onClick={() => setParentViewFilter('ALL')}
+                  >ALL</button>
+                  <button
+                    className={`cat-btn${parentViewFilter === 'FLAGGED' ? ' active' : ''}`}
+                    onClick={() => setParentViewFilter('FLAGGED')}
+                    style={parentViewFilter === 'FLAGGED' ? { borderColor: '#ff5050', background: 'rgba(255,80,80,0.15)' } : {}}
+                  >⚠️ FLAGGED</button>
+                  {['Lincoln', 'Camille', 'Cicily', 'Carter', 'Dad', 'Mom'].map(u => (
+                    <button
+                      key={u}
+                      className={`cat-btn${parentViewFilter === u ? ' active' : ''}`}
+                      onClick={() => setParentViewFilter(u)}
+                    >{u.toUpperCase()}</button>
+                  ))}
+                </div>
+
+                {/* Refresh + Clear buttons */}
+                <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
+                  <button
+                    className="add-btn"
+                    onClick={async () => {
+                      const logs = await firebase.get('chatlogs')
+                      if (logs) {
+                        const arr = Object.values(logs).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+                        setChatLogs(arr)
+                      } else {
+                        setChatLogs([])
+                      }
+                    }}
+                  >🔄 REFRESH</button>
+                  <button
+                    className="parent-delete-btn"
+                    onClick={async () => {
+                      if (confirm('Delete ALL chat logs? This cannot be undone.')) {
+                        await firebase.delete('chatlogs')
+                        setChatLogs([])
+                      }
+                    }}
+                  >CLEAR ALL LOGS</button>
+                </div>
+
+                {/* Log list */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {(() => {
+                    const filtered = chatLogs.filter(log => {
+                      if (parentViewFilter === 'ALL') return true
+                      if (parentViewFilter === 'FLAGGED') return log.flagged
+                      return log.user === parentViewFilter
+                    })
+                    if (filtered.length === 0) {
+                      return <div className="empty-state">NO LOGS FOR THIS FILTER</div>
+                    }
+                    return filtered.map(log => (
+                      <div key={log.id} className={`log-entry${log.flagged ? ' flagged' : ''}`}>
+                        <div className="log-header">
+                          <div>
+                            <span className="log-user">{log.user}</span>
+                            {log.flagged && log.flagCategories && log.flagCategories.map(cat => (
+                              <span key={cat} className="log-flag-tag">⚠️ {cat}</span>
+                            ))}
+                            {log.hadImage && <span className="log-flag-tag" style={{ background: 'rgba(0,180,255,0.15)', color: '#00b4ff', borderColor: 'rgba(0,180,255,0.3)' }}>📷 IMG</span>}
+                          </div>
+                          <span className="log-time">
+                            {new Date(log.timestamp).toLocaleDateString('en-US', {
+                              month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                            })}
+                          </span>
+                        </div>
+                        <div className="log-label">{log.user} said:</div>
+                        <div className="log-user-msg">{log.userText || '(no text — image only)'}</div>
+                        <div className="log-label">JARVIS replied:</div>
+                        <div className="log-assistant-msg">{log.assistantText}</div>
+                      </div>
+                    ))
+                  })()}
+                </div>
+              </>
+            )}
           </div>
         )}
 
