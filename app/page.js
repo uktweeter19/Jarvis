@@ -343,6 +343,8 @@ export default function Home() {
   const [newBulletin, setNewBulletin] = useState('')
   const [notification, setNotification] = useState('')
   const [dailyVerse, setDailyVerse] = useState('')
+  const [dailyBibleFact, setDailyBibleFact] = useState('')
+  const [dailyHistoryFact, setDailyHistoryFact] = useState('')
   const [uploadedImage, setUploadedImage] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
   const [countdowns, setCountdowns] = useState([])
@@ -408,6 +410,228 @@ export default function Home() {
     const today = new Date()
     const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24)
     return bibleVerses[dayOfYear % bibleVerses.length]
+  }
+
+  // Interesting Bible facts - large pool for daily variety
+  const bibleFacts = [
+    "The Bible was written over a period of roughly 1,500 years by more than 40 different authors, across three continents and in three languages (Hebrew, Aramaic, and Greek).",
+    "The shortest verse in the English Bible is John 11:35 — 'Jesus wept.' It appears when Jesus sees the grief over Lazarus's death.",
+    "The longest book in the Bible is Psalms, with 150 chapters. The shortest is 3 John, with only 14 verses.",
+    "Methuselah lived to be 969 years old, making him the oldest person recorded in the Bible (Genesis 5:27).",
+    "The word 'Bible' comes from the Greek word 'biblia,' meaning 'books' — a reminder that the Bible is actually a library of 66 books.",
+    "Jesus quoted from the Old Testament over 75 times during His earthly ministry.",
+    "Noah's ark was roughly 450 feet long, 75 feet wide, and 45 feet high — about the size of a modern cargo ship.",
+    "The Bible has been translated, in whole or in part, into more than 3,500 languages.",
+    "There are 66 books in the Protestant Bible: 39 in the Old Testament and 27 in the New Testament.",
+    "Goliath, the Philistine giant defeated by David, was over 9 feet tall according to 1 Samuel 17:4.",
+    "The first miracle Jesus performed was turning water into wine at a wedding in Cana (John 2:1-11).",
+    "The Dead Sea Scrolls, discovered between 1947 and 1956, include portions of every Old Testament book except Esther.",
+    "Paul wrote 13 of the 27 books in the New Testament, most of them while under house arrest or in prison.",
+    "The Hebrew word for 'heavens' in Genesis 1:1 ('shamayim') is plural, hinting at multiple layers or realms of heavens.",
+    "Solomon's temple in Jerusalem took seven years to build and was covered in gold inside (1 Kings 6:22).",
+    "The name 'Jesus' is the Greek form of the Hebrew name 'Yeshua,' which means 'The Lord saves.'",
+    "Enoch and Elijah are the only two people in the Bible who were taken directly to heaven without dying.",
+    "Jonah spent three days and three nights in the belly of a great fish before being delivered to Nineveh.",
+    "The Ten Commandments appear twice in the Bible — in Exodus 20 and again in Deuteronomy 5.",
+    "The 'Road to Emmaus' story (Luke 24) describes Jesus walking with two disciples who didn't recognize Him until He broke bread with them.",
+    "Jesus had 12 disciples, but the gospels also mention 72 others He sent out two by two (Luke 10:1).",
+    "The walls of Jericho famously fell after the Israelites marched around the city for seven days (Joshua 6).",
+    "The Book of Esther never mentions God by name, yet it shows His providence throughout the story.",
+    "Abraham was 75 years old when God called him to leave his homeland, and 100 when Isaac was born.",
+    "The Sermon on the Mount (Matthew 5-7) is the longest continuous teaching of Jesus recorded in the Bible.",
+    "King David wrote at least 73 of the 150 Psalms, many of them during times of great personal hardship.",
+    "The magi who visited Jesus are traditionally numbered at three, but the Bible never specifies how many there were.",
+    "The word 'Christian' appears only three times in the Bible (Acts 11:26, Acts 26:28, and 1 Peter 4:16).",
+    "Mary, the mother of Jesus, was likely a teenager when the angel Gabriel announced Jesus's birth.",
+    "The phrase 'fear not' appears in the Bible over 300 times — sometimes said to be one for every day of the year.",
+    "Pentecost, when the Holy Spirit descended on the disciples, occurred 50 days after Passover.",
+    "The Bible contains 31,102 verses across 1,189 chapters.",
+    "The tabernacle in the wilderness was a portable tent of worship used by the Israelites for about 400 years before Solomon's temple was built.",
+    "The Apostle John is believed to have lived the longest of the twelve disciples and is the only one who didn't die as a martyr.",
+    "The Book of Revelation was written by the Apostle John while he was exiled on the island of Patmos.",
+    "The name 'Israel' means 'he who struggles with God,' given to Jacob after wrestling with God (Genesis 32:28).",
+    "The Bible mentions over 40 different types of food, from bread and olives to quail and locusts.",
+    "The longest chapter in the Bible is Psalm 119, with 176 verses, all praising God's Word.",
+    "The shortest chapter in the Bible is Psalm 117, with just two verses.",
+    "The Bible describes 8 different miracles Jesus performed involving bringing someone back from death or healing life-threatening illness.",
+    "The word 'hallelujah' comes from two Hebrew words meaning 'praise' and 'Yahweh' (the Lord).",
+    "Joseph was 17 when sold into slavery by his brothers, and 30 when he became second-in-command of Egypt.",
+    "The Garden of Gethsemane, where Jesus prayed before His arrest, means 'oil press' in Aramaic.",
+    "The Bible was the first major book printed on Gutenberg's printing press around 1455.",
+    "The shepherds who visited the baby Jesus were likely tending sheep raised for temple sacrifices in Bethlehem.",
+    "The word 'love' appears more than 500 times in the Bible, depending on the translation.",
+    "Jesus was crucified on a Friday and rose from the dead on Sunday — the first day of the week.",
+    "The Bible mentions 21 different types of musical instruments, from harps and lyres to trumpets and cymbals.",
+    "The phrase 'God helps those who help themselves' is NOT in the Bible — it's actually from Benjamin Franklin.",
+    "The New Testament contains 260 chapters; the Old Testament contains 929.",
+    "The Bible contains approximately 783,137 words in the King James Version.",
+    "The name 'Bethlehem' means 'House of Bread' — fitting for the birthplace of Jesus, who called Himself the Bread of Life.",
+    "Queen Esther was originally named Hadassah, meaning 'myrtle' in Hebrew.",
+    "The prophet Isaiah foretold Jesus's birth and death over 700 years before they happened.",
+    "The first time the word 'love' appears in the Bible is in Genesis 22:2, referring to Abraham's love for his son Isaac.",
+    "The Book of Psalms is the only book of the Bible in which every verse is poetry.",
+    "The Sea of Galilee, where Jesus performed many miracles, is actually a freshwater lake about 13 miles long.",
+    "Peter was originally named Simon; Jesus renamed him Peter, meaning 'rock.'",
+    "The manna that fed the Israelites in the wilderness tasted 'like wafers made with honey' (Exodus 16:31).",
+    "The oldest complete copy of the Hebrew Bible, the Leningrad Codex, dates to around 1008 AD.",
+    "Melchizedek, the mysterious priest-king of Salem who blessed Abraham, is mentioned in only a handful of verses but is compared to Christ in Hebrews.",
+    "The Book of Acts was written by Luke and is considered the second volume of his gospel.",
+    "The disciples were first called 'Christians' in Antioch (Acts 11:26).",
+    "There are over 300 prophecies about Jesus in the Old Testament, all fulfilled in the New Testament.",
+    "The Last Supper was a Passover meal, which has been celebrated by Jewish families for over 3,400 years.",
+    "Lazarus was in the tomb for four days before Jesus raised him from the dead (John 11:39).",
+    "The apostle Paul had three distinct names: Saul (Hebrew), Saulos (Greek), and Paulus (Roman).",
+    "The early Christian symbol of the fish (ichthys) was used as a secret sign during times of persecution.",
+    "The word 'Amen' is the same in nearly every language because it comes directly from Hebrew, meaning 'so be it' or 'truly.'",
+    "The word 'gospel' comes from the Old English 'godspel,' meaning 'good news.'",
+    "Naaman the Syrian commander was healed of leprosy after dipping seven times in the Jordan River (2 Kings 5).",
+    "The Bible was the first book ever to be mass-produced.",
+    "Job, considered the oldest book in the Bible, predates most of Genesis in terms of events described.",
+    "Jesus's earthly ministry lasted approximately three years.",
+    "The Hebrew alphabet has 22 letters, and Psalm 119 is structured as an acrostic — each of its 22 sections begins with a successive letter.",
+    "There are 39 Old Testament books and Jesus referred to every single section (Law, Prophets, Writings) during His ministry.",
+    "Ruth, the Moabite woman who became the great-grandmother of King David, was a foreigner who chose to follow the God of Israel.",
+    "The apostle Thomas is traditionally believed to have taken the Gospel all the way to India.",
+    "The Bible was written by kings, shepherds, fishermen, a doctor, a tax collector, a tentmaker, and prophets.",
+    "Mount Sinai, where Moses received the Ten Commandments, is believed to be in the southern Sinai Peninsula.",
+    "The entire town of Nazareth, where Jesus grew up, had fewer than 500 people during His lifetime.",
+    "The number 40 appears many times in the Bible: 40 days of rain for Noah, 40 years in the wilderness, 40 days of Jesus's temptation.",
+    "The prophet Daniel interpreted dreams for three different kings of Babylon and Persia.",
+    "The apostle John wrote five books of the New Testament: the Gospel of John, 1-2-3 John, and Revelation.",
+    "The Bible mentions at least 19 separate resurrections, including Jesus's own.",
+    "Aaron, Moses's brother, was the first high priest of Israel and served in the role for nearly 40 years.",
+    "The Gospel of Mark is believed to be the earliest written Gospel, likely dating to around 65-70 AD.",
+    "Isaiah 53, written 700 years before Christ, describes in detail the crucifixion and sacrificial death of Jesus.",
+    "Psalm 22, also written centuries before, describes crucifixion details — including piercing of hands and feet — before crucifixion was even invented as a method of execution.",
+    "The word 'covenant' appears over 280 times in the Bible, highlighting God's relationship with humanity.",
+    "Luke, who wrote the Gospel of Luke and Acts, was a physician and the only Gentile author of a New Testament book.",
+    "The Bible has been the world's best-selling book every year for decades, with estimated total sales exceeding 5 billion copies.",
+    "In the Bible, angels are never described with halos or feminine features — those are later artistic traditions.",
+    "The Book of Job contains what may be the earliest reference to the water cycle (Job 36:27-28).",
+    "The prophet Elisha performed exactly twice as many recorded miracles as his mentor Elijah.",
+    "Simeon, the elderly man who held baby Jesus at the temple, had been promised by God he would see the Messiah before he died (Luke 2:25-32).",
+    "The Apostles' Creed, still recited in many churches today, dates back to at least the 4th century AD.",
+    "The names of Jesus's twelve apostles appear in four different lists in the New Testament (Matthew 10, Mark 3, Luke 6, and Acts 1).",
+    "The Gospel of John is the only one of the four gospels that does not contain a parable.",
+    "Barnabas, Paul's early missionary companion, had a name meaning 'son of encouragement' (Acts 4:36)."
+  ]
+
+  function getDailyBibleFact() {
+    const today = new Date()
+    const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24)
+    // Offset by 1 so bible fact doesn't match verse index
+    return bibleFacts[(dayOfYear + 1) % bibleFacts.length]
+  }
+
+  // Interesting U.S. History facts - large pool for daily variety
+  const historyFacts = [
+    "The Declaration of Independence was signed on July 4, 1776, but most delegates actually signed it on August 2, 1776.",
+    "The American flag was designed by Betsy Ross, a Philadelphia seamstress, at the request of George Washington in 1776.",
+    "The U.S. Constitution is the oldest written national constitution still in use, dating to 1787.",
+    "George Washington was the only president elected unanimously by the Electoral College — twice.",
+    "The Statue of Liberty was a gift from France to the United States, dedicated on October 28, 1886.",
+    "The Louisiana Purchase of 1803 doubled the size of the United States for about 3 cents per acre.",
+    "The Pledge of Allegiance was written in 1892 by Francis Bellamy to celebrate the 400th anniversary of Columbus's arrival.",
+    "The Liberty Bell cracked the first time it was rung in 1752 and had to be recast twice.",
+    "The first American president to live in the White House was John Adams, starting November 1, 1800.",
+    "The Star-Spangled Banner was written by Francis Scott Key during the War of 1812, after witnessing the bombardment of Fort McHenry.",
+    "Kentucky became the 15th state to join the Union on June 1, 1792.",
+    "The Lewis and Clark Expedition from 1804 to 1806 traveled over 8,000 miles exploring the western U.S.",
+    "The Battle of Yorktown in 1781 effectively ended the Revolutionary War with British General Cornwallis's surrender.",
+    "Abraham Lincoln's Gettysburg Address in 1863 was only 272 words long but is considered one of the greatest speeches in American history.",
+    "The Transcontinental Railroad was completed on May 10, 1869, with the driving of the 'Golden Spike' in Utah.",
+    "The Wright Brothers' first successful powered flight on December 17, 1903, lasted just 12 seconds and covered 120 feet.",
+    "Theodore Roosevelt was the first president to fly in an airplane — in 1910, after leaving office.",
+    "Kentucky is known as the 'Bluegrass State' because of the bluegrass found in many of its pastures.",
+    "The Kentucky Derby, first held in 1875, is the oldest continuously held sporting event in the United States.",
+    "The Mayflower landed at Plymouth Rock on December 21, 1620, carrying 102 passengers.",
+    "The Boston Tea Party took place on December 16, 1773, when colonists dumped 342 chests of tea into Boston Harbor.",
+    "Paul Revere's famous midnight ride on April 18, 1775, actually involved several riders — and he never shouted 'the British are coming.'",
+    "The Battle of Bunker Hill in 1775 was actually fought mostly on Breed's Hill.",
+    "The word 'United States of America' was first used officially in the Declaration of Independence.",
+    "The Great Seal of the United States was adopted on June 20, 1782, and features a bald eagle holding an olive branch and arrows.",
+    "The bald eagle was officially adopted as the national bird of the United States on June 20, 1782.",
+    "The original 13 colonies became states in this order, with Delaware being the first to ratify the Constitution on December 7, 1787.",
+    "The War of 1812 is sometimes called 'The Second War of Independence' because it reaffirmed American sovereignty.",
+    "The Emancipation Proclamation was issued by President Lincoln on January 1, 1863.",
+    "Texas was an independent country — the Republic of Texas — from 1836 to 1845 before becoming a state.",
+    "Alaska was purchased from Russia in 1867 for $7.2 million, or about 2 cents per acre.",
+    "The Panama Canal, completed in 1914, shortened ship travel between the Atlantic and Pacific by about 8,000 miles.",
+    "Women gained the right to vote in the U.S. with the ratification of the 19th Amendment on August 18, 1920.",
+    "The Great Depression began with the stock market crash on October 29, 1929 — 'Black Tuesday.'",
+    "The United States entered World War II after the attack on Pearl Harbor on December 7, 1941.",
+    "The D-Day invasion of Normandy on June 6, 1944, was the largest seaborne invasion in history.",
+    "Neil Armstrong became the first person to walk on the moon on July 20, 1969, during the Apollo 11 mission.",
+    "The U.S. Marine Corps was founded on November 10, 1775, at Tun Tavern in Philadelphia.",
+    "The Pentagon, headquarters of the Department of Defense, is one of the world's largest office buildings with over 17 miles of hallways.",
+    "The Lincoln Memorial in Washington, D.C., was dedicated on May 30, 1922, and features a 19-foot statue of Abraham Lincoln.",
+    "Mount Rushmore took 14 years to complete (1927-1941) and features the faces of Washington, Jefferson, Roosevelt, and Lincoln.",
+    "The Empire State Building was completed in 1931 and was the tallest building in the world for nearly 40 years.",
+    "Daniel Boone, the famous frontiersman, played a major role in the exploration and settlement of Kentucky in the 1700s.",
+    "Kentucky is home to Fort Knox, which holds a significant portion of the United States' gold reserves.",
+    "The first-ever McDonald's opened in San Bernardino, California, in 1940 by brothers Richard and Maurice McDonald.",
+    "The Voting Rights Act of 1965 outlawed discriminatory voting practices that had disenfranchised African Americans.",
+    "The Moon Landing on July 20, 1969, was watched by an estimated 650 million people worldwide.",
+    "The U.S. interstate highway system, begun in 1956 under President Eisenhower, is over 47,000 miles long.",
+    "The Smithsonian Institution, founded in 1846, is the world's largest museum and research complex with 21 museums.",
+    "Hawaii became the 50th and most recent state to join the Union on August 21, 1959.",
+    "The American Revolution officially ended with the Treaty of Paris, signed on September 3, 1783.",
+    "George Washington served as commander of the Continental Army for over 8 years without accepting a salary.",
+    "Benjamin Franklin was the only Founding Father to sign all four key documents: the Declaration of Independence, the Treaty of Alliance with France, the Treaty of Paris, and the Constitution.",
+    "The Statue of Liberty's full name is 'Liberty Enlightening the World.'",
+    "The White House has 132 rooms, 35 bathrooms, and 6 levels.",
+    "The phrase 'In God We Trust' was officially adopted as the U.S. national motto in 1956.",
+    "The United States has had 46 presidents, with George Washington being the first in 1789.",
+    "The U.S. Capitol building's dome was completed during the Civil War as a symbol that the Union would endure.",
+    "Francis Scott Key wrote the Star-Spangled Banner as a poem in 1814, but it wasn't adopted as the national anthem until 1931.",
+    "The Civil War (1861-1865) remains the deadliest conflict in American history, with over 600,000 soldiers killed.",
+    "The Erie Canal, completed in 1825, connected the Great Lakes to the Atlantic and transformed American commerce.",
+    "The Pony Express only operated for 18 months (1860-1861) before being replaced by the telegraph.",
+    "Harriet Tubman made about 13 missions to rescue approximately 70 enslaved people via the Underground Railroad.",
+    "The 13th Amendment, abolishing slavery, was ratified on December 6, 1865.",
+    "President James K. Polk accomplished every goal of his presidency in a single term and then declined to run again.",
+    "The California Gold Rush began in 1848 when gold was discovered at Sutter's Mill, drawing over 300,000 people to California.",
+    "The Pentagon has two zip codes — one for the Army side and one for the Navy side.",
+    "Martin Luther King Jr. delivered his 'I Have a Dream' speech on August 28, 1963, to over 250,000 people at the Lincoln Memorial.",
+    "The first American patent was issued in 1790 to Samuel Hopkins for a new process of making potash.",
+    "Thomas Jefferson and John Adams both died on July 4, 1826 — exactly 50 years after the Declaration of Independence.",
+    "President William Henry Harrison gave the longest inauguration speech (nearly 2 hours) and died 31 days later — the shortest presidency.",
+    "The American bison, once numbering in the tens of millions, was hunted nearly to extinction by the late 1800s.",
+    "The Brooklyn Bridge, completed in 1883, was the world's first steel-wire suspension bridge.",
+    "The first transcontinental telephone call was made on January 25, 1915, from New York to San Francisco.",
+    "The U.S. flag has been modified 27 times since 1777, with the current 50-star design adopted in 1960.",
+    "The original Constitution is written on parchment made from treated animal skin.",
+    "Abraham Lincoln was the first U.S. president to be photographed at his inauguration in 1861.",
+    "President Theodore Roosevelt was the first American to win a Nobel Peace Prize, in 1906, for mediating the end of the Russo-Japanese War.",
+    "The Empire State Building was constructed in just 410 days during the Great Depression.",
+    "The National Parks System was established by President Woodrow Wilson in 1916, with Yellowstone already having been the world's first national park since 1872.",
+    "George Washington Carver developed over 300 uses for the peanut, revolutionizing Southern agriculture.",
+    "Rosa Parks's refusal to give up her seat on a Montgomery bus on December 1, 1955, sparked the 381-day Montgomery Bus Boycott.",
+    "The Berlin Wall fell on November 9, 1989, a defining victory for American values of freedom during the Cold War.",
+    "The Golden Gate Bridge, completed in 1937, was the longest suspension bridge in the world for 27 years.",
+    "John F. Kennedy was the youngest person elected U.S. president, at age 43, in 1960.",
+    "The U.S. Coast Guard is one of the oldest military services, founded in 1790 as the Revenue Cutter Service.",
+    "Ronald Reagan signed the first treaty eliminating an entire class of nuclear weapons, the INF Treaty, with the Soviet Union in 1987.",
+    "The Mason-Dixon Line was originally surveyed from 1763-1767 to settle a property dispute between Maryland and Pennsylvania.",
+    "The U.S. Army's West Point military academy, established in 1802, is the oldest continuously operating military post in the country.",
+    "The first successful gasoline-powered automobile in America was built by Charles and Frank Duryea in 1893.",
+    "The Apollo 13 mission in 1970 was called a 'successful failure' because all astronauts returned safely despite severe equipment malfunction.",
+    "Fort Boonesborough, founded by Daniel Boone in 1775, was one of the first American settlements west of the Appalachian Mountains.",
+    "Abraham Lincoln was born in a log cabin in Hodgenville, Kentucky, on February 12, 1809.",
+    "Jefferson Davis, the president of the Confederacy, was born in Fairview, Kentucky, just 100 miles from Lincoln's birthplace.",
+    "Kentucky Fried Chicken was founded by Colonel Harland Sanders in Corbin, Kentucky, in 1930.",
+    "Muhammad Ali, born Cassius Clay, was from Louisville, Kentucky, and is considered one of the greatest boxers of all time.",
+    "The United States Air Force became a separate branch of the military in 1947, having previously been part of the Army.",
+    "The 22nd Amendment, ratified in 1951, limits a president to two terms in office.",
+    "The Homestead Act of 1862 gave 160 acres of public land to any American willing to farm it for five years.",
+    "Mount Vernon, George Washington's home, is visited by over one million people each year."
+  ]
+
+  function getDailyHistoryFact() {
+    const today = new Date()
+    const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24)
+    // Offset by 2 so history fact doesn't match verse or bible fact indexes
+    return historyFacts[(dayOfYear + 2) % historyFacts.length]
   }
 
   function handleImageUpload(event) {
@@ -497,6 +721,8 @@ export default function Home() {
 
     // Set daily Bible verse
     setDailyVerse(getDailyVerse())
+    setDailyBibleFact(getDailyBibleFact())
+    setDailyHistoryFact(getDailyHistoryFact())
 
     // Initialize countdowns and UK sports
     calculateCountdowns()
@@ -826,7 +1052,7 @@ export default function Home() {
             <div className="dash-row cols-3">
               {/* Date + Weather + Chores */}
               <div className="dash-card">
-                <div className="dash-card-label">TODAY'S SCHEDULE</div>
+                <div className="dash-card-label">TODAY</div>
                 <div className="dash-date">{today.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).toUpperCase()}</div>
                 <div className="dash-sub">{today.getFullYear()} · LEXINGTON KY</div>
               </div>
@@ -875,6 +1101,42 @@ export default function Home() {
                 textAlign: 'right'
               }}>
                 — {dailyVerse.reference}
+              </div>
+            </div>
+
+            {/* Bible Fact of the Day */}
+            <div className="dash-card">
+              <div className="dash-card-label">
+                BIBLE FACT OF THE DAY
+                <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', marginLeft: 8 }}>
+                  ({new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})
+                </span>
+              </div>
+              <div style={{
+                fontSize: 13,
+                color: 'rgba(255,255,255,0.9)',
+                lineHeight: 1.6,
+                padding: '8px 0'
+              }}>
+                ✝️ {dailyBibleFact}
+              </div>
+            </div>
+
+            {/* U.S. History Fact of the Day */}
+            <div className="dash-card">
+              <div className="dash-card-label">
+                U.S. HISTORY FACT
+                <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', marginLeft: 8 }}>
+                  ({new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})
+                </span>
+              </div>
+              <div style={{
+                fontSize: 13,
+                color: 'rgba(255,255,255,0.9)',
+                lineHeight: 1.6,
+                padding: '8px 0'
+              }}>
+                🇺🇸 {dailyHistoryFact}
               </div>
             </div>
 
