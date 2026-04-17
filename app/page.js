@@ -346,7 +346,6 @@ export default function Home() {
   const [uploadedImage, setUploadedImage] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
   const [countdowns, setCountdowns] = useState([])
-  const [ukSports, setUkSports] = useState({ basketball: null, football: null })
   const bottomRef = useRef(null)
   const family = ['Dad', 'Mom', 'Lincoln', 'Camille', 'Cicily', 'Carter']
 
@@ -465,73 +464,10 @@ export default function Home() {
         targetDate
       }
     })
-    .filter(item => item.daysLeft > 0 && item.daysLeft <= 365) // Only show upcoming events within a year
+    .filter(item => item.daysLeft >= 0 && item.daysLeft <= 365) // Include today (0 days) and within a year
     .sort((a, b) => a.daysLeft - b.daysLeft) // Sort by closest first
     
-    setCountdowns(activeCountdowns.slice(0, 3)) // Show top 3 upcoming events
-  }
-
-  // Fetch UK Wildcats sports data - automatically updates when available
-  async function fetchUKSports() {
-    try {
-      // TODO: Replace with real ESPN API or CBS Sports API for UK Wildcats
-      // Example API call structure:
-      // const response = await fetch('https://api.espn.com/v1/sports/basketball/mens-college-basketball/teams/96/schedule')
-      
-      // For now, structured for easy real API integration
-      const basketballSchedule = await fetchUKBasketballSchedule()
-      const footballSchedule = await fetchUKFootballSchedule()
-      
-      setUkSports({
-        basketball: basketballSchedule,
-        football: footballSchedule
-      })
-    } catch (error) {
-      console.log('UK Sports fetch error:', error)
-      // Fallback to current manual data if API fails
-      setUkSports({
-        basketball: {
-          nextGames: [
-            "2026-27 Season Starts - November 2026",
-            "Exhibition Games - October 2026"
-          ],
-          record: "2025-26 Season Complete"
-        },
-        football: {
-          nextGames: [
-            "Blue-White Spring Game - April 19, 2:00 PM",
-            "Season Opener vs Eastern Michigan - Aug 30, 7:00 PM"
-          ],
-          record: "2026 Season Preparation"
-        }
-      })
-    }
-  }
-
-  // Helper function for basketball schedule (ready for real API)
-  async function fetchUKBasketballSchedule() {
-    // TODO: Integrate with ESPN API for UK basketball
-    // Filter to only upcoming games, no past games
-    return {
-      nextGames: [
-        "2026-27 Season Starts - November 2026",
-        "Exhibition Games - October 2026"
-      ],
-      record: "2025-26 Season Complete"
-    }
-  }
-
-  // Helper function for football schedule (ready for real API)
-  async function fetchUKFootballSchedule() {
-    // TODO: Integrate with ESPN API for UK football  
-    // Filter to only upcoming games, no past games
-    return {
-      nextGames: [
-        "Blue-White Spring Game - April 19, 2:00 PM",
-        "Season Opener vs Eastern Michigan - Aug 30, 7:00 PM"
-      ],
-      record: "2026 Season Preparation"
-    }
+    setCountdowns(activeCountdowns.slice(0, 5)) // Show top 5 upcoming events
   }
 
   // Load persisted data and set up Firebase sync
@@ -557,7 +493,6 @@ export default function Home() {
 
     // Initialize countdowns and UK sports
     calculateCountdowns()
-    fetchUKSports()
 
     // Real-time sync - check for updates every 3 seconds
     const syncInterval = setInterval(async () => {
@@ -1007,14 +942,30 @@ God bless your studies! 📚`
               )}
             </div>
 
-            {/* Today's Events - Simple Text List Only */}
+            {/* Today's Events - Smart Daily Display */}
             <div className="dash-card">
               <div className="dash-card-label">TODAY'S EVENTS</div>
               
-              {/* Simple Today's Events - No Calendar Widget */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 
-                {/* Today's Event List */}
+                {/* Today's Birthdays - Automatic from countdown data */}
+                {countdowns.filter(c => c.daysLeft === 0).map((birthday, i) => (
+                  <div key={`birthday-${i}`} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ 
+                      fontSize: '12px', 
+                      color: '#ff6b35', 
+                      fontWeight: '600',
+                      minWidth: '70px'
+                    }}>🎉 All Day</div>
+                    <div style={{ 
+                      fontSize: '12px', 
+                      color: 'rgba(255,255,255,0.85)',
+                      fontWeight: '600'
+                    }}>{birthday.name}!</div>
+                  </div>
+                ))}
+                
+                {/* Manual Daily Events - Update these each day */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <div style={{ 
                     fontSize: '12px', 
@@ -1025,14 +976,14 @@ God bless your studies! 📚`
                   <div style={{ 
                     fontSize: '12px', 
                     color: 'rgba(255,255,255,0.85)'
-                  }}>Dinner at Carson's</div>
+                  }}>Family Dinner Night</div>
                 </div>
-                
-                {/* Add more events as needed - copy the format above */}
-                {/* 
+
+                {/* Add more daily events by copying the format above */}
+                {/*
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <div style={{ fontSize: '12px', color: '#0056b3', fontWeight: '600', minWidth: '70px' }}>8:30 PM</div>
-                  <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.85)' }}>Kids Basketball</div>
+                  <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.85)' }}>Movie Night</div>
                 </div>
                 */}
                 
@@ -1043,7 +994,7 @@ God bless your studies! 📚`
                   marginTop: '8px',
                   fontStyle: 'italic'
                 }}>
-                  Update events by editing the code
+                  Birthdays auto-update • Edit daily events as needed
                 </div>
                 
               </div>
@@ -1077,86 +1028,18 @@ God bless your studies! 📚`
                       </div>
                       <div style={{
                         fontSize: '11px',
-                        color: countdown.daysLeft <= 7 ? '#ff6b35' : '#0056b3',
+                        color: countdown.daysLeft === 0 ? '#ff6b35' : countdown.daysLeft <= 7 ? '#ff6b35' : '#0056b3',
                         fontWeight: '600',
                         padding: '3px 8px',
-                        background: countdown.daysLeft <= 7 ? 'rgba(255,107,53,0.15)' : 'rgba(0,86,179,0.15)',
+                        background: countdown.daysLeft === 0 ? 'rgba(255,107,53,0.2)' : countdown.daysLeft <= 7 ? 'rgba(255,107,53,0.15)' : 'rgba(0,86,179,0.15)',
                         borderRadius: '12px',
-                        border: countdown.daysLeft <= 7 ? '1px solid rgba(255,107,53,0.3)' : '1px solid rgba(0,86,179,0.3)'
+                        border: countdown.daysLeft === 0 ? '1px solid rgba(255,107,53,0.4)' : countdown.daysLeft <= 7 ? '1px solid rgba(255,107,53,0.3)' : '1px solid rgba(0,86,179,0.3)'
                       }}>
-                        {countdown.daysLeft === 1 ? 'TOMORROW!' : `${countdown.daysLeft} DAYS`}
+                        {countdown.daysLeft === 0 ? '🎉 TODAY!' : countdown.daysLeft === 1 ? 'TOMORROW!' : `${countdown.daysLeft} DAYS`}
                       </div>
                     </div>
                   ))
                 )}
-              </div>
-            </div>
-
-            {/* UK Wildcats Sports */}
-            <div className="dash-card">
-              <div className="dash-card-label">
-                🐾 GO WILDCATS!
-                <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', marginLeft: 8 }}>
-                  BASKETBALL • FOOTBALL
-                </span>
-              </div>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                
-                {/* Basketball */}
-                {ukSports.basketball && (
-                  <div style={{ 
-                    background: 'rgba(0,56,147,0.12)', 
-                    border: '1px solid rgba(0,56,147,0.2)',
-                    borderRadius: '8px',
-                    padding: '10px 12px'
-                  }}>
-                    <div style={{ 
-                      fontSize: '11px', 
-                      color: '#0038b3', 
-                      fontWeight: '600',
-                      marginBottom: '8px',
-                      letterSpacing: '1px'
-                    }}>🏀 BASKETBALL ({ukSports.basketball.record})</div>
-                    
-                    <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', marginBottom: '6px', fontWeight: '600' }}>
-                      UPCOMING GAMES:
-                    </div>
-                    {ukSports.basketball.nextGames && ukSports.basketball.nextGames.map((game, i) => (
-                      <div key={i} style={{ fontSize: '11px', color: 'rgba(255,255,255,0.85)', marginBottom: '2px' }}>
-                        • {game}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Football */}
-                {ukSports.football && (
-                  <div style={{ 
-                    background: 'rgba(0,56,147,0.08)', 
-                    border: '1px solid rgba(0,56,147,0.15)',
-                    borderRadius: '8px',
-                    padding: '10px 12px'
-                  }}>
-                    <div style={{ 
-                      fontSize: '11px', 
-                      color: '#0038b3', 
-                      fontWeight: '600',
-                      marginBottom: '8px',
-                      letterSpacing: '1px'
-                    }}>🏈 FOOTBALL ({ukSports.football.record})</div>
-                    
-                    <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', marginBottom: '6px', fontWeight: '600' }}>
-                      UPCOMING GAMES:
-                    </div>
-                    {ukSports.football.nextGames && ukSports.football.nextGames.map((game, i) => (
-                      <div key={i} style={{ fontSize: '11px', color: 'rgba(255,255,255,0.85)', marginBottom: '2px' }}>
-                        • {game}
-                      </div>
-                    ))}
-                  </div>
-                )}
-                
               </div>
             </div>
 
