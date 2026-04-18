@@ -540,6 +540,7 @@ export default function Home() {
   const [gifts, setGifts] = useState({})
   const [newGiftKid, setNewGiftKid] = useState('')
   const [newGiftItem, setNewGiftItem] = useState('')
+  const [newGiftImage, setNewGiftImage] = useState(null)
   const [notification, setNotification] = useState('')
   const [dailyVerse, setDailyVerse] = useState('')
   const [dailyBibleFact, setDailyBibleFact] = useState('')
@@ -1194,15 +1195,51 @@ export default function Home() {
     saveToFirebase('bulletins', updated)
   }
 
+  // Compress an image file to a smaller JPEG data URL to keep Firebase lean.
+  // Scales the long edge down to 800px and saves at 70% JPEG quality.
+  function compressImage(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const img = new Image()
+        img.onload = () => {
+          const maxDim = 800
+          let w = img.width
+          let h = img.height
+          if (w > h && w > maxDim) {
+            h = Math.round(h * (maxDim / w))
+            w = maxDim
+          } else if (h > maxDim) {
+            w = Math.round(w * (maxDim / h))
+            h = maxDim
+          }
+          const canvas = document.createElement('canvas')
+          canvas.width = w
+          canvas.height = h
+          const ctx = canvas.getContext('2d')
+          ctx.drawImage(img, 0, 0, w, h)
+          resolve(canvas.toDataURL('image/jpeg', 0.7))
+        }
+        img.onerror = reject
+        img.src = e.target.result
+      }
+      reader.onerror = reject
+      reader.readAsDataURL(file)
+    })
+  }
+
   // Gift wish list helpers
   function saveGifts(updated) {
     setGifts(updated)
     saveToFirebase('gifts', updated)
   }
 
-  function addGift() {
+  async function addGift() {
     const text = newGiftItem.trim()
-    if (!text) return
+    if (!text && !newGiftImage) {
+      alert('Please add a description or a picture.')
+      return
+    }
     if (!newGiftKid) {
       alert('Please select whose wish list this gift is for.')
       return
@@ -1210,10 +1247,29 @@ export default function Home() {
     const kidList = Array.isArray(gifts[newGiftKid]) ? gifts[newGiftKid] : []
     const updated = {
       ...gifts,
-      [newGiftKid]: [...kidList, { id: Date.now(), text }]
+      [newGiftKid]: [...kidList, {
+        id: Date.now(),
+        text: text || '',
+        image: newGiftImage || null
+      }]
     }
     saveGifts(updated)
     setNewGiftItem('')
+    setNewGiftImage(null)
+  }
+
+  async function handleGiftImageUpload(event) {
+    const file = event.target.files[0]
+    if (!file || !file.type.startsWith('image/')) return
+    try {
+      const compressed = await compressImage(file)
+      setNewGiftImage(compressed)
+    } catch (e) {
+      alert('Could not process that image. Try a different one.')
+      console.error(e)
+    }
+    // Reset the input so picking the same file again works
+    event.target.value = ''
   }
 
   function deleteGift(kid, id) {
@@ -2149,8 +2205,67 @@ export default function Home() {
                     onChange={e => setNewGiftItem(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && addGift()}
                   />
-                  <button className="add-btn" onClick={addGift}>+ ADD</button>
                 </div>
+
+                {/* Image upload row */}
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    id="gift-image-upload"
+                    style={{ display: 'none' }}
+                    onChange={handleGiftImageUpload}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => document.getElementById('gift-image-upload').click()}
+                    style={{
+                      background: 'rgba(255,255,255,0.06)',
+                      border: '1px solid rgba(0,180,255,0.3)',
+                      color: 'rgba(0,180,255,0.8)',
+                      padding: '7px 12px',
+                      borderRadius: 8,
+                      fontFamily: "'Inter',sans-serif",
+                      fontSize: 11,
+                      fontWeight: 600,
+                      letterSpacing: 0.5,
+                      cursor: 'pointer',
+                      flex: newGiftImage ? '0 0 auto' : 1
+                    }}
+                  >
+                    📷 {newGiftImage ? 'Change photo' : 'Add a photo (optional)'}
+                  </button>
+                  {newGiftImage && (
+                    <>
+                      <img
+                        src={newGiftImage}
+                        alt="Gift preview"
+                        style={{
+                          width: 50,
+                          height: 50,
+                          objectFit: 'cover',
+                          borderRadius: 6,
+                          border: '1px solid rgba(0,180,255,0.3)'
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setNewGiftImage(null)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: 'rgba(255,80,80,0.7)',
+                          fontSize: 18,
+                          cursor: 'pointer',
+                          padding: '0 4px'
+                        }}
+                        title="Remove photo"
+                      >×</button>
+                    </>
+                  )}
+                </div>
+
+                <button className="add-btn" onClick={addGift} style={{ width: '100%', marginTop: 2 }}>+ ADD TO WISH LIST</button>
               </div>
             </div>
 
@@ -2167,9 +2282,29 @@ export default function Home() {
                   </div>
                   {kidGifts.length === 0 && <div className="empty-state">NO GIFTS ON WISH LIST YET</div>}
                   {kidGifts.map(g => (
-                    <div key={g.id} className="chore-item">
-                      <span style={{ fontSize: 18, marginRight: 4 }}>🎁</span>
-                      <span className="chore-text">{g.text}</span>
+                    <div key={g.id} className="chore-item" style={{ alignItems: 'center', gap: 10 }}>
+                      {g.image ? (
+                        <img
+                          src={g.image}
+                          alt={g.text || 'Gift'}
+                          style={{
+                            width: 54,
+                            height: 54,
+                            objectFit: 'cover',
+                            borderRadius: 6,
+                            border: '1px solid rgba(255,180,0,0.3)',
+                            flexShrink: 0,
+                            cursor: 'pointer'
+                          }}
+                          onClick={() => window.open(g.image, '_blank')}
+                          title="Tap to view larger"
+                        />
+                      ) : (
+                        <span style={{ fontSize: 22, marginRight: 2 }}>🎁</span>
+                      )}
+                      <span className="chore-text" style={{ flex: 1 }}>
+                        {g.text || <span style={{ color: 'rgba(255,255,255,0.4)', fontStyle: 'italic' }}>(photo only)</span>}
+                      </span>
                       <button className="chore-del" onClick={() => deleteGift(kid, g.id)}>×</button>
                     </div>
                   ))}
