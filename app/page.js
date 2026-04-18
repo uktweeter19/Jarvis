@@ -954,6 +954,30 @@ export default function Home() {
     }
     pruneOldChatLogs()
 
+    // Prune bulletins older than 7 days (runs once on app load).
+    // Bulletins are stored as a single array under "bulletins" in Firebase,
+    // so we filter the array and save the trimmed version back.
+    async function pruneOldBulletins() {
+      try {
+        const allBulletins = await firebase.get('bulletins')
+        if (!Array.isArray(allBulletins) || allBulletins.length === 0) return
+        const cutoff = Date.now() - (7 * 24 * 60 * 60 * 1000) // 7 days in ms
+        const kept = allBulletins.filter(b => {
+          if (!b || !b.timestamp) return false
+          return new Date(b.timestamp).getTime() >= cutoff
+        })
+        const removedCount = allBulletins.length - kept.length
+        if (removedCount > 0) {
+          await firebase.set('bulletins', kept)
+          setBulletins(kept)
+          console.log(`[JARVIS] Pruned ${removedCount} bulletin(s) older than 7 days`)
+        }
+      } catch (e) {
+        console.error('Bulletin prune failed:', e)
+      }
+    }
+    pruneOldBulletins()
+
     // Set daily Bible verse
     setDailyVerse(getDailyVerse())
     setDailyBibleFact(getDailyBibleFact())
