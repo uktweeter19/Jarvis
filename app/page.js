@@ -543,6 +543,9 @@ export default function Home() {
   const [adultChatPassInput, setAdultChatPassInput] = useState('')
   const [parentViewFilter, setParentViewFilter] = useState('ALL') // ALL, FLAGGED, or user name
   const bottomRef = useRef(null)
+  // Tracks which bulletin IDs have already triggered a notification on this device.
+  // Initialized when bulletins first load; after that, any NEW id triggers a pop-up.
+  const seenBulletinIdsRef = useRef(null)
   const family = ['Dad', 'Mom', 'Lincoln', 'Camille', 'Cicily', 'Carter']
 
   // Daily Bible verses - large collection for daily variety
@@ -949,25 +952,48 @@ export default function Home() {
       const firebaseBulletins = await loadFromFirebase('bulletins')
       const firebaseShopping = await loadFromFirebase('shopping')
       const firebaseChores = await loadFromFirebase('chores')
-      
-      // Update state if Firebase has newer data
-      if (firebaseBulletins && firebaseBulletins.length !== bulletins.length) {
-        const prevLength = bulletins.length
-        setBulletins(firebaseBulletins)
-        // Show notification for any newly-added bulletin(s)
-        if (firebaseBulletins.length > prevLength) {
-          const newBulletin = firebaseBulletins[0]
-          if (newBulletin) {
-            const preview = (newBulletin.text || '').substring(0, 60)
-            showNotification(`📢 ${newBulletin.author}: ${preview}${newBulletin.text && newBulletin.text.length > 60 ? '...' : ''}`)
+
+      // Handle bulletin updates + notifications.
+      // We track which bulletin IDs this device has already seen in a ref,
+      // so we reliably fire exactly one notification per new bulletin, even
+      // on the device that posted it, and without stale-closure bugs.
+      if (firebaseBulletins) {
+        const list = Array.isArray(firebaseBulletins) ? firebaseBulletins : []
+        const currentIds = list.map(b => b && b.id).filter(Boolean)
+
+        // First load: initialize the ref without firing any notifications
+        if (seenBulletinIdsRef.current === null) {
+          seenBulletinIdsRef.current = new Set(currentIds)
+          // Still update state if different from local
+          if (JSON.stringify(list) !== JSON.stringify(bulletins)) {
+            setBulletins(list)
+          }
+        } else {
+          // Find bulletin IDs we haven't seen yet on this device
+          const newBulletins = list.filter(b => b && b.id && !seenBulletinIdsRef.current.has(b.id))
+          if (newBulletins.length > 0) {
+            // Update local state
+            setBulletins(list)
+            // Fire a notification for each new one (usually just 1 at a time)
+            newBulletins.forEach(nb => {
+              const preview = (nb.text || '').substring(0, 60)
+              const more = nb.text && nb.text.length > 60 ? '...' : ''
+              showNotification(`📢 ${nb.author}: ${preview}${more}`)
+              seenBulletinIdsRef.current.add(nb.id)
+            })
+          } else if (JSON.stringify(list) !== JSON.stringify(bulletins)) {
+            // No new bulletins but something changed (e.g., a delete) — just sync state
+            setBulletins(list)
+            // Refresh the seen set so deleted IDs don't linger
+            seenBulletinIdsRef.current = new Set(currentIds)
           }
         }
       }
-      
+
       if (firebaseShopping && JSON.stringify(firebaseShopping) !== JSON.stringify(shopping)) {
         setShopping(firebaseShopping)
       }
-      
+
       if (firebaseChores && JSON.stringify(firebaseChores) !== JSON.stringify(chores)) {
         setChores(firebaseChores)
       }
