@@ -351,7 +351,7 @@ const styles = `
   .bulletin-send:hover{background:#0066cc;}
   .bulletin-item{background:rgba(0,86,179,0.08);border:1px solid rgba(0,86,179,0.15);border-left:3px solid #0056b3;border-radius:0 8px 8px 0;padding:10px 12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:flex-start;}
   .bulletin-content{flex:1;}
-  .bulletin-text{font-size:12px;color:rgba(255,255,255,0.85);line-height:1.4;margin-bottom:4px;}
+  .bulletin-text{font-size:24px;color:rgba(255,255,255,0.95);line-height:1.35;margin-bottom:6px;font-weight:500;}
   .bulletin-meta{font-size:9px;color:rgba(0,86,179,0.6);letter-spacing:1px;}
   .bulletin-delete{background:none;border:none;color:rgba(255,80,80,0.4);cursor:pointer;font-size:14px;padding:0 4px;margin-left:8px;}
   .bulletin-delete:hover{color:rgba(255,80,80,0.8);}
@@ -418,6 +418,7 @@ const styles = `
     /* Bulletin items — prevent wide textareas from overflow */
     .bulletin-form { gap: 6px; }
     .bulletin-input { font-size: 13px; }
+    .bulletin-text { font-size: 20px; line-height: 1.3; }
 
     /* Chat interface */
     .chat-header { padding: 8px 12px; }
