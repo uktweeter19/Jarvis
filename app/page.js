@@ -351,7 +351,8 @@ const styles = `
   .bulletin-send:hover{background:#0066cc;}
   .bulletin-item{background:rgba(0,86,179,0.08);border:1px solid rgba(0,86,179,0.15);border-left:3px solid #0056b3;border-radius:0 8px 8px 0;padding:10px 12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:flex-start;}
   .bulletin-content{flex:1;}
-  .bulletin-text{font-size:24px;color:rgba(255,255,255,0.95);line-height:1.35;margin-bottom:6px;font-weight:500;}
+  .bulletin-text{font-size:12px;color:rgba(255,255,255,0.85);line-height:1.4;margin-bottom:4px;}
+  .bulletin-text-unread{font-size:24px;color:rgba(255,255,255,0.95);line-height:1.35;margin-bottom:6px;font-weight:500;}
   .bulletin-meta{font-size:9px;color:rgba(0,86,179,0.6);letter-spacing:1px;}
   .bulletin-delete{background:none;border:none;color:rgba(255,80,80,0.4);cursor:pointer;font-size:14px;padding:0 4px;margin-left:8px;}
   .bulletin-delete:hover{color:rgba(255,80,80,0.8);}
@@ -418,7 +419,7 @@ const styles = `
     /* Bulletin items — prevent wide textareas from overflow */
     .bulletin-form { gap: 6px; }
     .bulletin-input { font-size: 13px; }
-    .bulletin-text { font-size: 20px; line-height: 1.3; }
+    .bulletin-text-unread { font-size: 20px; line-height: 1.3; }
 
     /* Chat interface */
     .chat-header { padding: 8px 12px; }
@@ -535,6 +536,10 @@ export default function Home() {
   const [bulletins, setBulletins] = useState([])
   const [newBulletin, setNewBulletin] = useState('')
   const [bulletinAuthor, setBulletinAuthor] = useState('')
+  // Gift wish list state — organized by kid, e.g. { Lincoln: [...], Camille: [...] }
+  const [gifts, setGifts] = useState({})
+  const [newGiftKid, setNewGiftKid] = useState('')
+  const [newGiftItem, setNewGiftItem] = useState('')
   const [notification, setNotification] = useState('')
   const [dailyVerse, setDailyVerse] = useState('')
   const [dailyBibleFact, setDailyBibleFact] = useState('')
@@ -911,12 +916,14 @@ export default function Home() {
       const firebaseChores = await loadFromFirebase('chores')
       const firebaseShopping = await loadFromFirebase('shopping')
       const firebaseBulletins = await loadFromFirebase('bulletins')
+      const firebaseGifts = await loadFromFirebase('gifts', {})
       
       // Set state with Firebase data or fallbacks
       setChores(firebaseChores || DEFAULT_CHORES.Cicily ? 
         Object.fromEntries(KIDS.map(k => [k, (DEFAULT_CHORES[k] || []).map((t, i) => ({ id: i, text: t, done: false }))])) : {}
       )
       setShopping(firebaseShopping || [])
+      setGifts(firebaseGifts && typeof firebaseGifts === 'object' && !Array.isArray(firebaseGifts) ? firebaseGifts : {})
       const initialBulletins = Array.isArray(firebaseBulletins) ? firebaseBulletins : []
       setBulletins(initialBulletins)
       // Initialize the seen-set with everything already on the board so we
@@ -1034,10 +1041,18 @@ export default function Home() {
       if (firebaseChores && JSON.stringify(firebaseChores) !== JSON.stringify(chores)) {
         setChores(firebaseChores)
       }
+
+      // Sync gifts across devices
+      const firebaseGifts = await loadFromFirebase('gifts', {})
+      if (firebaseGifts && typeof firebaseGifts === 'object' && !Array.isArray(firebaseGifts)) {
+        if (JSON.stringify(firebaseGifts) !== JSON.stringify(gifts)) {
+          setGifts(firebaseGifts)
+        }
+      }
     }, 3000)
 
     return () => clearInterval(syncInterval)
-  }, [user, bulletins.length, shopping, chores])
+  }, [user, bulletins.length, shopping, chores, gifts])
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
 
@@ -1177,6 +1192,34 @@ export default function Home() {
     const updated = bulletins.filter(b => b.id !== id)
     setBulletins(updated)
     saveToFirebase('bulletins', updated)
+  }
+
+  // Gift wish list helpers
+  function saveGifts(updated) {
+    setGifts(updated)
+    saveToFirebase('gifts', updated)
+  }
+
+  function addGift() {
+    const text = newGiftItem.trim()
+    if (!text) return
+    if (!newGiftKid) {
+      alert('Please select whose wish list this gift is for.')
+      return
+    }
+    const kidList = Array.isArray(gifts[newGiftKid]) ? gifts[newGiftKid] : []
+    const updated = {
+      ...gifts,
+      [newGiftKid]: [...kidList, { id: Date.now(), text }]
+    }
+    saveGifts(updated)
+    setNewGiftItem('')
+  }
+
+  function deleteGift(kid, id) {
+    const kidList = Array.isArray(gifts[kid]) ? gifts[kid] : []
+    const updated = { ...gifts, [kid]: kidList.filter(g => g.id !== id) }
+    saveGifts(updated)
   }
 
   function saveShopping(updated) { 
@@ -1425,9 +1468,9 @@ export default function Home() {
 
         {/* NAV */}
         <div className="nav-tabs">
-          {['dashboard', 'chat', 'chores', 'shopping', 'calendar'].map(t => (
+          {['dashboard', 'chat', 'gifts', 'shopping', 'calendar'].map(t => (
             <button key={t} className={`nav-tab${tab === t ? ' active' : ''}`} onClick={() => setTab(t)}>
-              {t === 'dashboard' ? '⬡ HOME' : t === 'chat' ? '◈ CHAT' : t === 'chores' ? '✦ CHORES' : t === 'shopping' ? '⊕ SHOPPING' : '◷ CALENDAR'}
+              {t === 'dashboard' ? '⬡ HOME' : t === 'chat' ? '◈ CHAT' : t === 'gifts' ? '🎁 GIFTS' : t === 'shopping' ? '⊕ SHOPPING' : '◷ CALENDAR'}
             </button>
           ))}
         </div>
@@ -1472,8 +1515,8 @@ export default function Home() {
         {/* ── DASHBOARD TAB ── */}
         {tab === 'dashboard' && (
           <div className="dashboard">
-            <div className="dash-row cols-3">
-              {/* Date + Weather + Chores */}
+            <div className="dash-row" style={{ gridTemplateColumns: '1fr 1fr', gap: 10, display: 'grid' }}>
+              {/* Date */}
               <div className="dash-card">
                 <div className="dash-card-label">TODAY</div>
                 <div className="dash-date">{today.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).toUpperCase()}</div>
@@ -1489,12 +1532,6 @@ export default function Home() {
                     <div className="dash-sub">{weather.desc.toUpperCase()} · WIND {weather.wind}MPH</div>
                   </>
                 ) : <div className="weather-loading">SCANNING...</div>}
-              </div>
-              {/* Chore Progress */}
-              <div className="dash-card">
-                <div className="dash-card-label">CHORES</div>
-                <div className="dash-big">{totalChoresDone}<span style={{ fontSize: 14, color: 'rgba(0,180,255,0.4)' }}>/{totalChores}</span></div>
-                <div className="dash-sub">TASKS COMPLETED TODAY</div>
               </div>
             </div>
 
@@ -1585,7 +1622,7 @@ export default function Home() {
                       >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
                           <div className="bulletin-content">
-                            <div className="bulletin-text">{bulletin.text}</div>
+                            <div className={isFullySeen ? 'bulletin-text' : 'bulletin-text-unread'}>{bulletin.text}</div>
                             <div className="bulletin-meta">
                               <strong>{bulletin.author}</strong> · {new Date(bulletin.timestamp).toLocaleDateString('en-US', {
                                 month: 'short',
@@ -1823,27 +1860,6 @@ export default function Home() {
                     </div>
                   ))
                 )}
-              </div>
-            </div>
-
-            {/* Chore Summary - MOVED TO BOTTOM */}
-            <div className="dash-card">
-              <div className="dash-card-label">CHORE STATUS BY AGENT</div>
-              <div className="chore-summary">
-                {KIDS.map(kid => {
-                  const kidChores = chores[kid] || []
-                  const done = kidChores.filter(c => c.done).length
-                  const total = kidChores.length
-                  const allDone = total > 0 && done === total
-                  return (
-                    <div key={kid} className="chore-row">
-                      <span>{kid}</span>
-                      {allDone
-                        ? <span className="chore-done-badge">✓ Done</span>
-                        : <span className="chore-progress">{done}/{total}</span>}
-                    </div>
-                  )
-                })}
               </div>
             </div>
 
@@ -2101,38 +2117,62 @@ export default function Home() {
           </div>
         )}
 
-        {tab === 'chores' && (
+        {tab === 'gifts' && (
           <div className="chores-panel">
             <div className="section-header">
-              <div className="section-title">Chore Assignments</div>
-              <div className="section-count">{totalChoresDone}/{totalChores} done</div>
+              <div className="section-title">🎁 Gift Wish List</div>
+              <div className="section-count">{Object.values(gifts).flat().length} items</div>
             </div>
+
+            {/* Add form at top — pick who the gift is for */}
+            <div className="kid-block" style={{ background: 'rgba(0,86,179,0.08)', border: '1px solid rgba(0,86,179,0.25)' }}>
+              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', letterSpacing: 1, marginBottom: 6, textTransform: 'uppercase' }}>
+                Add a gift to someone's wish list
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <select
+                  value={newGiftKid}
+                  onChange={e => setNewGiftKid(e.target.value)}
+                  className="shop-cat-select"
+                  style={{ width: '100%', fontSize: 13 }}
+                >
+                  <option value="">-- Whose wish list? --</option>
+                  {KIDS.map(k => (
+                    <option key={k} value={k}>{k}</option>
+                  ))}
+                </select>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <input
+                    className="add-chore-input"
+                    placeholder={newGiftKid ? `What does ${newGiftKid} want?` : 'Select who first...'}
+                    value={newGiftItem}
+                    onChange={e => setNewGiftItem(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && addGift()}
+                  />
+                  <button className="add-btn" onClick={addGift}>+ ADD</button>
+                </div>
+              </div>
+            </div>
+
+            {/* One block per kid with their wish list */}
             {KIDS.map(kid => {
-              const kidChores = chores[kid] || []
-              const doneCount = kidChores.filter(c => c.done).length
+              const kidGifts = gifts[kid] || []
               return (
                 <div key={kid} className="kid-block">
                   <div className="kid-name">
                     {kid.toUpperCase()}
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                      <span className="kid-badge">{doneCount}/{kidChores.length}</span>
-                      <button className="reset-btn" onClick={() => resetChores(kid)}>RESET</button>
-                    </div>
+                    <span className="kid-badge" style={{ background: 'rgba(255,180,0,0.15)', color: '#ffb400', border: '1px solid rgba(255,180,0,0.3)' }}>
+                      {kidGifts.length} {kidGifts.length === 1 ? 'item' : 'items'}
+                    </span>
                   </div>
-                  {kidChores.length === 0 && <div className="empty-state">NO CHORES ASSIGNED</div>}
-                  {kidChores.map(c => (
-                    <div key={c.id} className="chore-item">
-                      <div className={`chore-check${c.done ? ' done' : ''}`} onClick={() => toggleChore(kid, c.id)} />
-                      <span className={`chore-text${c.done ? ' done' : ''}`}>{c.text}</span>
-                      <button className="chore-del" onClick={() => deleteChore(kid, c.id)}>×</button>
+                  {kidGifts.length === 0 && <div className="empty-state">NO GIFTS ON WISH LIST YET</div>}
+                  {kidGifts.map(g => (
+                    <div key={g.id} className="chore-item">
+                      <span style={{ fontSize: 18, marginRight: 4 }}>🎁</span>
+                      <span className="chore-text">{g.text}</span>
+                      <button className="chore-del" onClick={() => deleteGift(kid, g.id)}>×</button>
                     </div>
                   ))}
-                  <div className="add-chore-row">
-                    <input className="add-chore-input" placeholder="Add task..." value={newChore[kid] || ''}
-                      onChange={e => setNewChore({ ...newChore, [kid]: e.target.value })}
-                      onKeyDown={e => e.key === 'Enter' && addChore(kid)} />
-                    <button className="add-btn" onClick={() => addChore(kid)}>+ ADD</button>
-                  </div>
                 </div>
               )
             })}
