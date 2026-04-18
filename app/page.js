@@ -541,6 +541,7 @@ export default function Home() {
   const [newGiftKid, setNewGiftKid] = useState('')
   const [newGiftItem, setNewGiftItem] = useState('')
   const [newGiftImage, setNewGiftImage] = useState(null)
+  const [lightboxImage, setLightboxImage] = useState(null)
   const [notification, setNotification] = useState('')
   const [dailyVerse, setDailyVerse] = useState('')
   const [dailyBibleFact, setDailyBibleFact] = useState('')
@@ -1486,6 +1487,74 @@ export default function Home() {
           📢 {notification}
         </div>
       )}
+
+      {/* Lightbox — shows a tapped gift image full-size with a close button */}
+      {lightboxImage && (
+        <div
+          onClick={() => setLightboxImage(null)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.92)',
+            zIndex: 2000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 20,
+            cursor: 'pointer',
+            animation: 'notifySlide 0.2s ease-out'
+          }}
+        >
+          <button
+            onClick={(e) => { e.stopPropagation(); setLightboxImage(null) }}
+            style={{
+              position: 'absolute',
+              top: 20,
+              right: 20,
+              background: 'rgba(255,255,255,0.15)',
+              border: '1px solid rgba(255,255,255,0.3)',
+              color: '#fff',
+              fontSize: 24,
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              lineHeight: 1,
+              padding: 0
+            }}
+            title="Close"
+          >×</button>
+          <img
+            src={lightboxImage}
+            alt="Gift"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: '95%',
+              maxHeight: '90vh',
+              objectFit: 'contain',
+              borderRadius: 8,
+              boxShadow: '0 4px 40px rgba(0,180,255,0.3)'
+            }}
+          />
+          <div style={{
+            position: 'absolute',
+            bottom: 20,
+            left: 0,
+            right: 0,
+            textAlign: 'center',
+            fontSize: 11,
+            color: 'rgba(255,255,255,0.5)',
+            letterSpacing: 2,
+            textTransform: 'uppercase',
+            pointerEvents: 'none'
+          }}>
+            Tap anywhere to close
+          </div>
+        </div>
+      )}
       
       <div className="app">
 
@@ -2296,7 +2365,7 @@ export default function Home() {
                             flexShrink: 0,
                             cursor: 'pointer'
                           }}
-                          onClick={() => window.open(g.image, '_blank')}
+                          onClick={() => setLightboxImage(g.image)}
                           title="Tap to view larger"
                         />
                       ) : (
