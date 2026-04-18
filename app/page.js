@@ -952,12 +952,14 @@ export default function Home() {
       
       // Update state if Firebase has newer data
       if (firebaseBulletins && firebaseBulletins.length !== bulletins.length) {
+        const prevLength = bulletins.length
         setBulletins(firebaseBulletins)
-        // Show notification if new bulletin from someone else
-        if (firebaseBulletins.length > bulletins.length) {
+        // Show notification for any newly-added bulletin(s)
+        if (firebaseBulletins.length > prevLength) {
           const newBulletin = firebaseBulletins[0]
-          if (newBulletin && newBulletin.author !== user) {
-            showNotification(`New bulletin from ${newBulletin.author}: ${newBulletin.text.substring(0, 50)}...`)
+          if (newBulletin) {
+            const preview = (newBulletin.text || '').substring(0, 60)
+            showNotification(`📢 ${newBulletin.author}: ${preview}${newBulletin.text && newBulletin.text.length > 60 ? '...' : ''}`)
           }
         }
       }
@@ -1062,10 +1064,10 @@ export default function Home() {
 
   function showNotification(message) {
     setNotification(message)
-    // Auto-hide after 5 seconds
+    // Auto-hide after 8 seconds — longer so people actually notice it
     setTimeout(() => {
       setNotification('')
-    }, 5000)
+    }, 8000)
     
     // Try to show browser notification if allowed
     if ('Notification' in window && Notification.permission === 'granted') {
