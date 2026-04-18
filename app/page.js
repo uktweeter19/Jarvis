@@ -910,7 +910,15 @@ export default function Home() {
         Object.fromEntries(KIDS.map(k => [k, (DEFAULT_CHORES[k] || []).map((t, i) => ({ id: i, text: t, done: false }))])) : {}
       )
       setShopping(firebaseShopping || [])
-      setBulletins(firebaseBulletins || [])
+      const initialBulletins = Array.isArray(firebaseBulletins) ? firebaseBulletins : []
+      setBulletins(initialBulletins)
+      // Initialize the seen-set with everything already on the board so we
+      // don't notification-spam the user on page load. Any NEW bulletin that
+      // arrives after this point will trigger a pop-up.
+      seenBulletinIdsRef.current = new Set(
+        initialBulletins.map(b => b && b.id).filter(Boolean)
+      )
+      console.log('[JARVIS] Initialized seen-set with', seenBulletinIdsRef.current.size, 'bulletin IDs')
     }
 
     loadInitialData()
@@ -954,38 +962,36 @@ export default function Home() {
       const firebaseChores = await loadFromFirebase('chores')
 
       // Handle bulletin updates + notifications.
-      // We track which bulletin IDs this device has already seen in a ref,
-      // so we reliably fire exactly one notification per new bulletin, even
-      // on the device that posted it, and without stale-closure bugs.
       if (firebaseBulletins) {
         const list = Array.isArray(firebaseBulletins) ? firebaseBulletins : []
         const currentIds = list.map(b => b && b.id).filter(Boolean)
 
-        // First load: initialize the ref without firing any notifications
+        // If the seen-set isn't initialized yet (race condition during initial load),
+        // initialize it without firing any notifications.
         if (seenBulletinIdsRef.current === null) {
           seenBulletinIdsRef.current = new Set(currentIds)
-          // Still update state if different from local
-          if (JSON.stringify(list) !== JSON.stringify(bulletins)) {
-            setBulletins(list)
-          }
+          setBulletins(list)
         } else {
-          // Find bulletin IDs we haven't seen yet on this device
+          // Find bulletins this device hasn't seen yet
           const newBulletins = list.filter(b => b && b.id && !seenBulletinIdsRef.current.has(b.id))
           if (newBulletins.length > 0) {
-            // Update local state
+            console.log('[JARVIS] Found', newBulletins.length, 'new bulletin(s) — firing notification')
             setBulletins(list)
-            // Fire a notification for each new one (usually just 1 at a time)
+            // Fire a pop-up for each new one
             newBulletins.forEach(nb => {
               const preview = (nb.text || '').substring(0, 60)
               const more = nb.text && nb.text.length > 60 ? '...' : ''
               showNotification(`📢 ${nb.author}: ${preview}${more}`)
               seenBulletinIdsRef.current.add(nb.id)
             })
-          } else if (JSON.stringify(list) !== JSON.stringify(bulletins)) {
-            // No new bulletins but something changed (e.g., a delete) — just sync state
-            setBulletins(list)
-            // Refresh the seen set so deleted IDs don't linger
-            seenBulletinIdsRef.current = new Set(currentIds)
+          } else {
+            // No new bulletins — check if something else changed (like a delete)
+            // and sync local state quietly
+            const seenCount = seenBulletinIdsRef.current.size
+            if (list.length !== seenCount) {
+              setBulletins(list)
+              seenBulletinIdsRef.current = new Set(currentIds)
+            }
           }
         }
       }
@@ -1115,12 +1121,25 @@ export default function Home() {
       id: Date.now(),
       text,
       author: bulletinAuthor,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      seenBy: [bulletinAuthor] // author has inherently seen their own post
     }
     const updated = [bulletin, ...bulletins]
     setBulletins(updated)
     saveToFirebase('bulletins', updated)
     setNewBulletin('')
+  }
+
+  // Mark a bulletin as seen by a specific family member
+  function markBulletinSeen(bulletinId, personName) {
+    const updated = bulletins.map(b => {
+      if (b.id !== bulletinId) return b
+      const seenBy = Array.isArray(b.seenBy) ? b.seenBy : []
+      if (seenBy.includes(personName)) return b // already marked
+      return { ...b, seenBy: [...seenBy, personName] }
+    })
+    setBulletins(updated)
+    saveToFirebase('bulletins', updated)
   }
   
   function deleteBulletin(id) {
@@ -1516,25 +1535,97 @@ export default function Home() {
                 </div>
               ) : (
                 <div>
-                  {bulletins.slice(0, 5).map(bulletin => (
-                    <div key={bulletin.id} className="bulletin-item">
-                      <div className="bulletin-content">
-                        <div className="bulletin-text">{bulletin.text}</div>
-                        <div className="bulletin-meta">
-                          <strong>{bulletin.author}</strong> · {new Date(bulletin.timestamp).toLocaleDateString('en-US', { 
-                            month: 'short', 
-                            day: 'numeric', 
-                            hour: '2-digit', 
-                            minute: '2-digit' 
-                          })}
+                  {bulletins.slice(0, 5).map(bulletin => {
+                    const seenBy = Array.isArray(bulletin.seenBy) ? bulletin.seenBy : [bulletin.author]
+                    const unseenBy = family.filter(name => !seenBy.includes(name))
+                    const isFullySeen = unseenBy.length === 0
+                    return (
+                      <div
+                        key={bulletin.id}
+                        className="bulletin-item"
+                        style={!isFullySeen ? {
+                          background: 'rgba(255,180,0,0.10)',
+                          border: '1px solid rgba(255,180,0,0.35)',
+                          borderLeft: '3px solid #ffb400',
+                          boxShadow: '0 0 10px rgba(255,180,0,0.15)',
+                          flexDirection: 'column',
+                          alignItems: 'stretch'
+                        } : { flexDirection: 'column', alignItems: 'stretch' }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                          <div className="bulletin-content">
+                            <div className="bulletin-text">{bulletin.text}</div>
+                            <div className="bulletin-meta">
+                              <strong>{bulletin.author}</strong> · {new Date(bulletin.timestamp).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </div>
+                          </div>
+                          <button
+                            className="bulletin-delete"
+                            onClick={() => deleteBulletin(bulletin.id)}
+                          >×</button>
                         </div>
+                        {!isFullySeen && (
+                          <div style={{
+                            marginTop: 8,
+                            paddingTop: 8,
+                            borderTop: '1px dashed rgba(255,180,0,0.25)',
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: 6,
+                            alignItems: 'center'
+                          }}>
+                            <span style={{
+                              fontSize: 9,
+                              fontWeight: 700,
+                              letterSpacing: 1,
+                              color: 'rgba(255,180,0,0.8)',
+                              textTransform: 'uppercase',
+                              marginRight: 4
+                            }}>
+                              Tap when seen:
+                            </span>
+                            {unseenBy.map(name => (
+                              <button
+                                key={name}
+                                onClick={() => markBulletinSeen(bulletin.id, name)}
+                                style={{
+                                  background: '#ffb400',
+                                  color: '#1a1a1a',
+                                  border: 'none',
+                                  fontSize: 10,
+                                  fontWeight: 700,
+                                  padding: '4px 10px',
+                                  borderRadius: 10,
+                                  letterSpacing: 0.5,
+                                  cursor: 'pointer',
+                                  textTransform: 'uppercase',
+                                  boxShadow: '0 0 6px rgba(255,180,0,0.4)'
+                                }}
+                              >
+                                {name}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        {isFullySeen && seenBy.length > 1 && (
+                          <div style={{
+                            marginTop: 6,
+                            fontSize: 9,
+                            color: 'rgba(0,200,100,0.6)',
+                            letterSpacing: 1,
+                            textTransform: 'uppercase'
+                          }}>
+                            ✓ Seen by everyone
+                          </div>
+                        )}
                       </div>
-                      <button 
-                        className="bulletin-delete" 
-                        onClick={() => deleteBulletin(bulletin.id)}
-                      >×</button>
-                    </div>
-                  ))}
+                    )
+                  })}
                   {bulletins.length > 5 && (
                     <div style={{ fontSize: 10, color: 'rgba(0,180,255,0.4)', textAlign: 'center', padding: 4 }}>
                       +{bulletins.length - 5} more announcements
