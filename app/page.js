@@ -362,6 +362,12 @@ const styles = `
   .notification.hide{animation:notifySlideOut 0.3s ease-out forwards;}
   @keyframes notifySlideOut{from{transform:translateX(0);opacity:1;}to{transform:translateX(100%);opacity:0;}}
 
+  /* ── BULLETIN UNSEEN PULSE ── */
+  @keyframes bulletinUnseenPulse {
+    0%, 100% { box-shadow: 0 0 10px rgba(255,180,0,0.5); transform: scale(1); }
+    50% { box-shadow: 0 0 18px rgba(255,180,0,0.9); transform: scale(1.04); }
+  }
+
   /* ── CALENDAR ── */
   .calendar-panel{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:12px;}
   .calendar-iframe{width:100%;height:calc(100vh - 160px);border:0;border-radius:12px;background:rgba(255,255,255,0.95);}
@@ -1569,58 +1575,110 @@ export default function Home() {
                             onClick={() => deleteBulletin(bulletin.id)}
                           >×</button>
                         </div>
+
                         {!isFullySeen && (
-                          <div style={{
-                            marginTop: 8,
-                            paddingTop: 8,
-                            borderTop: '1px dashed rgba(255,180,0,0.25)',
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            gap: 6,
-                            alignItems: 'center'
-                          }}>
-                            <span style={{
-                              fontSize: 9,
+                          <>
+                            {/* Clear instruction line */}
+                            <div style={{
+                              marginTop: 10,
+                              paddingTop: 10,
+                              borderTop: '1px dashed rgba(255,180,0,0.3)',
+                              fontSize: 11,
+                              color: '#ffb400',
                               fontWeight: 700,
-                              letterSpacing: 1,
-                              color: 'rgba(255,180,0,0.8)',
-                              textTransform: 'uppercase',
-                              marginRight: 4
+                              letterSpacing: 0.5,
+                              textAlign: 'center',
+                              textTransform: 'uppercase'
                             }}>
-                              Tap when seen:
-                            </span>
-                            {unseenBy.map(name => (
-                              <button
-                                key={name}
-                                onClick={() => markBulletinSeen(bulletin.id, name)}
-                                style={{
-                                  background: '#ffb400',
-                                  color: '#1a1a1a',
-                                  border: 'none',
-                                  fontSize: 10,
+                              👇 Click your name below to confirm you've read this
+                            </div>
+
+                            {/* Unseen — needs to click */}
+                            <div style={{ marginTop: 8 }}>
+                              <div style={{
+                                fontSize: 9,
+                                fontWeight: 700,
+                                letterSpacing: 1,
+                                color: 'rgba(255,180,0,0.9)',
+                                textTransform: 'uppercase',
+                                marginBottom: 5
+                              }}>
+                                Hasn't read it yet:
+                              </div>
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                                {unseenBy.map(name => (
+                                  <button
+                                    key={name}
+                                    onClick={() => markBulletinSeen(bulletin.id, name)}
+                                    style={{
+                                      background: 'transparent',
+                                      color: '#ffb400',
+                                      border: '2px solid #ffb400',
+                                      fontSize: 11,
+                                      fontWeight: 700,
+                                      padding: '6px 14px',
+                                      borderRadius: 16,
+                                      letterSpacing: 0.5,
+                                      cursor: 'pointer',
+                                      textTransform: 'uppercase',
+                                      boxShadow: '0 0 10px rgba(255,180,0,0.5)',
+                                      animation: 'bulletinUnseenPulse 2s ease-in-out infinite'
+                                    }}
+                                  >
+                                    {name}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Seen — already confirmed */}
+                            {seenBy.length > 0 && (
+                              <div style={{ marginTop: 10 }}>
+                                <div style={{
+                                  fontSize: 9,
                                   fontWeight: 700,
-                                  padding: '4px 10px',
-                                  borderRadius: 10,
-                                  letterSpacing: 0.5,
-                                  cursor: 'pointer',
+                                  letterSpacing: 1,
+                                  color: 'rgba(0,200,100,0.7)',
                                   textTransform: 'uppercase',
-                                  boxShadow: '0 0 6px rgba(255,180,0,0.4)'
-                                }}
-                              >
-                                {name}
-                              </button>
-                            ))}
-                          </div>
+                                  marginBottom: 5
+                                }}>
+                                  ✓ Already read by:
+                                </div>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                                  {seenBy.map(name => (
+                                    <span
+                                      key={name}
+                                      style={{
+                                        background: 'rgba(0,200,100,0.12)',
+                                        color: 'rgba(0,200,100,0.85)',
+                                        border: '1px solid rgba(0,200,100,0.3)',
+                                        fontSize: 10,
+                                        fontWeight: 600,
+                                        padding: '4px 10px',
+                                        borderRadius: 14,
+                                        letterSpacing: 0.5,
+                                        textTransform: 'uppercase'
+                                      }}
+                                    >
+                                      ✓ {name}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </>
                         )}
+
                         {isFullySeen && seenBy.length > 1 && (
                           <div style={{
                             marginTop: 6,
-                            fontSize: 9,
-                            color: 'rgba(0,200,100,0.6)',
+                            fontSize: 10,
+                            color: 'rgba(0,200,100,0.7)',
                             letterSpacing: 1,
-                            textTransform: 'uppercase'
+                            textTransform: 'uppercase',
+                            fontWeight: 600
                           }}>
-                            ✓ Seen by everyone
+                            ✓ Read by everyone
                           </div>
                         )}
                       </div>
