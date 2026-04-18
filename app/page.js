@@ -527,6 +527,7 @@ export default function Home() {
   const [newShopCat, setNewShopCat] = useState('OTHER')
   const [bulletins, setBulletins] = useState([])
   const [newBulletin, setNewBulletin] = useState('')
+  const [bulletinAuthor, setBulletinAuthor] = useState('')
   const [notification, setNotification] = useState('')
   const [dailyVerse, setDailyVerse] = useState('')
   const [dailyBibleFact, setDailyBibleFact] = useState('')
@@ -1078,10 +1079,14 @@ export default function Home() {
   function addBulletin() {
     const text = newBulletin.trim()
     if (!text) return
+    if (!bulletinAuthor) {
+      alert('Please select who you are before posting.')
+      return
+    }
     const bulletin = {
       id: Date.now(),
       text,
-      author: user,
+      author: bulletinAuthor,
       timestamp: new Date().toISOString()
     }
     const updated = [bulletin, ...bulletins]
@@ -1444,10 +1449,26 @@ export default function Home() {
               </div>
               
               {/* Quick Post Form */}
+              <div style={{ marginBottom: 8 }}>
+                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', letterSpacing: 1, marginBottom: 4, textTransform: 'uppercase' }}>
+                  Posting as
+                </div>
+                <select
+                  value={bulletinAuthor}
+                  onChange={e => setBulletinAuthor(e.target.value)}
+                  className="shop-cat-select"
+                  style={{ width: '100%', fontSize: 13 }}
+                >
+                  <option value="">-- Select your name --</option>
+                  {family.map(f => (
+                    <option key={f} value={f}>{f}</option>
+                  ))}
+                </select>
+              </div>
               <div className="bulletin-form">
                 <textarea 
                   className="bulletin-input" 
-                  placeholder={`Post an announcement as ${user}...`}
+                  placeholder={bulletinAuthor ? `Post an announcement as ${bulletinAuthor}...` : 'Select who you are first...'}
                   value={newBulletin}
                   onChange={e => setNewBulletin(e.target.value)}
                   onKeyDown={e => {
