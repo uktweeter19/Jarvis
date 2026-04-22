@@ -1144,7 +1144,7 @@ export default function Home() {
     if (orbRafRef.current) cancelAnimationFrame(orbRafRef.current)
 
     const dpr = window.devicePixelRatio || 1
-    const SIZE = 300
+    const SIZE = 280
     canvas.width = SIZE * dpr
     canvas.height = SIZE * dpr
     canvas.style.width = SIZE + 'px'
@@ -1153,44 +1153,39 @@ export default function Home() {
     ctx.scale(dpr, dpr)
     const cx = SIZE / 2, cy = SIZE / 2
 
-    // 12 orbital streams — irregular radii and speeds for organic cloud look
-    const orbitCfgs = [
-      { tx: 1.22, ty: 0.00, r: 78, spd: 1.00 },
-      { tx: 0.00, ty: 1.10, r: 72, spd: 0.82 },
-      { tx: 0.70, ty: 0.90, r: 84, spd: 1.18 },
-      { tx: -0.60, ty: -0.80, r: 68, spd: 0.93 },
-      { tx: 0.30, ty: -1.00, r: 76, spd: 1.06 },
-      { tx: -0.90, ty: 0.40, r: 88, spd: 0.73 },
-      { tx: 1.50, ty: 0.55, r: 70, spd: 1.25 },
-      { tx: -0.25, ty: 1.35, r: 80, spd: 0.88 },
-      { tx: 0.82, ty: -0.35, r: 66, spd: 1.12 },
-      { tx: -1.10, ty: -0.52, r: 86, spd: 0.78 },
-      { tx: 0.45, ty: 1.60, r: 74, spd: 0.96 },
-      { tx: -1.30, ty: 0.20, r: 90, spd: 0.68 },
-    ]
-
-    const particles = []
-    orbitCfgs.forEach((cfg, oi) => {
-      const count = 14 + Math.floor(Math.random() * 6)
-      for (let i = 0; i < count; i++) {
-        particles.push({
-          angle: (i / count) * Math.PI * 2 + oi * 0.6,
-          cfg,
-          trail: [],
-          size: 0.7 + Math.random() * 1.6,
-          wobble: Math.random() * Math.PI * 2,
-          wobbleSpd: 0.8 + Math.random() * 1.2
-        })
+    // Free-floating cloud particles — no orbital paths
+    const NPART = 200
+    const particles = Array.from({ length: NPART }, () => {
+      const angle = Math.random() * Math.PI * 2
+      const dist = Math.pow(Math.random(), 0.45) * 88
+      const tilt = (Math.random() - 0.5) * Math.PI
+      const bX = dist * Math.cos(angle) * Math.cos(tilt)
+      const bY = dist * Math.sin(tilt) * 0.75
+      const bZ = dist * Math.sin(angle) * Math.cos(tilt)
+      const colorR = Math.random()
+      return {
+        bX, bY, bZ,
+        // Two independent drift sinusoids per axis for organic motion
+        ax: (Math.random()-0.5)*18, bx: (Math.random()-0.5)*10,
+        ay: (Math.random()-0.5)*14, by: (Math.random()-0.5)*8,
+        fx: 0.06+Math.random()*0.18, gx: 0.18+Math.random()*0.28,
+        fy: 0.05+Math.random()*0.16, gy: 0.15+Math.random()*0.25,
+        px: Math.random()*Math.PI*2, py: Math.random()*Math.PI*2,
+        qx: Math.random()*Math.PI*2, qy: Math.random()*Math.PI*2,
+        size: 0.7 + Math.random() * 2.4,
+        alpha: 0.25 + Math.random() * 0.75,
+        dist,
+        // color: white-hot core particles, gold mid, orange-red outer
+        colorR
       }
     })
 
-    // Drifting cloud blob offsets — these shift over time for organic nebula look
-    const blobs = Array.from({ length: 6 }, () => ({
-      ox: (Math.random() - 0.5) * 40,
-      oy: (Math.random() - 0.5) * 40,
+    // Large volumetric cloud blobs — create the nebula volume
+    const blobs = Array.from({ length: 9 }, () => ({
+      ox: (Math.random()-0.5) * 55, oy: (Math.random()-0.5) * 45,
       phase: Math.random() * Math.PI * 2,
-      spd: 0.4 + Math.random() * 0.6,
-      r: 35 + Math.random() * 30
+      sx: 0.15+Math.random()*0.3, sy: 0.12+Math.random()*0.25,
+      r: 38 + Math.random() * 52
     }))
 
     let t = 0
@@ -1199,94 +1194,65 @@ export default function Home() {
       ctx.clearRect(0, 0, SIZE, SIZE)
       const speedMul = orbSpeedMultRef.current
       const brightness = orbBrightnessRef.current
-      t += 0.012 * speedMul
+      t += 0.007 * speedMul
 
-      // Outer purple nebula glow
-      const outerGlow = ctx.createRadialGradient(cx, cy, 60, cx, cy, 152)
-      outerGlow.addColorStop(0, 'rgba(100,0,180,0.0)')
-      outerGlow.addColorStop(0.5, `rgba(80,0,160,${0.14 * brightness})`)
-      outerGlow.addColorStop(1, 'rgba(50,0,120,0)')
-      ctx.fillStyle = outerGlow
+      // Layer 1 — outer atmospheric purple haze
+      const atmos = ctx.createRadialGradient(cx, cy, 20, cx, cy, 148)
+      atmos.addColorStop(0, 'rgba(120,0,200,0)')
+      atmos.addColorStop(0.45, `rgba(75,0,155,${0.09 * brightness})`)
+      atmos.addColorStop(0.8, `rgba(40,0,100,${0.06 * brightness})`)
+      atmos.addColorStop(1, 'rgba(10,0,40,0)')
+      ctx.fillStyle = atmos
       ctx.fillRect(0, 0, SIZE, SIZE)
 
-      // Drifting nebula cloud blobs — organic, shifting golden clouds
+      // Layer 2 — drifting volumetric cloud blobs
       blobs.forEach(b => {
-        const bx = cx + b.ox * Math.sin(t * b.spd + b.phase)
-        const by = cy + b.oy * Math.cos(t * b.spd * 0.7 + b.phase)
-        const grad = ctx.createRadialGradient(bx, by, 0, bx, by, b.r)
-        grad.addColorStop(0, `rgba(255,190,20,${0.18 * brightness})`)
-        grad.addColorStop(0.5, `rgba(200,80,0,${0.07 * brightness})`)
-        grad.addColorStop(1, 'rgba(150,20,0,0)')
-        ctx.fillStyle = grad
-        ctx.beginPath()
-        ctx.arc(bx, by, b.r, 0, Math.PI * 2)
-        ctx.fill()
+        const bx = cx + b.ox * Math.sin(t * b.sx + b.phase)
+        const by = cy + b.oy * Math.cos(t * b.sy + b.phase * 1.4)
+        const g = ctx.createRadialGradient(bx, by, 0, bx, by, b.r)
+        g.addColorStop(0, `rgba(255,185,25,${0.13 * brightness})`)
+        g.addColorStop(0.38, `rgba(210,80,5,${0.065 * brightness})`)
+        g.addColorStop(0.72, `rgba(130,20,60,${0.03 * brightness})`)
+        g.addColorStop(1, 'rgba(60,0,80,0)')
+        ctx.fillStyle = g
+        ctx.beginPath(); ctx.arc(bx, by, b.r, 0, Math.PI * 2); ctx.fill()
       })
 
-      // Inner amber core — soft and diffuse like a real energy cloud
-      const pulse = 1 + 0.06 * Math.sin(t * 2.2)
-      const coreR = 44 * pulse
-      const core = ctx.createRadialGradient(cx - 8, cy - 8, 0, cx, cy, coreR)
-      core.addColorStop(0, `rgba(255,255,220,${brightness})`)
-      core.addColorStop(0.18, `rgba(255,220,60,${brightness * 0.9})`)
-      core.addColorStop(0.45, `rgba(255,130,10,${brightness * 0.55})`)
-      core.addColorStop(0.72, `rgba(180,40,120,${brightness * 0.22})`)
-      core.addColorStop(1, 'rgba(80,0,160,0)')
-      ctx.beginPath()
-      ctx.arc(cx, cy, coreR, 0, Math.PI * 2)
-      ctx.fillStyle = core
-      ctx.fill()
+      // Layer 3 — bright pulsing core
+      const pulse = 1 + 0.07 * Math.sin(t * 2.6) + 0.03 * Math.sin(t * 5.8)
+      const coreR = 40 * pulse
+      const core = ctx.createRadialGradient(cx-5, cy-5, 0, cx, cy, coreR * 2.2)
+      core.addColorStop(0, `rgba(255,255,235,${brightness})`)
+      core.addColorStop(0.12, `rgba(255,235,80,${brightness * 0.95})`)
+      core.addColorStop(0.3, `rgba(255,145,15,${brightness * 0.7})`)
+      core.addColorStop(0.55, `rgba(210,50,100,${brightness * 0.28})`)
+      core.addColorStop(0.8, `rgba(100,0,180,${brightness * 0.1})`)
+      core.addColorStop(1, 'rgba(40,0,120,0)')
+      ctx.beginPath(); ctx.arc(cx, cy, coreR * 2.2, 0, Math.PI * 2)
+      ctx.fillStyle = core; ctx.fill()
 
-      // Orbital energy streams with organic wobble
+      // Layer 4 — free-floating cloud particles (no trails, no orbits)
       particles.forEach(p => {
-        p.angle += 0.005 * p.cfg.spd * speedMul
-        p.wobble += 0.02 * p.wobbleSpd * speedMul
-
-        // Base orbit position
-        const wobbleAmt = 6 * Math.sin(p.wobble)
-        const r = p.cfg.r + wobbleAmt
-        const x0 = Math.cos(p.angle) * r
-        const y0 = Math.sin(p.angle) * r
-
-        // 3D rotation
-        const x1 = x0 * Math.cos(p.cfg.ty)
-        const z1 = -x0 * Math.sin(p.cfg.ty)
-        const y2 = y0 * Math.cos(p.cfg.tx) - z1 * Math.sin(p.cfg.tx)
-        const z2 = y0 * Math.sin(p.cfg.tx) + z1 * Math.cos(p.cfg.tx)
-
-        // Perspective
-        const sc = 310 / (310 - z2)
-        const px = cx + x1 * sc
-        const py = cy + y2 * sc
-        const depth = Math.max(0.06, Math.min(1, (z2 + r) / (r * 2)))
-
-        p.trail.push({ x: px, y: py, d: depth })
-        if (p.trail.length > 38) p.trail.shift()
-
-        // Long, cloud-like glowing trail
-        for (let i = 1; i < p.trail.length; i++) {
-          const frac = i / p.trail.length
-          const d = p.trail[i].d
-          const alpha = frac * d * 0.55
-          // Color shifts from deep orange at tail to bright gold at head
-          const rr = 255
-          const gg = Math.round(100 + 130 * frac)
-          const bb = Math.round(20 * frac)
-          ctx.beginPath()
-          ctx.moveTo(p.trail[i - 1].x, p.trail[i - 1].y)
-          ctx.lineTo(p.trail[i].x, p.trail[i].y)
-          ctx.strokeStyle = `rgba(${rr},${gg},${bb},${alpha})`
-          ctx.lineWidth = Math.max(0.2, p.size * frac * sc * 0.6)
-          ctx.stroke()
-        }
-
-        // Particle glow dot
+        const dx = p.ax * Math.sin(t * p.fx + p.px) + p.bx * Math.sin(t * p.gx + p.qx)
+        const dy = p.ay * Math.cos(t * p.fy + p.py) + p.by * Math.cos(t * p.gy + p.qy)
+        const ppx = cx + p.bX + dx
+        const ppy = cy + p.bY + dy
+        // Depth factor from Z so particles behind center are dimmer
+        const depth = 0.35 + 0.65 * (p.bZ + 88) / 176
+        const distFactor = p.dist / 88
+        // Color: white-hot near center, gold mid, orange-purple at edges
+        const rr = 255
+        const gg = p.colorR < 0.55
+          ? Math.round(220 - 80 * distFactor)
+          : Math.round(130 - 60 * distFactor)
+        const bb = p.colorR > 0.8 ? Math.round(180 * (1 - distFactor)) : Math.round(distFactor * 30)
+        const a = p.alpha * depth * brightness * (0.6 + 0.4 * (1 - distFactor))
         ctx.save()
-        ctx.shadowBlur = 14 * depth
-        ctx.shadowColor = `rgba(255,210,0,${depth})`
+        ctx.shadowBlur = (6 + p.size * 4) * depth
+        ctx.shadowColor = `rgba(255,175,20,${a * 0.7})`
         ctx.beginPath()
-        ctx.arc(px, py, Math.max(0.4, p.size * sc * depth * 0.9), 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(255,240,100,${0.5 + depth * 0.5})`
+        ctx.arc(ppx, ppy, Math.max(0.4, p.size * depth * 0.85), 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(${rr},${gg},${bb},${Math.min(1, a)})`
         ctx.fill()
         ctx.restore()
       })
@@ -1616,25 +1582,33 @@ export default function Home() {
 
   function speakBrowser(clean) {
     if (typeof window === 'undefined' || !window.speechSynthesis) { afterSpeak(); return }
-    setTimeout(() => {
+    const doSpeak = () => {
       const utter = new SpeechSynthesisUtterance(clean)
       utter.rate = 0.90
       utter.pitch = 0.68
       utter.volume = 1.0
       const voices = window.speechSynthesis.getVoices()
-      const v = voices.find(v => v.name === 'Daniel')
-        || voices.find(v => v.name === 'Arthur')
+      // Strict priority order — pick ONE voice and stick with it
+      const v = voices.find(v => v.name === 'Daniel')           // macOS/iOS British male
+        || voices.find(v => v.name === 'Arthur')                // macOS British male
         || voices.find(v => v.name === 'Google UK English Male')
         || voices.find(v => v.name.includes('Microsoft George'))
         || voices.find(v => v.name.includes('Microsoft Harry'))
         || voices.find(v => v.lang === 'en-GB' && !v.name.toLowerCase().includes('female'))
-        || voices.find(v => v.lang.startsWith('en') && !v.name.toLowerCase().includes('female'))
+        || voices.find(v => v.lang === 'en-US' && v.name.includes('Male'))
+        || null
       if (v) utter.voice = v
       utter.onstart = () => setIsSpeaking(true)
       utter.onend = afterSpeak
       utter.onerror = afterSpeak
       window.speechSynthesis.speak(utter)
-    }, 50)
+    }
+    // Voices may not be loaded yet on first call
+    if (window.speechSynthesis.getVoices().length > 0) {
+      setTimeout(doSpeak, 50)
+    } else {
+      window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.onvoiceschanged = null; setTimeout(doSpeak, 50) }
+    }
   }
 
   function speak(text) {
@@ -1816,7 +1790,9 @@ export default function Home() {
             const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'America/New_York' })
             parts.push(`TODAY'S CALENDAR (${today}):\n` + d.events.map(e => `• ${e.allDay ? 'All day' : e.time} — ${e.summary}`).join('\n'))
           } else if (d.error) {
-            parts.push('CALENDAR: ' + d.error)
+            parts.push('CALENDAR ERROR: ' + d.error)
+          } else if (d.errors?.length) {
+            parts.push('CALENDAR ACCESS ERROR: ' + d.errors.join('; ') + ' — The calendar may need to be made public in Google Calendar settings.')
           } else {
             parts.push('CALENDAR: No events scheduled for today.')
           }
@@ -2105,13 +2081,13 @@ export default function Home() {
               justifyContent: 'flex-end',
               paddingRight: 4,
               fontSize: 11,
-              color: 'rgba(0,180,255,0.6)',
+              color: 'rgba(255,180,0,0.55)',
               letterSpacing: 1,
               fontWeight: 600,
               textTransform: 'uppercase',
               whiteSpace: 'nowrap'
             }}>
-              Chatting as <span style={{ color: '#00d4ff', marginLeft: 6 }}>{user}</span>
+              Chatting as <span style={{ color: '#ffcc00', marginLeft: 6 }}>{user}</span>
             </div>
           </div>
         )}
@@ -2733,9 +2709,9 @@ export default function Home() {
                 <button 
                   onClick={() => document.getElementById('image-upload').click()}
                   style={{
-                    width: '40px',
-                    height: '40px',
-                    background: 'linear-gradient(135deg,#003366,#0066cc)',
+                    width: '42px',
+                    height: '42px',
+                    background: 'linear-gradient(135deg,#7a3800,#ff8c00)',
                     border: 'none',
                     cursor: 'pointer',
                     display: 'flex',
@@ -2744,7 +2720,7 @@ export default function Home() {
                     clipPath: 'polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%)',
                     color: 'white',
                     fontSize: '16px',
-                    boxShadow: '0 0 15px rgba(0,150,255,0.3)',
+                    boxShadow: '0 0 16px rgba(255,140,0,0.35)',
                     marginRight: '8px'
                   }}
                   title="Upload math problem image"

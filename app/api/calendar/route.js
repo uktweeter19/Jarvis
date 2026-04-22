@@ -14,10 +14,23 @@ export async function GET() {
   try {
     const now = new Date()
     const tz = 'America/New_York'
-    const startOfDay = new Date(now.toLocaleDateString('en-US', { timeZone: tz }))
+
+    // Get today's date in Eastern time (YYYY-MM-DD) using Swedish locale which outputs ISO format
+    const dateStr = new Intl.DateTimeFormat('sv', { timeZone: tz }).format(now)
+
+    // Get the UTC offset for Eastern right now — handles DST automatically
+    const offsetPart = new Intl.DateTimeFormat('en', {
+      timeZone: tz, timeZoneName: 'shortOffset'
+    }).formatToParts(now).find(p => p.type === 'timeZoneName')?.value || 'GMT-4'
+    const offsetHours = parseInt(offsetPart.replace('GMT', '')) || -4
+    const offsetMs = offsetHours * 3600 * 1000
+
+    // Eastern midnight = UTC midnight shifted by offset
+    const startOfDay = new Date(new Date(dateStr + 'T00:00:00.000Z').getTime() - offsetMs)
     const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000)
 
     const allEvents = []
+    const errors = []
 
     await Promise.all(CALENDARS.map(async calId => {
       const params = new URLSearchParams({
@@ -31,8 +44,11 @@ export async function GET() {
       const res = await fetch(
         `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events?${params}`
       )
-      if (!res.ok) return
       const data = await res.json()
+      if (!res.ok) {
+        errors.push(`${calId}: ${res.status} — ${data?.error?.message || res.statusText}`)
+        return
+      }
       for (const item of (data.items || [])) {
         const allDay = !item.start?.dateTime
         let timeStr = ''
@@ -45,14 +61,15 @@ export async function GET() {
       }
     }))
 
-    // All-day events first, then by time
     allEvents.sort((a, b) => {
       if (a.allDay && !b.allDay) return -1
       if (!a.allDay && b.allDay) return 1
       return (a.time || '').localeCompare(b.time || '')
     })
 
-    return NextResponse.json({ events: allEvents })
+    const result = { events: allEvents }
+    if (errors.length) result.errors = errors
+    return NextResponse.json(result)
   } catch (e) {
     return NextResponse.json({ error: e.message, events: [] })
   }
