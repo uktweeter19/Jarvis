@@ -1596,6 +1596,15 @@ export default function Home() {
     const textToSend = typeof voiceInput === 'string' ? voiceInput : input
     if ((!textToSend.trim() && !uploadedImage) || loading) return
 
+    // iOS Safari blocks speechSynthesis outside a user-gesture context.
+    // Speaking an empty utterance here (inside the tap handler) unlocks
+    // the audio pipeline so the real speak() call works after the await.
+    if (voiceEnabledRef.current && typeof window !== 'undefined' && window.speechSynthesis) {
+      const primer = new SpeechSynthesisUtterance('')
+      window.speechSynthesis.speak(primer)
+      window.speechSynthesis.cancel()
+    }
+
     // Create user message with optional image
     const userMsg = {
       role: 'user',
