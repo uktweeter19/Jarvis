@@ -224,8 +224,33 @@ const styles = `
   .log-entry.assistant{color:#7eb8d8;}
   @keyframes logFade{from{opacity:0;}to{opacity:0.35;}}
   .log-sep{height:1px;margin:4px 20px 0;background:linear-gradient(90deg,transparent,rgba(0,180,255,0.2),transparent);flex-shrink:0;}
-  .jarvis-display{flex:1;display:flex;flex-direction:column;justify-content:center;padding:16px 24px;position:relative;overflow:hidden;}
-  .waveform{display:flex;align-items:center;gap:3px;height:28px;margin-bottom:12px;}
+  /* ── ORB ── */
+  .jarvis-display{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 24px 12px;position:relative;overflow:hidden;}
+  .orb-section{display:flex;flex-direction:column;align-items:center;flex-shrink:0;margin-bottom:10px;}
+  .orb{position:relative;width:150px;height:150px;}
+  .orb-core{position:absolute;inset:28px;border-radius:50%;background:radial-gradient(circle at 38% 35%,#60d0ff,#0077ff,#001a66);box-shadow:0 0 26px #00b4ff,0 0 55px rgba(0,180,255,0.45),0 0 90px rgba(0,60,200,0.2);animation:orbPulse 2.8s ease-in-out infinite;}
+  .orb-ring{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(0,180,255,0.4);box-shadow:0 0 6px rgba(0,180,255,0.2);}
+  .orb-ring-1{animation:ring1 9s linear infinite;}
+  .orb-ring-2{animation:ring2 13s linear infinite;}
+  .orb-ring-3{animation:ring3 11s linear infinite;}
+  .orb-ring-4{animation:ring4 16s linear infinite reverse;}
+  @keyframes ring1{from{transform:rotateX(70deg) rotateZ(0deg);}to{transform:rotateX(70deg) rotateZ(360deg);}}
+  @keyframes ring2{from{transform:rotateY(65deg) rotateZ(0deg);}to{transform:rotateY(65deg) rotateZ(360deg);}}
+  @keyframes ring3{from{transform:rotateX(40deg) rotateY(55deg) rotateZ(0deg);}to{transform:rotateX(40deg) rotateY(55deg) rotateZ(360deg);}}
+  @keyframes ring4{from{transform:rotateX(-35deg) rotateY(-50deg) rotateZ(0deg);}to{transform:rotateX(-35deg) rotateY(-50deg) rotateZ(360deg);}}
+  @keyframes orbPulse{0%,100%{box-shadow:0 0 26px #00b4ff,0 0 55px rgba(0,180,255,0.45),0 0 90px rgba(0,60,200,0.2);}50%{box-shadow:0 0 42px #00d4ff,0 0 85px rgba(0,212,255,0.65),0 0 130px rgba(0,100,255,0.3);}}
+  .orb.active .orb-ring-1{animation-duration:3.5s;}
+  .orb.active .orb-ring-2{animation-duration:5s;}
+  .orb.active .orb-ring-3{animation-duration:4s;}
+  .orb.active .orb-ring-4{animation-duration:6s;}
+  .orb.active .orb-core{animation-duration:1s;}
+  .orb.processing .orb-ring-1{animation-duration:1.4s;}
+  .orb.processing .orb-ring-2{animation-duration:2s;}
+  .orb.processing .orb-ring-3{animation-duration:1.7s;}
+  .orb.processing .orb-ring-4{animation-duration:2.4s;}
+  .orb.processing .orb-core{animation-duration:0.5s;}
+  /* ── WAVEFORM ── */
+  .waveform{display:flex;align-items:center;gap:3px;height:22px;margin-bottom:10px;}
   .wave-bar{width:3px;border-radius:2px;background:linear-gradient(to top,rgba(0,68,204,0.7),rgba(0,212,255,0.95));}
   .waveform.idle .wave-bar{animation:waveIdle 3s ease-in-out infinite;}
   .waveform.active .wave-bar{animation:waveActive 0.55s ease-in-out infinite;}
@@ -242,22 +267,18 @@ const styles = `
   .wave-bar:nth-child(10){animation-delay:0.63s;}
   .wave-bar:nth-child(11){animation-delay:0.7s;}
   .wave-bar:nth-child(12){animation-delay:0.77s;}
-  @keyframes waveIdle{0%,100%{height:3px;opacity:0.2;}50%{height:9px;opacity:0.4;}}
-  @keyframes waveActive{0%,100%{height:4px;opacity:0.6;}50%{height:26px;opacity:1;box-shadow:0 0 4px rgba(0,212,255,0.5);}}
-  .j-label{font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(0,180,255,0.35);letter-spacing:4px;margin-bottom:6px;text-transform:uppercase;}
-  .response-text{font-family:'Share Tech Mono',monospace;font-size:13px;line-height:1.85;color:#c8e6ff;white-space:pre-wrap;width:100%;overflow-y:auto;max-height:52vh;}
+  @keyframes waveIdle{0%,100%{height:3px;opacity:0.2;}50%{height:8px;opacity:0.35;}}
+  @keyframes waveActive{0%,100%{height:4px;opacity:0.6;}50%{height:20px;opacity:1;box-shadow:0 0 4px rgba(0,212,255,0.5);}}
+  .j-label{font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(0,180,255,0.35);letter-spacing:4px;margin-bottom:6px;text-transform:uppercase;text-align:center;width:100%;}
+  .response-text{font-family:'Share Tech Mono',monospace;font-size:13px;line-height:1.85;color:#c8e6ff;white-space:pre-wrap;width:100%;overflow-y:auto;max-height:38vh;}
   .typing-cursor{display:inline-block;width:2px;height:13px;background:#00d4ff;margin-left:1px;vertical-align:middle;animation:cursorBlink 0.7s step-end infinite;box-shadow:0 0 5px #00d4ff;}
   @keyframes cursorBlink{0%,100%{opacity:1;}50%{opacity:0;}}
-  .proc-wrap{display:flex;flex-direction:column;align-items:flex-start;gap:10px;}
+  .proc-wrap{display:flex;flex-direction:column;align-items:center;gap:8px;}
   .proc-label{font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(0,180,255,0.5);letter-spacing:5px;text-transform:uppercase;animation:procBlink 1.4s ease-in-out infinite;}
   @keyframes procBlink{0%,100%{opacity:0.35;}50%{opacity:1;}}
-  .jarvis-idle{width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;opacity:0.55;text-align:center;}
-  .jarvis-idle-ring{width:76px;height:76px;position:relative;margin:0 auto 4px;}
-  .jarvis-idle-ring::before{content:'';position:absolute;inset:0;border-radius:50%;border:1px solid rgba(0,180,255,0.35);animation:reactorSpin 6s linear infinite;}
-  .jarvis-idle-ring::after{content:'';position:absolute;inset:8px;border-radius:50%;border:1px solid rgba(0,180,255,0.2);animation:reactorSpin 3s linear infinite reverse;}
-  .jarvis-idle-core{position:absolute;inset:18px;border-radius:50%;background:radial-gradient(circle,#00d4ff,#0044cc);box-shadow:0 0 16px #00b4ff;animation:corePulse 2s ease-in-out infinite;}
+  .jarvis-idle{display:flex;flex-direction:column;align-items:center;gap:6px;opacity:0.6;text-align:center;}
   .jarvis-idle h2{font-family:'Rajdhani',sans-serif;font-size:12px;letter-spacing:6px;color:#00b4ff;}
-  .jarvis-idle p{font-size:10px;color:rgba(0,180,255,0.55);max-width:230px;line-height:1.8;}
+  .jarvis-idle p{font-size:10px;color:rgba(0,180,255,0.55);max-width:220px;line-height:1.8;}
   .input-area{padding:10px 16px;border-top:1px solid rgba(0,180,255,0.15);background:rgba(2,11,24,0.9);backdrop-filter:blur(10px);flex-shrink:0;}
   .input-row{display:flex;gap:8px;align-items:flex-end;}
   .input-wrap{flex:1;position:relative;}
@@ -2173,12 +2194,22 @@ export default function Home() {
 
               {/* Main ambient JARVIS display */}
               <div className="jarvis-display">
+                {/* Gyroscope orb — always visible, state drives spin speed */}
+                <div className="orb-section">
+                  <div className={`orb ${loading ? 'processing' : isTyping ? 'active' : 'idle'}`}>
+                    <div className="orb-ring orb-ring-1" />
+                    <div className="orb-ring orb-ring-2" />
+                    <div className="orb-ring orb-ring-3" />
+                    <div className="orb-ring orb-ring-4" />
+                    <div className="orb-core" />
+                  </div>
+                </div>
+
                 {/* Welcome / idle state */}
                 {messages.length === 0 && !loading && (
                   <div className="jarvis-idle">
-                    <div className="jarvis-idle-ring"><div className="jarvis-idle-core" /></div>
                     <h2>SYSTEMS ONLINE</h2>
-                    <p>Good to see you, {user}. All Deatherage family systems operational. How may I assist?</p>
+                    <p>Good to see you, {user}. All systems operational. How may I assist?</p>
                   </div>
                 )}
 
