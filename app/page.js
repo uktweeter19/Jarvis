@@ -1825,7 +1825,15 @@ export default function Home() {
     }
 
     await Promise.all(fetches)
-    return parts.length ? '\n\n--- LIVE DATA ---\n' + parts.join('\n\n') + '\n--- END LIVE DATA ---' : ''
+    if (!parts.length) return ''
+    return (
+      '\n\n--- LIVE DATA (fetched right now, use this to answer the user) ---\n' +
+      parts.join('\n\n') +
+      '\n--- END LIVE DATA ---\n' +
+      '\nCRITICAL: The data above is REAL and was fetched live this instant. ' +
+      'Use it to answer the question directly. Do NOT say you cannot access real-time information or the internet — you have it right there. ' +
+      'Relay it naturally in your JARVIS butler voice.'
+    )
   }
 
   async function send(voiceInput) {
