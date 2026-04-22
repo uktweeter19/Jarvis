@@ -224,31 +224,9 @@ const styles = `
   .log-entry.assistant{color:#7eb8d8;}
   @keyframes logFade{from{opacity:0;}to{opacity:0.35;}}
   .log-sep{height:1px;margin:4px 20px 0;background:linear-gradient(90deg,transparent,rgba(0,180,255,0.2),transparent);flex-shrink:0;}
-  /* ── ORB ── */
+  /* ── ORB (canvas) ── */
   .jarvis-display{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 24px 12px;position:relative;overflow:hidden;}
-  .orb-section{display:flex;flex-direction:column;align-items:center;flex-shrink:0;margin-bottom:10px;}
-  .orb{position:relative;width:150px;height:150px;}
-  .orb-core{position:absolute;inset:28px;border-radius:50%;background:radial-gradient(circle at 38% 35%,#60d0ff,#0077ff,#001a66);box-shadow:0 0 26px #00b4ff,0 0 55px rgba(0,180,255,0.45),0 0 90px rgba(0,60,200,0.2);animation:orbPulse 2.8s ease-in-out infinite;}
-  .orb-ring{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(0,180,255,0.4);box-shadow:0 0 6px rgba(0,180,255,0.2);}
-  .orb-ring-1{animation:ring1 9s linear infinite;}
-  .orb-ring-2{animation:ring2 13s linear infinite;}
-  .orb-ring-3{animation:ring3 11s linear infinite;}
-  .orb-ring-4{animation:ring4 16s linear infinite reverse;}
-  @keyframes ring1{from{transform:rotateX(70deg) rotateZ(0deg);}to{transform:rotateX(70deg) rotateZ(360deg);}}
-  @keyframes ring2{from{transform:rotateY(65deg) rotateZ(0deg);}to{transform:rotateY(65deg) rotateZ(360deg);}}
-  @keyframes ring3{from{transform:rotateX(40deg) rotateY(55deg) rotateZ(0deg);}to{transform:rotateX(40deg) rotateY(55deg) rotateZ(360deg);}}
-  @keyframes ring4{from{transform:rotateX(-35deg) rotateY(-50deg) rotateZ(0deg);}to{transform:rotateX(-35deg) rotateY(-50deg) rotateZ(360deg);}}
-  @keyframes orbPulse{0%,100%{box-shadow:0 0 26px #00b4ff,0 0 55px rgba(0,180,255,0.45),0 0 90px rgba(0,60,200,0.2);}50%{box-shadow:0 0 42px #00d4ff,0 0 85px rgba(0,212,255,0.65),0 0 130px rgba(0,100,255,0.3);}}
-  .orb.active .orb-ring-1{animation-duration:3.5s;}
-  .orb.active .orb-ring-2{animation-duration:5s;}
-  .orb.active .orb-ring-3{animation-duration:4s;}
-  .orb.active .orb-ring-4{animation-duration:6s;}
-  .orb.active .orb-core{animation-duration:1s;}
-  .orb.processing .orb-ring-1{animation-duration:1.4s;}
-  .orb.processing .orb-ring-2{animation-duration:2s;}
-  .orb.processing .orb-ring-3{animation-duration:1.7s;}
-  .orb.processing .orb-ring-4{animation-duration:2.4s;}
-  .orb.processing .orb-core{animation-duration:0.5s;}
+  .orb-section{display:flex;justify-content:center;flex-shrink:0;margin-bottom:6px;}
   /* ── WAVEFORM ── */
   .waveform{display:flex;align-items:center;gap:3px;height:22px;margin-bottom:10px;}
   .wave-bar{width:3px;border-radius:2px;background:linear-gradient(to top,rgba(0,68,204,0.7),rgba(0,212,255,0.95));}
@@ -595,6 +573,9 @@ export default function Home() {
   const [adultChatPassInput, setAdultChatPassInput] = useState('')
   const [parentViewFilter, setParentViewFilter] = useState('ALL') // ALL, FLAGGED, or user name
   const bottomRef = useRef(null)
+  const orbCanvasRef = useRef(null)
+  const orbRafRef = useRef(null)
+  const orbStateRef = useRef('idle')
   const [displayedText, setDisplayedText] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   // Tracks which bulletin IDs have already triggered a notification on this device.
@@ -1113,6 +1094,122 @@ export default function Home() {
     }, 15)
     return () => { clearInterval(iv) }
   }, [messages])
+
+  // Keep the orb state ref in sync so the animation loop reads current state
+  useEffect(() => {
+    orbStateRef.current = loading ? 'processing' : isTyping ? 'active' : 'idle'
+  }, [loading, isTyping])
+
+  // Canvas particle-orb animation — starts when the chat canvas enters the DOM
+  useEffect(() => {
+    if (tab !== 'chat' || !userSelected) return
+    if ((user === 'Dad' || user === 'Mom') && !adultChatUnlocked) return
+    const canvas = orbCanvasRef.current
+    if (!canvas) return
+    if (orbRafRef.current) cancelAnimationFrame(orbRafRef.current)
+
+    const dpr = window.devicePixelRatio || 1
+    const SIZE = 200
+    canvas.width = SIZE * dpr
+    canvas.height = SIZE * dpr
+    canvas.style.width = SIZE + 'px'
+    canvas.style.height = SIZE + 'px'
+    const ctx = canvas.getContext('2d')
+    ctx.scale(dpr, dpr)
+    const cx = SIZE / 2, cy = SIZE / 2
+
+    // Six orbital paths at different 3D tilt angles
+    const orbitCfgs = [
+      { tx: 1.22, ty: 0.00, r: 72, spd: 1.00 },
+      { tx: 0.00, ty: 1.10, r: 68, spd: 0.85 },
+      { tx: 0.70, ty: 0.90, r: 76, spd: 1.15 },
+      { tx: -0.60, ty: -0.80, r: 64, spd: 0.95 },
+      { tx: 0.30, ty: -1.00, r: 70, spd: 1.05 },
+      { tx: -0.90, ty: 0.40, r: 78, spd: 0.75 },
+    ]
+
+    const particles = []
+    orbitCfgs.forEach((cfg, oi) => {
+      for (let i = 0; i < 20; i++) {
+        particles.push({ angle: (i / 20) * Math.PI * 2 + oi, cfg, trail: [], size: 1.0 + Math.random() * 1.2 })
+      }
+    })
+
+    function draw() {
+      ctx.clearRect(0, 0, SIZE, SIZE)
+      const state = orbStateRef.current
+      const speedMul = state === 'processing' ? 5 : state === 'active' ? 2.5 : 1
+
+      // Atmospheric halo
+      const halo = ctx.createRadialGradient(cx, cy, 16, cx, cy, 98)
+      halo.addColorStop(0, 'rgba(0,140,255,0.18)')
+      halo.addColorStop(0.5, 'rgba(0,80,220,0.07)')
+      halo.addColorStop(1, 'rgba(0,20,180,0)')
+      ctx.fillStyle = halo
+      ctx.fillRect(0, 0, SIZE, SIZE)
+
+      // Glowing core sphere
+      const brightness = state === 'processing' ? 1.0 : state === 'active' ? 0.88 : 0.68
+      const core = ctx.createRadialGradient(cx - 9, cy - 9, 0, cx, cy, 30)
+      core.addColorStop(0, `rgba(220,245,255,${brightness})`)
+      core.addColorStop(0.35, `rgba(0,195,255,${brightness * 0.75})`)
+      core.addColorStop(0.7, `rgba(0,80,220,${brightness * 0.4})`)
+      core.addColorStop(1, 'rgba(0,40,180,0)')
+      ctx.beginPath()
+      ctx.arc(cx, cy, 30, 0, Math.PI * 2)
+      ctx.fillStyle = core
+      ctx.fill()
+
+      particles.forEach(p => {
+        p.angle += 0.006 * p.cfg.spd * speedMul
+
+        // 3D position on orbital plane
+        const x0 = Math.cos(p.angle) * p.cfg.r
+        const y0 = Math.sin(p.angle) * p.cfg.r
+
+        // Rotate around Y then X
+        const x1 = x0 * Math.cos(p.cfg.ty)
+        const z1 = -x0 * Math.sin(p.cfg.ty)
+        const y2 = y0 * Math.cos(p.cfg.tx) - z1 * Math.sin(p.cfg.tx)
+        const z2 = y0 * Math.sin(p.cfg.tx) + z1 * Math.cos(p.cfg.tx)
+
+        // Perspective projection
+        const sc = 320 / (320 - z2)
+        const px = cx + x1 * sc
+        const py = cy + y2 * sc
+        const depth = Math.max(0.08, Math.min(1, (z2 + p.cfg.r) / (p.cfg.r * 2)))
+
+        p.trail.push({ x: px, y: py })
+        if (p.trail.length > 22) p.trail.shift()
+
+        // Glowing trail
+        for (let t = 1; t < p.trail.length; t++) {
+          const alpha = (t / p.trail.length) * depth * 0.65
+          ctx.beginPath()
+          ctx.moveTo(p.trail[t - 1].x, p.trail[t - 1].y)
+          ctx.lineTo(p.trail[t].x, p.trail[t].y)
+          ctx.strokeStyle = `rgba(0,205,255,${alpha})`
+          ctx.lineWidth = Math.max(0.3, p.size * (t / p.trail.length) * sc * 0.55)
+          ctx.stroke()
+        }
+
+        // Particle dot with glow
+        ctx.save()
+        ctx.shadowBlur = 10 * depth
+        ctx.shadowColor = 'rgba(0,220,255,0.9)'
+        ctx.beginPath()
+        ctx.arc(px, py, Math.max(0.5, p.size * sc * depth), 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(90,225,255,${0.55 + depth * 0.45})`
+        ctx.fill()
+        ctx.restore()
+      })
+
+      orbRafRef.current = requestAnimationFrame(draw)
+    }
+
+    draw()
+    return () => { if (orbRafRef.current) cancelAnimationFrame(orbRafRef.current) }
+  }, [tab, userSelected, adultChatUnlocked, user])
 
   // Force the Google Calendar iframe to reload fresh every time the user
   // opens the dashboard or calendar tab, so updates always show on mobile.
@@ -2194,15 +2291,9 @@ export default function Home() {
 
               {/* Main ambient JARVIS display */}
               <div className="jarvis-display">
-                {/* Gyroscope orb — always visible, state drives spin speed */}
+                {/* Canvas particle orb — state drives speed via orbStateRef */}
                 <div className="orb-section">
-                  <div className={`orb ${loading ? 'processing' : isTyping ? 'active' : 'idle'}`}>
-                    <div className="orb-ring orb-ring-1" />
-                    <div className="orb-ring orb-ring-2" />
-                    <div className="orb-ring orb-ring-3" />
-                    <div className="orb-ring orb-ring-4" />
-                    <div className="orb-core" />
-                  </div>
+                  <canvas ref={orbCanvasRef} />
                 </div>
 
                 {/* Welcome / idle state */}
