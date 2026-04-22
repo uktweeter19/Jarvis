@@ -1574,7 +1574,14 @@ export default function Home() {
       setIsListening(false)
       send(transcript)
     }
-    rec.onerror = () => setIsListening(false)
+    rec.onerror = (e) => {
+      setIsListening(false)
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+        alert('Microphone access was denied.\n\niOS: Go to Settings → Privacy & Security → Microphone and allow Safari.\nAlso check Settings → General → Keyboard → Enable Dictation is ON.')
+      } else if (e.error === 'network') {
+        alert('Speech recognition requires a connection to Apple\'s servers.\n\nMake sure you\'re connected to the internet and that Siri & Dictation is enabled in Settings → Siri & Search.')
+      }
+    }
     rec.onend = () => setIsListening(false)
     rec.start()
     recognitionRef.current = rec
