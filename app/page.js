@@ -193,43 +193,46 @@ const styles = `
   .user-btn:hover{border-color:#0056b3;color:rgba(255,255,255,0.8);background:rgba(0,86,179,0.1);}
   .user-btn.active{border:2px solid #00b4ff;color:#00d4ff;background:linear-gradient(135deg,#0056b3,#003580);box-shadow:0 0 15px rgba(0,180,255,0.5);font-weight:700;transform:scale(1.05);}
 
-  /* ── CHAT (keep original Jarvis feel) ── */
-  .arc-bg{position:fixed;inset:0;background:radial-gradient(ellipse at 50% 50%, #0a1f35 0%, #020b18 70%);z-index:0;}
-  .arc-bg::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(0,180,255,0.03) 40px),repeating-linear-gradient(90deg,transparent,transparent 39px,rgba(0,180,255,0.03) 40px);}
-  .corner{position:fixed;width:80px;height:80px;opacity:0.4;pointer-events:none;z-index:1;}
-  .corner.tl{top:0;left:0;border-top:1px solid #00b4ff;border-left:1px solid #00b4ff;}
-  .corner.tr{top:0;right:0;border-top:1px solid #00b4ff;border-right:1px solid #00b4ff;}
-  .corner.bl{bottom:0;left:0;border-bottom:1px solid #00b4ff;border-left:1px solid #00b4ff;}
-  .corner.br{bottom:0;right:0;border-bottom:1px solid #00b4ff;border-right:1px solid #00b4ff;}
-  .scan{position:fixed;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(0,180,255,0.6),transparent);animation:scanMove 4s linear infinite;z-index:1;pointer-events:none;}
+  /* ── CHAT — JARVIS ATMOSPHERE ── */
+  .arc-bg{position:fixed;inset:0;background:radial-gradient(ellipse at 50% 35%, #1a0030 0%, #0d0018 45%, #080010 100%);z-index:0;}
+  .arc-bg::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 59px,rgba(180,80,255,0.018) 60px),repeating-linear-gradient(90deg,transparent,transparent 59px,rgba(180,80,255,0.018) 60px);}
+  .corner{position:fixed;width:70px;height:70px;opacity:0.5;pointer-events:none;z-index:1;}
+  .corner.tl{top:0;left:0;border-top:1px solid rgba(255,180,0,0.5);border-left:1px solid rgba(255,180,0,0.5);}
+  .corner.tr{top:0;right:0;border-top:1px solid rgba(255,180,0,0.5);border-right:1px solid rgba(255,180,0,0.5);}
+  .corner.bl{bottom:0;left:0;border-bottom:1px solid rgba(255,180,0,0.5);border-left:1px solid rgba(255,180,0,0.5);}
+  .corner.br{bottom:0;right:0;border-bottom:1px solid rgba(255,180,0,0.5);border-right:1px solid rgba(255,180,0,0.5);}
+  .scan{position:fixed;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,180,0,0.5),transparent);animation:scanMove 6s linear infinite;z-index:1;pointer-events:none;}
   @keyframes scanMove{0%{top:-2px;}100%{top:100vh;}}
   .arc-reactor{position:relative;width:44px;height:44px;flex-shrink:0;}
-  .arc-outer{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(0,180,255,0.4);animation:reactorSpin 8s linear infinite;}
-  .arc-outer::before{content:'';position:absolute;top:-1px;left:50%;width:4px;height:4px;background:#00b4ff;border-radius:50%;transform:translateX(-50%);box-shadow:0 0 6px #00b4ff;}
-  .arc-mid{position:absolute;inset:6px;border-radius:50%;border:1px solid rgba(0,180,255,0.3);animation:reactorSpin 4s linear infinite reverse;}
-  .arc-core{position:absolute;inset:14px;border-radius:50%;background:radial-gradient(circle,#00d4ff,#0066ff);box-shadow:0 0 15px #00b4ff,0 0 30px rgba(0,180,255,0.4);animation:corePulse 2s ease-in-out infinite;}
+  .arc-outer{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(255,180,0,0.4);animation:reactorSpin 8s linear infinite;}
+  .arc-outer::before{content:'';position:absolute;top:-1px;left:50%;width:4px;height:4px;background:#ffb700;border-radius:50%;transform:translateX(-50%);box-shadow:0 0 8px #ffb700;}
+  .arc-mid{position:absolute;inset:6px;border-radius:50%;border:1px solid rgba(200,100,255,0.35);animation:reactorSpin 4s linear infinite reverse;}
+  .arc-core{position:absolute;inset:14px;border-radius:50%;background:radial-gradient(circle,#ffe066,#ff8c00);box-shadow:0 0 12px #ffb700,0 0 28px rgba(255,160,0,0.5);animation:corePulse 2s ease-in-out infinite;}
   @keyframes reactorSpin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
-  @keyframes corePulse{0%,100%{box-shadow:0 0 15px #00b4ff,0 0 30px rgba(0,180,255,0.4);}50%{box-shadow:0 0 25px #00d4ff,0 0 50px rgba(0,180,255,0.7),0 0 70px rgba(0,100,255,0.3);}}
-  .chat-header{padding:10px 20px;border-bottom:1px solid rgba(0,180,255,0.2);display:flex;align-items:center;justify-content:space-between;background:rgba(2,11,24,0.8);backdrop-filter:blur(10px);flex-shrink:0;}
-  .title-block h1{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;letter-spacing:8px;color:#00b4ff;text-shadow:0 0 20px rgba(0,180,255,0.5);}
-  .title-block p{font-size:8px;color:rgba(0,180,255,0.5);letter-spacing:4px;text-transform:uppercase;}
-  .hud-stats{display:flex;gap:16px;font-size:9px;color:rgba(0,180,255,0.5);letter-spacing:1px;}
+  @keyframes corePulse{0%,100%{box-shadow:0 0 12px #ffb700,0 0 28px rgba(255,160,0,0.4);}50%{box-shadow:0 0 22px #ffe066,0 0 50px rgba(255,180,0,0.7),0 0 80px rgba(150,0,255,0.2);}}
+  .chat-header{padding:10px 20px;border-bottom:1px solid rgba(255,160,0,0.15);display:flex;align-items:center;justify-content:space-between;background:rgba(8,0,16,0.85);backdrop-filter:blur(14px);flex-shrink:0;}
+  .title-block h1{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;letter-spacing:8px;color:#ffb700;text-shadow:0 0 20px rgba(255,180,0,0.6),0 0 40px rgba(150,0,255,0.3);}
+  .title-block p{font-size:8px;color:rgba(255,180,0,0.4);letter-spacing:4px;text-transform:uppercase;}
+  .hud-stats{display:flex;gap:14px;font-size:9px;color:rgba(255,180,0,0.4);letter-spacing:1px;}
   .hud-stat{display:flex;flex-direction:column;align-items:flex-end;gap:2px;}
-  .hud-stat span:first-child{color:#00b4ff;font-size:10px;}
+  .hud-stat span:first-child{color:#ffb700;font-size:10px;}
   /* ── AMBIENT JARVIS CHAT ── */
   .jarvis-chat{flex:1;overflow:hidden;display:flex;flex-direction:column;}
-  .chat-log{flex:0 0 auto;max-height:28%;overflow-y:auto;padding:10px 20px 6px;display:flex;flex-direction:column;gap:3px;}
-  .log-entry{font-family:'Share Tech Mono',monospace;font-size:10px;line-height:1.55;opacity:0.35;letter-spacing:0.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:logFade 0.4s ease-out;}
-  .log-entry.user{color:#00b4ff;}
-  .log-entry.assistant{color:#7eb8d8;}
-  @keyframes logFade{from{opacity:0;}to{opacity:0.35;}}
-  .log-sep{height:1px;margin:4px 20px 0;background:linear-gradient(90deg,transparent,rgba(0,180,255,0.2),transparent);flex-shrink:0;}
+  .chat-log{flex:0 0 auto;max-height:22%;overflow-y:auto;padding:8px 20px 4px;display:flex;flex-direction:column;gap:3px;background:rgba(20,0,35,0.4);}
+  .log-entry{font-family:'Share Tech Mono',monospace;font-size:10px;line-height:1.55;opacity:0.3;letter-spacing:0.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:logFade 0.4s ease-out;}
+  .log-entry.user{color:#ffb700;}
+  .log-entry.assistant{color:#e8ccff;}
+  @keyframes logFade{from{opacity:0;}to{opacity:0.3;}}
+  .log-sep{height:1px;margin:4px 20px 0;background:linear-gradient(90deg,transparent,rgba(255,160,0,0.25),transparent);flex-shrink:0;}
   /* ── ORB (canvas) ── */
-  .jarvis-display{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 24px 12px;position:relative;overflow:hidden;background:radial-gradient(ellipse at center top,rgba(80,0,120,0.12) 0%,transparent 65%);}
-  .orb-section{display:flex;justify-content:center;flex-shrink:0;margin-bottom:6px;transition:transform 0.5s cubic-bezier(0.34,1.56,0.64,1),filter 0.35s ease;filter:drop-shadow(0 0 18px rgba(130,0,220,0.5)) drop-shadow(0 0 38px rgba(100,0,180,0.28));}
-  .orb-section.listening{transform:scale(1.07);filter:drop-shadow(0 0 22px rgba(0,255,160,0.55)) drop-shadow(0 0 45px rgba(130,0,220,0.42));}
-  .orb-section.speaking{transform:scale(1.20);filter:drop-shadow(0 0 35px rgba(255,170,0,0.65)) drop-shadow(0 0 65px rgba(130,0,220,0.48));}
-  .orb-section.thinking{transform:scale(1.12);filter:drop-shadow(0 0 28px rgba(130,0,220,0.62)) drop-shadow(0 0 55px rgba(100,0,180,0.38));}
+  .jarvis-display{flex:1;display:flex;flex-direction:column;align-items:center;padding:6px 24px 10px;position:relative;overflow:hidden;background:radial-gradient(ellipse at 50% 42%,rgba(100,0,160,0.18) 0%,rgba(30,0,50,0.35) 55%,transparent 80%);}
+  .orb-section{display:flex;justify-content:center;flex-shrink:0;margin-bottom:4px;filter:drop-shadow(0 0 22px rgba(140,0,240,0.55)) drop-shadow(0 0 45px rgba(100,0,180,0.32));transition:filter 0.4s ease;}
+  .orb-section.listening{filter:drop-shadow(0 0 25px rgba(0,255,160,0.5)) drop-shadow(0 0 50px rgba(140,0,240,0.4));animation:orbListenPulse 1.1s ease-in-out infinite;}
+  @keyframes orbListenPulse{0%,100%{transform:scale(1.04);}50%{transform:scale(1.10);}}
+  .orb-section.speaking{filter:drop-shadow(0 0 45px rgba(255,180,0,0.7)) drop-shadow(0 0 80px rgba(140,0,240,0.55));animation:orbSpeakPulse 1.3s ease-in-out infinite;}
+  @keyframes orbSpeakPulse{0%,100%{transform:scale(1.14);}50%{transform:scale(1.26);}}
+  .orb-section.thinking{filter:drop-shadow(0 0 32px rgba(140,0,240,0.65)) drop-shadow(0 0 60px rgba(100,0,180,0.4));animation:orbThinkPulse 1.8s ease-in-out infinite;}
+  @keyframes orbThinkPulse{0%,100%{transform:scale(1.08);}50%{transform:scale(1.15);}}
   /* ── WAVEFORM ── */
   .waveform{display:flex;align-items:center;gap:3px;height:22px;margin-bottom:10px;}
   .wave-bar{width:3px;border-radius:2px;background:linear-gradient(to top,rgba(180,60,0,0.7),rgba(255,200,30,0.95));}
@@ -269,15 +272,15 @@ const styles = `
   .voice-toggle{padding:5px 12px;border:1px solid rgba(255,160,0,0.25);background:transparent;color:rgba(255,180,0,0.5);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;cursor:pointer;border-radius:20px;transition:all 0.2s;white-space:nowrap;}
   .voice-toggle.on{border-color:rgba(255,180,0,0.85);color:#ffb700;background:rgba(255,160,0,0.1);box-shadow:0 0 10px rgba(255,160,0,0.35);animation:voicePulse 2s ease-in-out infinite;}
   @keyframes voicePulse{0%,100%{box-shadow:0 0 8px rgba(255,160,0,0.3);}50%{box-shadow:0 0 18px rgba(255,160,0,0.6);}}
-  .input-area{padding:10px 16px;border-top:1px solid rgba(0,180,255,0.15);background:rgba(2,11,24,0.9);backdrop-filter:blur(10px);flex-shrink:0;}
+  .input-area{padding:10px 16px 14px;border-top:1px solid rgba(255,160,0,0.12);background:rgba(8,0,16,0.92);backdrop-filter:blur(14px);flex-shrink:0;}
   .input-row{display:flex;gap:8px;align-items:flex-end;}
   .input-wrap{flex:1;position:relative;}
-  .input-wrap::before{content:'//';position:absolute;left:10px;top:50%;transform:translateY(-50%);color:rgba(0,180,255,0.3);font-size:11px;pointer-events:none;}
-  textarea{width:100%;background:rgba(0,20,50,0.6);border:1px solid rgba(0,180,255,0.2);padding:10px 12px 10px 28px;color:#a8d4f0;font-family:'Share Tech Mono',monospace;font-size:12px;resize:none;min-height:40px;max-height:100px;outline:none;clip-path:polygon(0 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%);transition:border-color 0.2s;}
-  textarea:focus{border-color:rgba(0,180,255,0.5);}
-  textarea::placeholder{color:rgba(0,180,255,0.25);}
-  .send-btn{width:40px;height:40px;background:linear-gradient(135deg,#003399,#0099ff);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);transition:all 0.2s;color:white;font-size:14px;box-shadow:0 0 15px rgba(0,150,255,0.3);}
-  .send-btn:hover{box-shadow:0 0 25px rgba(0,180,255,0.6);}
+  .input-wrap::before{content:'›';position:absolute;left:11px;top:50%;transform:translateY(-50%);color:rgba(255,180,0,0.4);font-size:16px;pointer-events:none;}
+  textarea{width:100%;background:rgba(25,0,40,0.7);border:1px solid rgba(255,160,0,0.18);border-radius:8px;padding:10px 12px 10px 26px;color:#f0ddb0;font-family:'Share Tech Mono',monospace;font-size:12px;resize:none;min-height:42px;max-height:100px;outline:none;transition:border-color 0.25s,box-shadow 0.25s;}
+  textarea:focus{border-color:rgba(255,180,0,0.45);box-shadow:0 0 16px rgba(255,160,0,0.15);}
+  textarea::placeholder{color:rgba(255,180,0,0.2);}
+  .send-btn{width:42px;height:42px;background:linear-gradient(135deg,#7a3800,#ff8c00);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);transition:all 0.2s;color:white;font-size:14px;box-shadow:0 0 16px rgba(255,140,0,0.35);}
+  .send-btn:hover{box-shadow:0 0 28px rgba(255,160,0,0.65);}
   .send-btn:disabled{opacity:0.3;cursor:not-allowed;}
 
   /* ── LOCK SCREEN ── */
@@ -1141,7 +1144,7 @@ export default function Home() {
     if (orbRafRef.current) cancelAnimationFrame(orbRafRef.current)
 
     const dpr = window.devicePixelRatio || 1
-    const SIZE = 280
+    const SIZE = 300
     canvas.width = SIZE * dpr
     canvas.height = SIZE * dpr
     canvas.style.width = SIZE + 'px'
@@ -1150,123 +1153,140 @@ export default function Home() {
     ctx.scale(dpr, dpr)
     const cx = SIZE / 2, cy = SIZE / 2
 
-    // Ten orbital paths at varied 3D tilt angles — more complex sphere
+    // 12 orbital streams — irregular radii and speeds for organic cloud look
     const orbitCfgs = [
-      { tx: 1.22, ty: 0.00, r: 92, spd: 1.00 },
-      { tx: 0.00, ty: 1.10, r: 88, spd: 0.85 },
-      { tx: 0.70, ty: 0.90, r: 96, spd: 1.15 },
-      { tx: -0.60, ty: -0.80, r: 84, spd: 0.95 },
-      { tx: 0.30, ty: -1.00, r: 90, spd: 1.05 },
-      { tx: -0.90, ty: 0.40, r: 98, spd: 0.75 },
-      { tx: 1.50, ty: 0.55, r: 86, spd: 1.22 },
-      { tx: -0.25, ty: 1.35, r: 94, spd: 0.90 },
-      { tx: 0.82, ty: -0.35, r: 82, spd: 1.10 },
-      { tx: -1.10, ty: -0.52, r: 100, spd: 0.80 },
+      { tx: 1.22, ty: 0.00, r: 78, spd: 1.00 },
+      { tx: 0.00, ty: 1.10, r: 72, spd: 0.82 },
+      { tx: 0.70, ty: 0.90, r: 84, spd: 1.18 },
+      { tx: -0.60, ty: -0.80, r: 68, spd: 0.93 },
+      { tx: 0.30, ty: -1.00, r: 76, spd: 1.06 },
+      { tx: -0.90, ty: 0.40, r: 88, spd: 0.73 },
+      { tx: 1.50, ty: 0.55, r: 70, spd: 1.25 },
+      { tx: -0.25, ty: 1.35, r: 80, spd: 0.88 },
+      { tx: 0.82, ty: -0.35, r: 66, spd: 1.12 },
+      { tx: -1.10, ty: -0.52, r: 86, spd: 0.78 },
+      { tx: 0.45, ty: 1.60, r: 74, spd: 0.96 },
+      { tx: -1.30, ty: 0.20, r: 90, spd: 0.68 },
     ]
 
     const particles = []
     orbitCfgs.forEach((cfg, oi) => {
-      for (let i = 0; i < 16; i++) {
-        particles.push({ angle: (i / 16) * Math.PI * 2 + oi * 0.7, cfg, trail: [], size: 0.9 + Math.random() * 1.3 })
+      const count = 14 + Math.floor(Math.random() * 6)
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          angle: (i / count) * Math.PI * 2 + oi * 0.6,
+          cfg,
+          trail: [],
+          size: 0.7 + Math.random() * 1.6,
+          wobble: Math.random() * Math.PI * 2,
+          wobbleSpd: 0.8 + Math.random() * 1.2
+        })
       }
     })
 
-    // Slow-rotating grid angle
-    let gridAngle = 0
+    // Drifting cloud blob offsets — these shift over time for organic nebula look
+    const blobs = Array.from({ length: 6 }, () => ({
+      ox: (Math.random() - 0.5) * 40,
+      oy: (Math.random() - 0.5) * 40,
+      phase: Math.random() * Math.PI * 2,
+      spd: 0.4 + Math.random() * 0.6,
+      r: 35 + Math.random() * 30
+    }))
+
+    let t = 0
 
     function draw() {
       ctx.clearRect(0, 0, SIZE, SIZE)
       const speedMul = orbSpeedMultRef.current
       const brightness = orbBrightnessRef.current
-      gridAngle += 0.003 * speedMul
+      t += 0.012 * speedMul
 
-      // Purple outer atmosphere
-      const outerHalo = ctx.createRadialGradient(cx, cy, 70, cx, cy, 145)
-      outerHalo.addColorStop(0, 'rgba(110,0,200,0.0)')
-      outerHalo.addColorStop(0.55, `rgba(90,0,170,${0.10 * brightness})`)
-      outerHalo.addColorStop(1, 'rgba(70,0,140,0)')
-      ctx.fillStyle = outerHalo
+      // Outer purple nebula glow
+      const outerGlow = ctx.createRadialGradient(cx, cy, 60, cx, cy, 152)
+      outerGlow.addColorStop(0, 'rgba(100,0,180,0.0)')
+      outerGlow.addColorStop(0.5, `rgba(80,0,160,${0.14 * brightness})`)
+      outerGlow.addColorStop(1, 'rgba(50,0,120,0)')
+      ctx.fillStyle = outerGlow
       ctx.fillRect(0, 0, SIZE, SIZE)
 
-      // Amber inner halo
-      const halo = ctx.createRadialGradient(cx, cy, 20, cx, cy, 108)
-      halo.addColorStop(0, `rgba(255,180,0,${0.22 * brightness})`)
-      halo.addColorStop(0.5, `rgba(200,80,0,${0.09 * brightness})`)
-      halo.addColorStop(1, 'rgba(160,20,0,0)')
-      ctx.fillStyle = halo
-      ctx.fillRect(0, 0, SIZE, SIZE)
-
-      // Faint sphere lattice rings (depth adds complexity)
-      const latticeR = 85
-      const latticeAlpha = 0.10 * brightness
-      ;[-0.65, -0.25, 0.15, 0.55, 0.85].forEach(yFrac => {
-        const ringY = yFrac * latticeR
-        const ringR = Math.sqrt(Math.max(0, latticeR * latticeR - ringY * ringY))
+      // Drifting nebula cloud blobs — organic, shifting golden clouds
+      blobs.forEach(b => {
+        const bx = cx + b.ox * Math.sin(t * b.spd + b.phase)
+        const by = cy + b.oy * Math.cos(t * b.spd * 0.7 + b.phase)
+        const grad = ctx.createRadialGradient(bx, by, 0, bx, by, b.r)
+        grad.addColorStop(0, `rgba(255,190,20,${0.18 * brightness})`)
+        grad.addColorStop(0.5, `rgba(200,80,0,${0.07 * brightness})`)
+        grad.addColorStop(1, 'rgba(150,20,0,0)')
+        ctx.fillStyle = grad
         ctx.beginPath()
-        for (let a = 0; a <= Math.PI * 2; a += 0.18) {
-          const x0 = Math.cos(a + gridAngle) * ringR
-          const z0 = Math.sin(a + gridAngle) * ringR
-          const sc = 300 / (300 - z0)
-          const px = cx + x0 * sc
-          const py = cy + ringY * sc
-          a === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py)
-        }
-        ctx.closePath()
-        ctx.strokeStyle = `rgba(255,160,30,${latticeAlpha * Math.max(0.3, 1 - Math.abs(yFrac))})`
-        ctx.lineWidth = 0.5
-        ctx.stroke()
+        ctx.arc(bx, by, b.r, 0, Math.PI * 2)
+        ctx.fill()
       })
 
-      // Bright amber core
-      const core = ctx.createRadialGradient(cx - 12, cy - 12, 0, cx, cy, 38)
-      core.addColorStop(0, `rgba(255,255,210,${brightness})`)
-      core.addColorStop(0.22, `rgba(255,215,60,${brightness * 0.88})`)
-      core.addColorStop(0.55, `rgba(255,120,0,${brightness * 0.52})`)
-      core.addColorStop(1, 'rgba(200,40,0,0)')
+      // Inner amber core — soft and diffuse like a real energy cloud
+      const pulse = 1 + 0.06 * Math.sin(t * 2.2)
+      const coreR = 44 * pulse
+      const core = ctx.createRadialGradient(cx - 8, cy - 8, 0, cx, cy, coreR)
+      core.addColorStop(0, `rgba(255,255,220,${brightness})`)
+      core.addColorStop(0.18, `rgba(255,220,60,${brightness * 0.9})`)
+      core.addColorStop(0.45, `rgba(255,130,10,${brightness * 0.55})`)
+      core.addColorStop(0.72, `rgba(180,40,120,${brightness * 0.22})`)
+      core.addColorStop(1, 'rgba(80,0,160,0)')
       ctx.beginPath()
-      ctx.arc(cx, cy, 38, 0, Math.PI * 2)
+      ctx.arc(cx, cy, coreR, 0, Math.PI * 2)
       ctx.fillStyle = core
       ctx.fill()
 
+      // Orbital energy streams with organic wobble
       particles.forEach(p => {
-        p.angle += 0.0055 * p.cfg.spd * speedMul
+        p.angle += 0.005 * p.cfg.spd * speedMul
+        p.wobble += 0.02 * p.wobbleSpd * speedMul
 
-        const x0 = Math.cos(p.angle) * p.cfg.r
-        const y0 = Math.sin(p.angle) * p.cfg.r
+        // Base orbit position
+        const wobbleAmt = 6 * Math.sin(p.wobble)
+        const r = p.cfg.r + wobbleAmt
+        const x0 = Math.cos(p.angle) * r
+        const y0 = Math.sin(p.angle) * r
 
+        // 3D rotation
         const x1 = x0 * Math.cos(p.cfg.ty)
         const z1 = -x0 * Math.sin(p.cfg.ty)
         const y2 = y0 * Math.cos(p.cfg.tx) - z1 * Math.sin(p.cfg.tx)
         const z2 = y0 * Math.sin(p.cfg.tx) + z1 * Math.cos(p.cfg.tx)
 
-        const sc = 320 / (320 - z2)
+        // Perspective
+        const sc = 310 / (310 - z2)
         const px = cx + x1 * sc
         const py = cy + y2 * sc
-        const depth = Math.max(0.08, Math.min(1, (z2 + p.cfg.r) / (p.cfg.r * 2)))
+        const depth = Math.max(0.06, Math.min(1, (z2 + r) / (r * 2)))
 
-        p.trail.push({ x: px, y: py })
-        if (p.trail.length > 26) p.trail.shift()
+        p.trail.push({ x: px, y: py, d: depth })
+        if (p.trail.length > 38) p.trail.shift()
 
-        for (let t = 1; t < p.trail.length; t++) {
-          const frac = t / p.trail.length
-          const alpha = frac * depth * 0.7
-          const r = Math.round(255)
-          const g = Math.round(140 + 60 * frac)
-          const b = Math.round(0 + 30 * frac)
+        // Long, cloud-like glowing trail
+        for (let i = 1; i < p.trail.length; i++) {
+          const frac = i / p.trail.length
+          const d = p.trail[i].d
+          const alpha = frac * d * 0.55
+          // Color shifts from deep orange at tail to bright gold at head
+          const rr = 255
+          const gg = Math.round(100 + 130 * frac)
+          const bb = Math.round(20 * frac)
           ctx.beginPath()
-          ctx.moveTo(p.trail[t - 1].x, p.trail[t - 1].y)
-          ctx.lineTo(p.trail[t].x, p.trail[t].y)
-          ctx.strokeStyle = `rgba(${r},${g},${b},${alpha})`
-          ctx.lineWidth = Math.max(0.3, p.size * frac * sc * 0.55)
+          ctx.moveTo(p.trail[i - 1].x, p.trail[i - 1].y)
+          ctx.lineTo(p.trail[i].x, p.trail[i].y)
+          ctx.strokeStyle = `rgba(${rr},${gg},${bb},${alpha})`
+          ctx.lineWidth = Math.max(0.2, p.size * frac * sc * 0.6)
           ctx.stroke()
         }
 
+        // Particle glow dot
         ctx.save()
-        ctx.shadowBlur = 12 * depth
-        ctx.shadowColor = 'rgba(255,200,0,0.9)'
+        ctx.shadowBlur = 14 * depth
+        ctx.shadowColor = `rgba(255,210,0,${depth})`
         ctx.beginPath()
-        ctx.arc(px, py, Math.max(0.5, p.size * sc * depth), 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(255,230,80,${0.55 + depth * 0.45})`
+        ctx.arc(px, py, Math.max(0.4, p.size * sc * depth * 0.9), 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(255,240,100,${0.5 + depth * 0.5})`
         ctx.fill()
         ctx.restore()
       })
@@ -1589,8 +1609,7 @@ export default function Home() {
 
   function afterSpeak() {
     setIsSpeaking(false)
-    const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent)
-    if (voiceEnabledRef.current && !loadingRef.current && !isIOS) {
+    if (voiceEnabledRef.current && !loadingRef.current) {
       setTimeout(startListening, 700)
     }
   }
@@ -1694,8 +1713,7 @@ export default function Home() {
       setIsListening(false)
       // Restart listening if we didn't get a result and voice is still on
       // (the onresult handler already handles restarts when speech was detected)
-      const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent)
-      if (!gotResult && voiceEnabledRef.current && !loadingRef.current && !isSpeakingRef.current && !isIOS) {
+      if (!gotResult && voiceEnabledRef.current && !loadingRef.current && !isSpeakingRef.current) {
         setTimeout(startListening, 700)
       }
     }
