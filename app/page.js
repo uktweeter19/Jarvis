@@ -1537,11 +1537,14 @@ export default function Home() {
   function speak(text) {
     if (typeof window === 'undefined' || !window.speechSynthesis) return
     window.speechSynthesis.cancel()
-    const utter = new SpeechSynthesisUtterance(text)
-    utter.rate = 1.0
-    utter.pitch = 0.82
-    utter.volume = 1.0
-    const pickVoice = () => {
+    // Small delay lets cancel() finish processing before we queue the new
+    // utterance — skipping this causes silent failures on iOS Safari
+    setTimeout(() => {
+      const utter = new SpeechSynthesisUtterance(text)
+      utter.rate = 1.0
+      utter.pitch = 0.85
+      utter.volume = 1.0
+      // Pick a good voice if available; fall back to browser default
       const voices = window.speechSynthesis.getVoices()
       const v = voices.find(v => v.name === 'Google UK English Male')
         || voices.find(v => v.name === 'Daniel')
@@ -1551,12 +1554,7 @@ export default function Home() {
         || voices.find(v => v.lang.startsWith('en') && !v.name.toLowerCase().includes('female'))
       if (v) utter.voice = v
       window.speechSynthesis.speak(utter)
-    }
-    if (window.speechSynthesis.getVoices().length === 0) {
-      window.speechSynthesis.onvoiceschanged = pickVoice
-    } else {
-      pickVoice()
-    }
+    }, 50)
   }
 
   function startListening() {
@@ -1597,12 +1595,11 @@ export default function Home() {
     if ((!textToSend.trim() && !uploadedImage) || loading) return
 
     // iOS Safari blocks speechSynthesis outside a user-gesture context.
-    // Speaking an empty utterance here (inside the tap handler) unlocks
-    // the audio pipeline so the real speak() call works after the await.
+    // Speak an empty utterance here (inside the tap) to unlock the audio
+    // pipeline — do NOT cancel it, let it end naturally so iOS keeps the
+    // context unlocked for the real speak() call after the await.
     if (voiceEnabledRef.current && typeof window !== 'undefined' && window.speechSynthesis) {
-      const primer = new SpeechSynthesisUtterance('')
-      window.speechSynthesis.speak(primer)
-      window.speechSynthesis.cancel()
+      window.speechSynthesis.speak(new SpeechSynthesisUtterance(''))
     }
 
     // Create user message with optional image
