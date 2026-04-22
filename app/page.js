@@ -601,6 +601,7 @@ export default function Home() {
   const wakeRecognitionRef = useRef(null)
   const loadingRef = useRef(false)
   const isSpeakingRef = useRef(false)
+  const currentAudioRef = useRef(null)
   // Tracks which bulletin IDs have already triggered a notification on this device.
   // Initialized when bulletins first load; after that, any NEW id triggers a pop-up.
   const seenBulletinIdsRef = useRef(null)
@@ -1586,23 +1587,16 @@ export default function Home() {
   // (state closures inside async functions can be stale)
   useEffect(() => { voiceEnabledRef.current = voiceEnabled }, [voiceEnabled])
 
-  function speak(text) {
-    if (typeof window === 'undefined' || !window.speechSynthesis) return
-    window.speechSynthesis.cancel()
+  function afterSpeak() {
+    setIsSpeaking(false)
+    const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent)
+    if (voiceEnabledRef.current && !loadingRef.current && !isIOS) {
+      setTimeout(startListening, 700)
+    }
+  }
 
-    // Strip markdown so it doesn't get read aloud
-    const clean = text
-      .replace(/\*\*(.*?)\*\*/g, '$1')
-      .replace(/\*(.*?)\*/g, '$1')
-      .replace(/#{1,6}\s+/g, '')
-      .replace(/```[\s\S]*?```/g, 'code block omitted.')
-      .replace(/`([^`]+)`/g, '$1')
-      .replace(/\n\n+/g, '. ')
-      .replace(/\n/g, ', ')
-      .replace(/[•\-]\s+/g, '')
-      .replace(/\d+\.\s+/g, '')
-      .trim()
-
+  function speakBrowser(clean) {
+    if (typeof window === 'undefined' || !window.speechSynthesis) { afterSpeak(); return }
     setTimeout(() => {
       const utter = new SpeechSynthesisUtterance(clean)
       utter.rate = 0.90
@@ -1618,23 +1612,49 @@ export default function Home() {
         || voices.find(v => v.lang.startsWith('en') && !v.name.toLowerCase().includes('female'))
       if (v) utter.voice = v
       utter.onstart = () => setIsSpeaking(true)
-      utter.onend = () => {
-        setIsSpeaking(false)
-        // Auto-restart listening after JARVIS finishes speaking (non-iOS only)
-        const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent)
-        if (voiceEnabledRef.current && !loadingRef.current && !isIOS) {
-          setTimeout(startListening, 700)
-        }
-      }
-      utter.onerror = () => {
-        setIsSpeaking(false)
-        const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent)
-        if (voiceEnabledRef.current && !loadingRef.current && !isIOS) {
-          setTimeout(startListening, 700)
-        }
-      }
+      utter.onend = afterSpeak
+      utter.onerror = afterSpeak
       window.speechSynthesis.speak(utter)
     }, 50)
+  }
+
+  function speak(text) {
+    if (typeof window === 'undefined') return
+    window.speechSynthesis?.cancel()
+    if (currentAudioRef.current) { currentAudioRef.current.pause(); currentAudioRef.current = null }
+
+    const clean = text
+      .replace(/\*\*(.*?)\*\*/g, '$1')
+      .replace(/\*(.*?)\*/g, '$1')
+      .replace(/#{1,6}\s+/g, '')
+      .replace(/```[\s\S]*?```/g, 'code block omitted.')
+      .replace(/`([^`]+)`/g, '$1')
+      .replace(/\n\n+/g, '. ')
+      .replace(/\n/g, ', ')
+      .replace(/[•\-]\s+/g, '')
+      .replace(/\d+\.\s+/g, '')
+      .trim()
+
+    setIsSpeaking(true)
+
+    fetch('/api/tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: clean })
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.fallback || !data.audioContent) {
+          speakBrowser(clean)
+          return
+        }
+        const audio = new Audio('data:audio/mp3;base64,' + data.audioContent)
+        currentAudioRef.current = audio
+        audio.onended = afterSpeak
+        audio.onerror = () => speakBrowser(clean)
+        audio.play().catch(() => speakBrowser(clean))
+      })
+      .catch(() => speakBrowser(clean))
   }
 
   function startListening() {
@@ -1812,10 +1832,13 @@ export default function Home() {
     const textToSend = typeof voiceInput === 'string' ? voiceInput : input
     if ((!textToSend.trim() && !uploadedImage) || loading) return
 
-    // iOS Safari blocks speechSynthesis outside a user-gesture context.
-    // Speak an empty utterance here (inside the tap) to unlock the audio
-    // pipeline — do NOT cancel it, let it end naturally so iOS keeps the
-    // context unlocked for the real speak() call after the await.
+    // Stop any currently playing audio so user's message interrupts JARVIS
+    if (currentAudioRef.current) { currentAudioRef.current.pause(); currentAudioRef.current = null }
+    window.speechSynthesis?.cancel()
+    setIsSpeaking(false)
+
+    // iOS audio unlock: prime speechSynthesis within the user-gesture context
+    // so the later speak() call (after async fetch) is allowed to play
     if (voiceEnabledRef.current && typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.speak(new SpeechSynthesisUtterance(''))
     }
