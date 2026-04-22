@@ -216,31 +216,48 @@ const styles = `
   .hud-stats{display:flex;gap:16px;font-size:9px;color:rgba(0,180,255,0.5);letter-spacing:1px;}
   .hud-stat{display:flex;flex-direction:column;align-items:flex-end;gap:2px;}
   .hud-stat span:first-child{color:#00b4ff;font-size:10px;}
-  .messages{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:12px;}
-  .welcome{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;opacity:0.5;text-align:center;}
-  .welcome-ring{width:100px;height:100px;position:relative;margin:0 auto 8px;}
-  .welcome-ring::before{content:'';position:absolute;inset:0;border-radius:50%;border:1px solid rgba(0,180,255,0.3);animation:reactorSpin 6s linear infinite;}
-  .welcome-ring::after{content:'';position:absolute;inset:8px;border-radius:50%;border:1px solid rgba(0,180,255,0.2);animation:reactorSpin 3s linear infinite reverse;}
-  .welcome-core{position:absolute;inset:20px;border-radius:50%;background:radial-gradient(circle,#00d4ff,#0044cc);box-shadow:0 0 20px #00b4ff;animation:corePulse 2s ease-in-out infinite;}
-  .welcome h2{font-family:'Rajdhani',sans-serif;font-size:13px;letter-spacing:6px;color:#00b4ff;}
-  .welcome p{font-size:10px;color:rgba(0,180,255,0.6);max-width:260px;line-height:1.8;}
-  .msg{display:flex;gap:10px;animation:msgIn 0.3s ease-out;}
-  .msg.user{flex-direction:row-reverse;}
-  @keyframes msgIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
-  .msg-icon{width:30px;height:30px;flex-shrink:0;align-self:flex-end;display:flex;align-items:center;justify-content:center;font-size:8px;letter-spacing:1px;clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);}
-  .msg.assistant .msg-icon{background:linear-gradient(135deg,#003366,#0066cc);color:#00d4ff;box-shadow:0 0 10px rgba(0,180,255,0.3);}
-  .msg.user .msg-icon{background:rgba(0,60,100,0.8);color:#00b4ff;border:1px solid rgba(0,180,255,0.3);}
-  .msg-body{max-width:78%;}
-  .msg-bubble{padding:10px 14px;font-size:12px;line-height:1.7;position:relative;white-space:pre-wrap;}
-  .msg.assistant .msg-bubble{background:rgba(0,20,50,0.8);border:1px solid rgba(0,180,255,0.2);border-left:2px solid #00b4ff;clip-path:polygon(0 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%);color:#a8d4f0;font-family:'Share Tech Mono',monospace;}
-  .msg.user .msg-bubble{background:rgba(0,40,80,0.6);border:1px solid rgba(0,180,255,0.15);border-right:2px solid rgba(0,180,255,0.5);clip-path:polygon(8px 0,100% 0,100% 100%,0 calc(100% - 8px),0 8px);color:#c8e6ff;text-align:right;font-family:'Share Tech Mono',monospace;}
-  .msg-meta{font-size:8px;color:rgba(0,180,255,0.35);margin-top:3px;letter-spacing:1px;font-family:'Share Tech Mono',monospace;}
-  .msg.user .msg-meta{text-align:right;}
-  .thinking{display:flex;gap:5px;padding:10px 14px;}
-  .thinking span{width:5px;height:5px;border-radius:50%;background:#00b4ff;animation:think 1.2s ease-in-out infinite;}
-  .thinking span:nth-child(2){animation-delay:0.2s;}
-  .thinking span:nth-child(3){animation-delay:0.4s;}
-  @keyframes think{0%,100%{opacity:0.2;transform:scale(0.7);}50%{opacity:1;transform:scale(1.2);box-shadow:0 0 6px #00b4ff;}}
+  /* ── AMBIENT JARVIS CHAT ── */
+  .jarvis-chat{flex:1;overflow:hidden;display:flex;flex-direction:column;}
+  .chat-log{flex:0 0 auto;max-height:28%;overflow-y:auto;padding:10px 20px 6px;display:flex;flex-direction:column;gap:3px;}
+  .log-entry{font-family:'Share Tech Mono',monospace;font-size:10px;line-height:1.55;opacity:0.35;letter-spacing:0.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:logFade 0.4s ease-out;}
+  .log-entry.user{color:#00b4ff;}
+  .log-entry.assistant{color:#7eb8d8;}
+  @keyframes logFade{from{opacity:0;}to{opacity:0.35;}}
+  .log-sep{height:1px;margin:4px 20px 0;background:linear-gradient(90deg,transparent,rgba(0,180,255,0.2),transparent);flex-shrink:0;}
+  .jarvis-display{flex:1;display:flex;flex-direction:column;justify-content:center;padding:16px 24px;position:relative;overflow:hidden;}
+  .waveform{display:flex;align-items:center;gap:3px;height:28px;margin-bottom:12px;}
+  .wave-bar{width:3px;border-radius:2px;background:linear-gradient(to top,rgba(0,68,204,0.7),rgba(0,212,255,0.95));}
+  .waveform.idle .wave-bar{animation:waveIdle 3s ease-in-out infinite;}
+  .waveform.active .wave-bar{animation:waveActive 0.55s ease-in-out infinite;}
+  .waveform.processing .wave-bar{animation:waveActive 0.32s ease-in-out infinite;}
+  .wave-bar:nth-child(1){animation-delay:0s;}
+  .wave-bar:nth-child(2){animation-delay:0.07s;}
+  .wave-bar:nth-child(3){animation-delay:0.14s;}
+  .wave-bar:nth-child(4){animation-delay:0.21s;}
+  .wave-bar:nth-child(5){animation-delay:0.28s;}
+  .wave-bar:nth-child(6){animation-delay:0.35s;}
+  .wave-bar:nth-child(7){animation-delay:0.42s;}
+  .wave-bar:nth-child(8){animation-delay:0.49s;}
+  .wave-bar:nth-child(9){animation-delay:0.56s;}
+  .wave-bar:nth-child(10){animation-delay:0.63s;}
+  .wave-bar:nth-child(11){animation-delay:0.7s;}
+  .wave-bar:nth-child(12){animation-delay:0.77s;}
+  @keyframes waveIdle{0%,100%{height:3px;opacity:0.2;}50%{height:9px;opacity:0.4;}}
+  @keyframes waveActive{0%,100%{height:4px;opacity:0.6;}50%{height:26px;opacity:1;box-shadow:0 0 4px rgba(0,212,255,0.5);}}
+  .j-label{font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(0,180,255,0.35);letter-spacing:4px;margin-bottom:6px;text-transform:uppercase;}
+  .response-text{font-family:'Share Tech Mono',monospace;font-size:13px;line-height:1.85;color:#c8e6ff;white-space:pre-wrap;width:100%;overflow-y:auto;max-height:52vh;}
+  .typing-cursor{display:inline-block;width:2px;height:13px;background:#00d4ff;margin-left:1px;vertical-align:middle;animation:cursorBlink 0.7s step-end infinite;box-shadow:0 0 5px #00d4ff;}
+  @keyframes cursorBlink{0%,100%{opacity:1;}50%{opacity:0;}}
+  .proc-wrap{display:flex;flex-direction:column;align-items:flex-start;gap:10px;}
+  .proc-label{font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(0,180,255,0.5);letter-spacing:5px;text-transform:uppercase;animation:procBlink 1.4s ease-in-out infinite;}
+  @keyframes procBlink{0%,100%{opacity:0.35;}50%{opacity:1;}}
+  .jarvis-idle{width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;opacity:0.55;text-align:center;}
+  .jarvis-idle-ring{width:76px;height:76px;position:relative;margin:0 auto 4px;}
+  .jarvis-idle-ring::before{content:'';position:absolute;inset:0;border-radius:50%;border:1px solid rgba(0,180,255,0.35);animation:reactorSpin 6s linear infinite;}
+  .jarvis-idle-ring::after{content:'';position:absolute;inset:8px;border-radius:50%;border:1px solid rgba(0,180,255,0.2);animation:reactorSpin 3s linear infinite reverse;}
+  .jarvis-idle-core{position:absolute;inset:18px;border-radius:50%;background:radial-gradient(circle,#00d4ff,#0044cc);box-shadow:0 0 16px #00b4ff;animation:corePulse 2s ease-in-out infinite;}
+  .jarvis-idle h2{font-family:'Rajdhani',sans-serif;font-size:12px;letter-spacing:6px;color:#00b4ff;}
+  .jarvis-idle p{font-size:10px;color:rgba(0,180,255,0.55);max-width:230px;line-height:1.8;}
   .input-area{padding:10px 16px;border-top:1px solid rgba(0,180,255,0.15);background:rgba(2,11,24,0.9);backdrop-filter:blur(10px);flex-shrink:0;}
   .input-row{display:flex;gap:8px;align-items:flex-end;}
   .input-wrap{flex:1;position:relative;}
@@ -557,6 +574,8 @@ export default function Home() {
   const [adultChatPassInput, setAdultChatPassInput] = useState('')
   const [parentViewFilter, setParentViewFilter] = useState('ALL') // ALL, FLAGGED, or user name
   const bottomRef = useRef(null)
+  const [displayedText, setDisplayedText] = useState('')
+  const [isTyping, setIsTyping] = useState(false)
   // Tracks which bulletin IDs have already triggered a notification on this device.
   // Initialized when bulletins first load; after that, any NEW id triggers a pop-up.
   const seenBulletinIdsRef = useRef(null)
@@ -1058,6 +1077,22 @@ export default function Home() {
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
 
+  // Typewriter effect: animate the latest JARVIS response letter by letter
+  useEffect(() => {
+    const last = messages[messages.length - 1]
+    if (!last || last.role !== 'assistant') { setIsTyping(false); return }
+    let i = 0
+    const full = last.content || ''
+    setDisplayedText('')
+    setIsTyping(true)
+    const iv = setInterval(() => {
+      i++
+      setDisplayedText(full.slice(0, i))
+      if (i >= full.length) { clearInterval(iv); setIsTyping(false) }
+    }, 15)
+    return () => { clearInterval(iv) }
+  }, [messages])
+
   // Force the Google Calendar iframe to reload fresh every time the user
   // opens the dashboard or calendar tab, so updates always show on mobile.
   useEffect(() => {
@@ -1452,6 +1487,11 @@ export default function Home() {
   const filteredShopping = shopFilter === 'ALL' ? shopping : shopping.filter(i => i.cat === shopFilter)
   const totalChoresDone = Object.values(chores).flat().filter(c => c.done).length
   const totalChores = Object.values(chores).flat().length
+
+  // Ambient chat: separate history log from the displayed JARVIS response
+  const lastAsstIdx = messages.map(m => m.role).lastIndexOf('assistant')
+  const chatLogMessages = messages.filter((_, i) => i !== lastAsstIdx)
+  const latestAsstMsg = lastAsstIdx >= 0 ? messages[lastAsstIdx] : null
 
   if (!authed) return (
     <>
@@ -2112,48 +2152,67 @@ export default function Home() {
 
         {tab === 'chat' && userSelected && !((user === 'Dad' || user === 'Mom') && !adultChatUnlocked) && (
           <>
-            <div className="messages">
-              {messages.length === 0 && (
-                <div className="welcome">
-                  <div className="welcome-ring"><div className="welcome-core" /></div>
-                  <h2>SYSTEMS ONLINE</h2>
-                  <p>Good to see you, {user}. All Deatherage family systems operational. How may I assist?</p>
-                </div>
-              )}
-              {messages.map((m, i) => (
-                <div key={i} className={`msg ${m.role}`}>
-                  <div className="msg-icon">{m.role === 'user' ? m.name.substring(0, 2).toUpperCase() : 'J·A·I'}</div>
-                  <div className="msg-body">
-                    <div className="msg-bubble">
-                      {m.image && (
-                        <img 
-                          src={m.image} 
-                          alt="Uploaded math problem" 
-                          style={{ 
-                            maxWidth: '100%', 
-                            borderRadius: '8px', 
-                            marginBottom: '8px',
-                            border: '1px solid rgba(0,180,255,0.3)'
-                          }} 
-                        />
-                      )}
-                      {m.content}
-                    </div>
-                    <div className="msg-meta">{m.name} · {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+            <div className="jarvis-chat">
+              {/* Compact scrollable history log */}
+              {chatLogMessages.length > 0 && (
+                <>
+                  <div className="chat-log">
+                    {chatLogMessages.map((m, i) => (
+                      <div key={i} className={`log-entry ${m.role}`}>
+                        {m.role === 'user'
+                          ? `› ${m.name}: ${m.image ? '[img] ' : ''}${m.content}`
+                          : `J · ${m.content}`
+                        }
+                      </div>
+                    ))}
+                    <div ref={bottomRef} />
                   </div>
-                </div>
-              ))}
-              {loading && (
-                <div className="msg assistant">
-                  <div className="msg-icon">J·A·I</div>
-                  <div className="msg-body">
-                    <div className="msg-bubble" style={{ background: 'rgba(0,20,50,0.8)', border: '1px solid rgba(0,180,255,0.2)', borderLeft: '2px solid #00b4ff' }}>
-                      <div className="thinking"><span /><span /><span /></div>
-                    </div>
-                  </div>
-                </div>
+                  <div className="log-sep" />
+                </>
               )}
-              <div ref={bottomRef} />
+
+              {/* Main ambient JARVIS display */}
+              <div className="jarvis-display">
+                {/* Welcome / idle state */}
+                {messages.length === 0 && !loading && (
+                  <div className="jarvis-idle">
+                    <div className="jarvis-idle-ring"><div className="jarvis-idle-core" /></div>
+                    <h2>SYSTEMS ONLINE</h2>
+                    <p>Good to see you, {user}. All Deatherage family systems operational. How may I assist?</p>
+                  </div>
+                )}
+
+                {/* Processing / thinking state */}
+                {loading && (
+                  <div className="proc-wrap">
+                    <div className="waveform processing">
+                      {[...Array(12)].map((_, i) => <div key={i} className="wave-bar" />)}
+                    </div>
+                    <div className="proc-label">Analyzing query...</div>
+                  </div>
+                )}
+
+                {/* Latest JARVIS response with typewriter */}
+                {!loading && latestAsstMsg && (
+                  <>
+                    <div className="j-label">J · A · R · V · I · S</div>
+                    <div className={`waveform ${isTyping ? 'active' : 'idle'}`}>
+                      {[...Array(12)].map((_, i) => <div key={i} className="wave-bar" />)}
+                    </div>
+                    {latestAsstMsg.image && (
+                      <img
+                        src={latestAsstMsg.image}
+                        alt="Uploaded math problem"
+                        style={{ maxWidth: '100%', borderRadius: 8, marginBottom: 10, border: '1px solid rgba(0,180,255,0.3)' }}
+                      />
+                    )}
+                    <div className="response-text">
+                      {displayedText}
+                      {isTyping && <span className="typing-cursor" />}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
             <div className="input-area">
               {/* Image preview */}
