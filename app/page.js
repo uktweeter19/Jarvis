@@ -267,6 +267,12 @@ const styles = `
   @keyframes micPulse{0%,100%{box-shadow:0 0 12px rgba(0,255,160,0.4);}50%{box-shadow:0 0 26px rgba(0,255,160,0.85);}}
   .voice-toggle{padding:4px 10px;border:1px solid rgba(0,180,255,0.2);background:transparent;color:rgba(0,180,255,0.45);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;cursor:pointer;border-radius:20px;transition:all 0.2s;white-space:nowrap;}
   .voice-toggle.on{border-color:#00d4ff;color:#00d4ff;background:rgba(0,180,255,0.1);box-shadow:0 0 8px rgba(0,180,255,0.3);}
+  .orb-section.wake{animation:wakeGlow 2.5s ease-in-out infinite;}
+  @keyframes wakeGlow{0%,100%{filter:drop-shadow(0 0 6px rgba(0,255,160,0.15));}50%{filter:drop-shadow(0 0 16px rgba(0,255,160,0.45));}}
+  .wake-label{font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(0,255,160,0.55);letter-spacing:4px;text-transform:uppercase;animation:procBlink 2s ease-in-out infinite;text-align:center;margin-bottom:4px;}
+  .wake-btn{padding:4px 10px;border:1px solid rgba(0,255,160,0.25);background:transparent;color:rgba(0,255,160,0.4);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;cursor:pointer;border-radius:20px;transition:all 0.2s;white-space:nowrap;}
+  .wake-btn.on{border-color:rgba(0,255,160,0.8);color:rgba(0,255,160,0.9);background:rgba(0,255,160,0.08);box-shadow:0 0 8px rgba(0,255,160,0.25);animation:wakeBtnPulse 2s ease-in-out infinite;}
+  @keyframes wakeBtnPulse{0%,100%{box-shadow:0 0 6px rgba(0,255,160,0.2);}50%{box-shadow:0 0 14px rgba(0,255,160,0.5);}}
   .input-area{padding:10px 16px;border-top:1px solid rgba(0,180,255,0.15);background:rgba(2,11,24,0.9);backdrop-filter:blur(10px);flex-shrink:0;}
   .input-row{display:flex;gap:8px;align-items:flex-end;}
   .input-wrap{flex:1;position:relative;}
@@ -585,13 +591,18 @@ export default function Home() {
   const bottomRef = useRef(null)
   const orbCanvasRef = useRef(null)
   const orbRafRef = useRef(null)
-  const orbStateRef = useRef('idle')
+  const orbSpeedMultRef = useRef(1)
+  const orbBrightnessRef = useRef(0.68)
   const [displayedText, setDisplayedText] = useState('')
   const [isTyping, setIsTyping] = useState(false)
+  const [isSpeaking, setIsSpeaking] = useState(false)
   const [isListening, setIsListening] = useState(false)
   const [voiceEnabled, setVoiceEnabled] = useState(false)
+  const [wakeMode, setWakeMode] = useState(false)
   const recognitionRef = useRef(null)
   const voiceEnabledRef = useRef(false)
+  const wakeModeRef = useRef(false)
+  const wakeRecognitionRef = useRef(null)
   // Tracks which bulletin IDs have already triggered a notification on this device.
   // Initialized when bulletins first load; after that, any NEW id triggers a pop-up.
   const seenBulletinIdsRef = useRef(null)
@@ -1109,10 +1120,17 @@ export default function Home() {
     return () => { clearInterval(iv) }
   }, [messages])
 
-  // Keep the orb state ref in sync so the animation loop reads current state
+  // Drive orb animation speed + brightness — read every frame by the canvas loop
   useEffect(() => {
-    orbStateRef.current = loading ? 'processing' : isTyping ? 'active' : 'idle'
-  }, [loading, isTyping])
+    if (loading)          { orbSpeedMultRef.current = 5;   orbBrightnessRef.current = 1.0  }
+    else if (isSpeaking)  { orbSpeedMultRef.current = 4;   orbBrightnessRef.current = 0.96 }
+    else if (isTyping)    { orbSpeedMultRef.current = 2.5; orbBrightnessRef.current = 0.88 }
+    else if (isListening) { orbSpeedMultRef.current = 1.5; orbBrightnessRef.current = 0.75 }
+    else                  { orbSpeedMultRef.current = 1;   orbBrightnessRef.current = 0.68 }
+  }, [loading, isSpeaking, isTyping, isListening])
+
+  // Keep wakeModeRef in sync for the async recognition loop
+  useEffect(() => { wakeModeRef.current = wakeMode }, [wakeMode])
 
   // Canvas particle-orb animation — starts when the chat canvas enters the DOM
   useEffect(() => {
@@ -1151,8 +1169,7 @@ export default function Home() {
 
     function draw() {
       ctx.clearRect(0, 0, SIZE, SIZE)
-      const state = orbStateRef.current
-      const speedMul = state === 'processing' ? 5 : state === 'active' ? 2.5 : 1
+      const speedMul = orbSpeedMultRef.current
 
       // Atmospheric halo
       const halo = ctx.createRadialGradient(cx, cy, 16, cx, cy, 98)
@@ -1163,7 +1180,7 @@ export default function Home() {
       ctx.fillRect(0, 0, SIZE, SIZE)
 
       // Glowing core sphere
-      const brightness = state === 'processing' ? 1.0 : state === 'active' ? 0.88 : 0.68
+      const brightness = orbBrightnessRef.current
       const core = ctx.createRadialGradient(cx - 9, cy - 9, 0, cx, cy, 30)
       core.addColorStop(0, `rgba(220,245,255,${brightness})`)
       core.addColorStop(0.35, `rgba(0,195,255,${brightness * 0.75})`)
@@ -1537,22 +1554,25 @@ export default function Home() {
   function speak(text) {
     if (typeof window === 'undefined' || !window.speechSynthesis) return
     window.speechSynthesis.cancel()
-    // Small delay lets cancel() finish processing before we queue the new
-    // utterance — skipping this causes silent failures on iOS Safari
     setTimeout(() => {
       const utter = new SpeechSynthesisUtterance(text)
-      utter.rate = 1.0
-      utter.pitch = 0.85
+      // Butler cadence: measured pace, low authoritative pitch
+      utter.rate = 0.93
+      utter.pitch = 0.72
       utter.volume = 1.0
-      // Pick a good voice if available; fall back to browser default
+      // Priority order for a British male butler voice
       const voices = window.speechSynthesis.getVoices()
-      const v = voices.find(v => v.name === 'Google UK English Male')
-        || voices.find(v => v.name === 'Daniel')
-        || voices.find(v => v.name === 'Arthur')
-        || voices.find(v => v.name.includes('Microsoft David'))
-        || voices.find(v => v.lang === 'en-GB')
+      const v = voices.find(v => v.name === 'Daniel')              // iOS/macOS British male
+        || voices.find(v => v.name === 'Arthur')                   // newer macOS British male
+        || voices.find(v => v.name === 'Google UK English Male')   // Chrome/Android
+        || voices.find(v => v.name.includes('Microsoft George'))   // Windows British male
+        || voices.find(v => v.name.includes('Microsoft Harry'))
+        || voices.find(v => v.lang === 'en-GB' && !v.name.toLowerCase().includes('female'))
         || voices.find(v => v.lang.startsWith('en') && !v.name.toLowerCase().includes('female'))
       if (v) utter.voice = v
+      utter.onstart = () => setIsSpeaking(true)
+      utter.onend   = () => setIsSpeaking(false)
+      utter.onerror = () => setIsSpeaking(false)
       window.speechSynthesis.speak(utter)
     }, 50)
   }
@@ -1586,6 +1606,68 @@ export default function Home() {
   }
 
   function stopListening() {
+    try { recognitionRef.current?.stop() } catch (_) {}
+    setIsListening(false)
+  }
+
+  function startWakeMode() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition
+    if (!SR) { alert('Voice recognition not supported in this browser. Try Chrome or Safari.'); return }
+    setWakeMode(true)
+
+    function listenForWake() {
+      if (!wakeModeRef.current) return
+      const rec = new SR()
+      rec.lang = 'en-US'
+      rec.continuous = false
+      rec.interimResults = false
+      rec.maxAlternatives = 1
+
+      rec.onresult = (e) => {
+        const transcript = e.results[0][0].transcript.toLowerCase().trim()
+        if (transcript.includes('jarvis')) {
+          // Pull out whatever they said after the wake word
+          const afterWake = transcript.replace(/.*jarvis\s*/i, '').trim()
+          if (afterWake.length > 2) {
+            // Full command in one phrase — send it directly
+            send(afterWake)
+          } else {
+            // Just said "Hey JARVIS" — start a command session
+            setIsListening(true)
+            const cmdRec = new SR()
+            cmdRec.lang = 'en-US'
+            cmdRec.continuous = false
+            cmdRec.interimResults = false
+            cmdRec.onresult = (e2) => {
+              const cmd = e2.results[0][0].transcript
+              setIsListening(false)
+              send(cmd)
+            }
+            cmdRec.onerror = () => setIsListening(false)
+            cmdRec.onend   = () => {
+              setIsListening(false)
+              setTimeout(() => { if (wakeModeRef.current) listenForWake() }, 600)
+            }
+            cmdRec.start()
+            recognitionRef.current = cmdRec
+            return // don't restart wake loop yet — cmdRec.onend handles it
+          }
+        }
+      }
+
+      rec.onerror = () => { if (wakeModeRef.current) setTimeout(listenForWake, 1000) }
+      rec.onend   = () => { if (wakeModeRef.current) setTimeout(listenForWake, 300) }
+      rec.start()
+      wakeRecognitionRef.current = rec
+    }
+
+    listenForWake()
+  }
+
+  function stopWakeMode() {
+    setWakeMode(false)
+    wakeModeRef.current = false
+    try { wakeRecognitionRef.current?.stop() } catch (_) {}
     try { recognitionRef.current?.stop() } catch (_) {}
     setIsListening(false)
   }
@@ -1824,8 +1906,13 @@ export default function Home() {
                   setVoiceEnabled(next)
                   if (!next) window.speechSynthesis?.cancel()
                 }}
-                title={voiceEnabled ? 'Voice response on — click to mute' : 'Voice response off — click to enable'}
-              >{voiceEnabled ? '🔊 VOICE ON' : '🔇 VOICE OFF'}</button>
+                title={voiceEnabled ? 'Voice on' : 'Voice off'}
+              >{voiceEnabled ? '🔊 ON' : '🔇 OFF'}</button>
+              <button
+                className={`wake-btn${wakeMode ? ' on' : ''}`}
+                onClick={wakeMode ? stopWakeMode : startWakeMode}
+                title={wakeMode ? 'Wake mode on — say "Hey JARVIS"' : 'Enable wake word'}
+              >{wakeMode ? '👂 WAKE ON' : '👂 WAKE'}</button>
             </div>
           </div>
         ) : (
@@ -2386,13 +2473,14 @@ export default function Home() {
 
               {/* Main ambient JARVIS display */}
               <div className="jarvis-display">
-                {/* Canvas particle orb — glows green while listening */}
-                <div className={`orb-section${isListening ? ' listening' : ''}`}>
+                {/* Canvas particle orb */}
+                <div className={`orb-section${isListening ? ' listening' : wakeMode ? ' wake' : ''}`}>
                   <canvas ref={orbCanvasRef} />
                 </div>
 
-                {/* Listening indicator */}
+                {/* Status labels */}
                 {isListening && <div className="listen-label">Listening...</div>}
+                {wakeMode && !isListening && <div className="wake-label">Say "Hey JARVIS"</div>}
 
                 {/* Welcome / idle state */}
                 {messages.length === 0 && !loading && !isListening && (
