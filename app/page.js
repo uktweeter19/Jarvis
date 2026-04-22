@@ -2492,15 +2492,17 @@ export default function Home() {
                 <div className="input-wrap">
                   <textarea value={input} onChange={e => setInput(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }}
-                    placeholder={isListening ? 'Listening...' : 'Awaiting your command...'} rows={1} style={{ lineHeight: '20px' }} />
+                    placeholder={isListening ? 'Listening...' : (typeof navigator !== 'undefined' && /iP(hone|ad|od)/.test(navigator.userAgent)) ? 'Tap 🎤 on keyboard to speak...' : 'Awaiting your command...'} rows={1} style={{ lineHeight: '20px' }} />
                 </div>
-                {/* Mic button */}
-                <button
-                  className={`mic-btn${isListening ? ' listening' : ''}`}
-                  onClick={isListening ? stopListening : startListening}
-                  title={isListening ? 'Stop listening' : 'Speak to JARVIS'}
-                  disabled={loading}
-                >🎤</button>
+                {/* Mic button — hidden on iOS Safari where mic permission isn't available */}
+                {!(typeof navigator !== 'undefined' && /iP(hone|ad|od)/.test(navigator.userAgent)) && (
+                  <button
+                    className={`mic-btn${isListening ? ' listening' : ''}`}
+                    onClick={isListening ? stopListening : startListening}
+                    title={isListening ? 'Stop listening' : 'Speak to JARVIS'}
+                    disabled={loading}
+                  >🎤</button>
+                )}
                 <button className="send-btn" onClick={() => send()} disabled={loading}>➤</button>
               </div>
             </div>
