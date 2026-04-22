@@ -225,11 +225,14 @@ const styles = `
   @keyframes logFade{from{opacity:0;}to{opacity:0.35;}}
   .log-sep{height:1px;margin:4px 20px 0;background:linear-gradient(90deg,transparent,rgba(0,180,255,0.2),transparent);flex-shrink:0;}
   /* ── ORB (canvas) ── */
-  .jarvis-display{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 24px 12px;position:relative;overflow:hidden;}
-  .orb-section{display:flex;justify-content:center;flex-shrink:0;margin-bottom:6px;}
+  .jarvis-display{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 24px 12px;position:relative;overflow:hidden;background:radial-gradient(ellipse at center top,rgba(80,0,120,0.12) 0%,transparent 65%);}
+  .orb-section{display:flex;justify-content:center;flex-shrink:0;margin-bottom:6px;transition:transform 0.5s cubic-bezier(0.34,1.56,0.64,1),filter 0.35s ease;filter:drop-shadow(0 0 18px rgba(130,0,220,0.5)) drop-shadow(0 0 38px rgba(100,0,180,0.28));}
+  .orb-section.listening{transform:scale(1.07);filter:drop-shadow(0 0 22px rgba(0,255,160,0.55)) drop-shadow(0 0 45px rgba(130,0,220,0.42));}
+  .orb-section.speaking{transform:scale(1.20);filter:drop-shadow(0 0 35px rgba(255,170,0,0.65)) drop-shadow(0 0 65px rgba(130,0,220,0.48));}
+  .orb-section.thinking{transform:scale(1.12);filter:drop-shadow(0 0 28px rgba(130,0,220,0.62)) drop-shadow(0 0 55px rgba(100,0,180,0.38));}
   /* ── WAVEFORM ── */
   .waveform{display:flex;align-items:center;gap:3px;height:22px;margin-bottom:10px;}
-  .wave-bar{width:3px;border-radius:2px;background:linear-gradient(to top,rgba(0,68,204,0.7),rgba(0,212,255,0.95));}
+  .wave-bar{width:3px;border-radius:2px;background:linear-gradient(to top,rgba(180,60,0,0.7),rgba(255,200,30,0.95));}
   .waveform.idle .wave-bar{animation:waveIdle 3s ease-in-out infinite;}
   .waveform.active .wave-bar{animation:waveActive 0.55s ease-in-out infinite;}
   .waveform.processing .wave-bar{animation:waveActive 0.32s ease-in-out infinite;}
@@ -246,33 +249,26 @@ const styles = `
   .wave-bar:nth-child(11){animation-delay:0.7s;}
   .wave-bar:nth-child(12){animation-delay:0.77s;}
   @keyframes waveIdle{0%,100%{height:3px;opacity:0.2;}50%{height:8px;opacity:0.35;}}
-  @keyframes waveActive{0%,100%{height:4px;opacity:0.6;}50%{height:20px;opacity:1;box-shadow:0 0 4px rgba(0,212,255,0.5);}}
-  .j-label{font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(0,180,255,0.35);letter-spacing:4px;margin-bottom:6px;text-transform:uppercase;text-align:center;width:100%;}
-  .response-text{font-family:'Share Tech Mono',monospace;font-size:13px;line-height:1.85;color:#c8e6ff;white-space:pre-wrap;width:100%;overflow-y:auto;max-height:38vh;}
-  .typing-cursor{display:inline-block;width:2px;height:13px;background:#00d4ff;margin-left:1px;vertical-align:middle;animation:cursorBlink 0.7s step-end infinite;box-shadow:0 0 5px #00d4ff;}
+  @keyframes waveActive{0%,100%{height:4px;opacity:0.6;}50%{height:20px;opacity:1;box-shadow:0 0 4px rgba(255,180,0,0.6);}}
+  .j-label{font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(255,180,0,0.45);letter-spacing:4px;margin-bottom:6px;text-transform:uppercase;text-align:center;width:100%;}
+  .response-text{font-family:'Share Tech Mono',monospace;font-size:13px;line-height:1.9;color:#f5e8cc;white-space:pre-wrap;width:100%;overflow-y:auto;max-height:38vh;}
+  .typing-cursor{display:inline-block;width:2px;height:13px;background:#ffb700;margin-left:1px;vertical-align:middle;animation:cursorBlink 0.7s step-end infinite;box-shadow:0 0 5px #ffb700;}
   @keyframes cursorBlink{0%,100%{opacity:1;}50%{opacity:0;}}
   .proc-wrap{display:flex;flex-direction:column;align-items:center;gap:8px;}
-  .proc-label{font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(0,180,255,0.5);letter-spacing:5px;text-transform:uppercase;animation:procBlink 1.4s ease-in-out infinite;}
+  .proc-label{font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,160,0,0.6);letter-spacing:5px;text-transform:uppercase;animation:procBlink 1.4s ease-in-out infinite;}
   @keyframes procBlink{0%,100%{opacity:0.35;}50%{opacity:1;}}
-  .jarvis-idle{display:flex;flex-direction:column;align-items:center;gap:6px;opacity:0.6;text-align:center;}
-  .jarvis-idle h2{font-family:'Rajdhani',sans-serif;font-size:12px;letter-spacing:6px;color:#00b4ff;}
-  .jarvis-idle p{font-size:10px;color:rgba(0,180,255,0.55);max-width:220px;line-height:1.8;}
+  .jarvis-idle{display:flex;flex-direction:column;align-items:center;gap:6px;opacity:0.7;text-align:center;}
+  .jarvis-idle h2{font-family:'Rajdhani',sans-serif;font-size:13px;letter-spacing:5px;color:#ffb700;text-shadow:0 0 20px rgba(255,160,0,0.5);}
+  .jarvis-idle p{font-size:11px;color:rgba(255,220,150,0.55);max-width:230px;line-height:1.9;}
   /* ── VOICE ── */
-  .orb-section.listening{animation:listenGlow 0.9s ease-in-out infinite;}
-  @keyframes listenGlow{0%,100%{filter:drop-shadow(0 0 8px rgba(0,255,160,0.4));}50%{filter:drop-shadow(0 0 24px rgba(0,255,160,0.9));}}
-  .listen-label{font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(0,255,160,0.75);letter-spacing:5px;text-transform:uppercase;animation:procBlink 0.9s ease-in-out infinite;margin-bottom:6px;}
-  .mic-btn{width:40px;height:40px;background:rgba(0,20,50,0.8);border:1px solid rgba(0,180,255,0.25);cursor:pointer;display:flex;align-items:center;justify-content:center;clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);color:rgba(0,180,255,0.55);font-size:15px;transition:all 0.2s;flex-shrink:0;}
-  .mic-btn:hover{border-color:rgba(0,180,255,0.6);color:#00d4ff;box-shadow:0 0 14px rgba(0,180,255,0.4);}
-  .mic-btn.listening{background:linear-gradient(135deg,#003322,#006644);border-color:rgba(0,255,160,0.8);color:rgba(0,255,160,0.95);box-shadow:0 0 18px rgba(0,255,160,0.55);animation:micPulse 0.9s ease-in-out infinite;}
-  @keyframes micPulse{0%,100%{box-shadow:0 0 12px rgba(0,255,160,0.4);}50%{box-shadow:0 0 26px rgba(0,255,160,0.85);}}
-  .voice-toggle{padding:4px 10px;border:1px solid rgba(0,180,255,0.2);background:transparent;color:rgba(0,180,255,0.45);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;cursor:pointer;border-radius:20px;transition:all 0.2s;white-space:nowrap;}
-  .voice-toggle.on{border-color:#00d4ff;color:#00d4ff;background:rgba(0,180,255,0.1);box-shadow:0 0 8px rgba(0,180,255,0.3);}
-  .orb-section.wake{animation:wakeGlow 2.5s ease-in-out infinite;}
-  @keyframes wakeGlow{0%,100%{filter:drop-shadow(0 0 6px rgba(0,255,160,0.15));}50%{filter:drop-shadow(0 0 16px rgba(0,255,160,0.45));}}
-  .wake-label{font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(0,255,160,0.55);letter-spacing:4px;text-transform:uppercase;animation:procBlink 2s ease-in-out infinite;text-align:center;margin-bottom:4px;}
-  .wake-btn{padding:4px 10px;border:1px solid rgba(0,255,160,0.25);background:transparent;color:rgba(0,255,160,0.4);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;cursor:pointer;border-radius:20px;transition:all 0.2s;white-space:nowrap;}
-  .wake-btn.on{border-color:rgba(0,255,160,0.8);color:rgba(0,255,160,0.9);background:rgba(0,255,160,0.08);box-shadow:0 0 8px rgba(0,255,160,0.25);animation:wakeBtnPulse 2s ease-in-out infinite;}
-  @keyframes wakeBtnPulse{0%,100%{box-shadow:0 0 6px rgba(0,255,160,0.2);}50%{box-shadow:0 0 14px rgba(0,255,160,0.5);}}
+  .listen-label{font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(0,255,160,0.85);letter-spacing:5px;text-transform:uppercase;animation:procBlink 0.9s ease-in-out infinite;margin-bottom:6px;}
+  .mic-btn{width:40px;height:40px;background:rgba(20,0,40,0.8);border:1px solid rgba(180,80,255,0.3);cursor:pointer;display:flex;align-items:center;justify-content:center;clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);color:rgba(200,120,255,0.6);font-size:15px;transition:all 0.2s;flex-shrink:0;}
+  .mic-btn:hover{border-color:rgba(200,100,255,0.7);color:#cc80ff;box-shadow:0 0 14px rgba(150,0,255,0.4);}
+  .mic-btn.listening{background:linear-gradient(135deg,#1a0033,#3d0070);border-color:rgba(200,100,255,0.9);color:rgba(230,150,255,0.95);box-shadow:0 0 18px rgba(180,0,255,0.6);animation:micPulse 0.9s ease-in-out infinite;}
+  @keyframes micPulse{0%,100%{box-shadow:0 0 12px rgba(180,0,255,0.4);}50%{box-shadow:0 0 28px rgba(180,0,255,0.85);}}
+  .voice-toggle{padding:5px 12px;border:1px solid rgba(255,160,0,0.25);background:transparent;color:rgba(255,180,0,0.5);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;cursor:pointer;border-radius:20px;transition:all 0.2s;white-space:nowrap;}
+  .voice-toggle.on{border-color:rgba(255,180,0,0.85);color:#ffb700;background:rgba(255,160,0,0.1);box-shadow:0 0 10px rgba(255,160,0,0.35);animation:voicePulse 2s ease-in-out infinite;}
+  @keyframes voicePulse{0%,100%{box-shadow:0 0 8px rgba(255,160,0,0.3);}50%{box-shadow:0 0 18px rgba(255,160,0,0.6);}}
   .input-area{padding:10px 16px;border-top:1px solid rgba(0,180,255,0.15);background:rgba(2,11,24,0.9);backdrop-filter:blur(10px);flex-shrink:0;}
   .input-row{display:flex;gap:8px;align-items:flex-end;}
   .input-wrap{flex:1;position:relative;}
@@ -603,6 +599,8 @@ export default function Home() {
   const voiceEnabledRef = useRef(false)
   const wakeModeRef = useRef(false)
   const wakeRecognitionRef = useRef(null)
+  const loadingRef = useRef(false)
+  const isSpeakingRef = useRef(false)
   // Tracks which bulletin IDs have already triggered a notification on this device.
   // Initialized when bulletins first load; after that, any NEW id triggers a pop-up.
   const seenBulletinIdsRef = useRef(null)
@@ -1129,7 +1127,8 @@ export default function Home() {
     else                  { orbSpeedMultRef.current = 1;   orbBrightnessRef.current = 0.68 }
   }, [loading, isSpeaking, isTyping, isListening])
 
-  // Keep wakeModeRef in sync for the async recognition loop
+  useEffect(() => { loadingRef.current = loading }, [loading])
+  useEffect(() => { isSpeakingRef.current = isSpeaking }, [isSpeaking])
   useEffect(() => { wakeModeRef.current = wakeMode }, [wakeMode])
 
   // Canvas particle-orb animation — starts when the chat canvas enters the DOM
@@ -1141,7 +1140,7 @@ export default function Home() {
     if (orbRafRef.current) cancelAnimationFrame(orbRafRef.current)
 
     const dpr = window.devicePixelRatio || 1
-    const SIZE = 200
+    const SIZE = 280
     canvas.width = SIZE * dpr
     canvas.height = SIZE * dpr
     canvas.style.width = SIZE + 'px'
@@ -1150,87 +1149,123 @@ export default function Home() {
     ctx.scale(dpr, dpr)
     const cx = SIZE / 2, cy = SIZE / 2
 
-    // Six orbital paths at different 3D tilt angles
+    // Ten orbital paths at varied 3D tilt angles — more complex sphere
     const orbitCfgs = [
-      { tx: 1.22, ty: 0.00, r: 72, spd: 1.00 },
-      { tx: 0.00, ty: 1.10, r: 68, spd: 0.85 },
-      { tx: 0.70, ty: 0.90, r: 76, spd: 1.15 },
-      { tx: -0.60, ty: -0.80, r: 64, spd: 0.95 },
-      { tx: 0.30, ty: -1.00, r: 70, spd: 1.05 },
-      { tx: -0.90, ty: 0.40, r: 78, spd: 0.75 },
+      { tx: 1.22, ty: 0.00, r: 92, spd: 1.00 },
+      { tx: 0.00, ty: 1.10, r: 88, spd: 0.85 },
+      { tx: 0.70, ty: 0.90, r: 96, spd: 1.15 },
+      { tx: -0.60, ty: -0.80, r: 84, spd: 0.95 },
+      { tx: 0.30, ty: -1.00, r: 90, spd: 1.05 },
+      { tx: -0.90, ty: 0.40, r: 98, spd: 0.75 },
+      { tx: 1.50, ty: 0.55, r: 86, spd: 1.22 },
+      { tx: -0.25, ty: 1.35, r: 94, spd: 0.90 },
+      { tx: 0.82, ty: -0.35, r: 82, spd: 1.10 },
+      { tx: -1.10, ty: -0.52, r: 100, spd: 0.80 },
     ]
 
     const particles = []
     orbitCfgs.forEach((cfg, oi) => {
-      for (let i = 0; i < 20; i++) {
-        particles.push({ angle: (i / 20) * Math.PI * 2 + oi, cfg, trail: [], size: 1.0 + Math.random() * 1.2 })
+      for (let i = 0; i < 16; i++) {
+        particles.push({ angle: (i / 16) * Math.PI * 2 + oi * 0.7, cfg, trail: [], size: 0.9 + Math.random() * 1.3 })
       }
     })
+
+    // Slow-rotating grid angle
+    let gridAngle = 0
 
     function draw() {
       ctx.clearRect(0, 0, SIZE, SIZE)
       const speedMul = orbSpeedMultRef.current
+      const brightness = orbBrightnessRef.current
+      gridAngle += 0.003 * speedMul
 
-      // Atmospheric halo
-      const halo = ctx.createRadialGradient(cx, cy, 16, cx, cy, 98)
-      halo.addColorStop(0, 'rgba(0,140,255,0.18)')
-      halo.addColorStop(0.5, 'rgba(0,80,220,0.07)')
-      halo.addColorStop(1, 'rgba(0,20,180,0)')
+      // Purple outer atmosphere
+      const outerHalo = ctx.createRadialGradient(cx, cy, 70, cx, cy, 145)
+      outerHalo.addColorStop(0, 'rgba(110,0,200,0.0)')
+      outerHalo.addColorStop(0.55, `rgba(90,0,170,${0.10 * brightness})`)
+      outerHalo.addColorStop(1, 'rgba(70,0,140,0)')
+      ctx.fillStyle = outerHalo
+      ctx.fillRect(0, 0, SIZE, SIZE)
+
+      // Amber inner halo
+      const halo = ctx.createRadialGradient(cx, cy, 20, cx, cy, 108)
+      halo.addColorStop(0, `rgba(255,180,0,${0.22 * brightness})`)
+      halo.addColorStop(0.5, `rgba(200,80,0,${0.09 * brightness})`)
+      halo.addColorStop(1, 'rgba(160,20,0,0)')
       ctx.fillStyle = halo
       ctx.fillRect(0, 0, SIZE, SIZE)
 
-      // Glowing core sphere
-      const brightness = orbBrightnessRef.current
-      const core = ctx.createRadialGradient(cx - 9, cy - 9, 0, cx, cy, 30)
-      core.addColorStop(0, `rgba(220,245,255,${brightness})`)
-      core.addColorStop(0.35, `rgba(0,195,255,${brightness * 0.75})`)
-      core.addColorStop(0.7, `rgba(0,80,220,${brightness * 0.4})`)
-      core.addColorStop(1, 'rgba(0,40,180,0)')
+      // Faint sphere lattice rings (depth adds complexity)
+      const latticeR = 85
+      const latticeAlpha = 0.10 * brightness
+      ;[-0.65, -0.25, 0.15, 0.55, 0.85].forEach(yFrac => {
+        const ringY = yFrac * latticeR
+        const ringR = Math.sqrt(Math.max(0, latticeR * latticeR - ringY * ringY))
+        ctx.beginPath()
+        for (let a = 0; a <= Math.PI * 2; a += 0.18) {
+          const x0 = Math.cos(a + gridAngle) * ringR
+          const z0 = Math.sin(a + gridAngle) * ringR
+          const sc = 300 / (300 - z0)
+          const px = cx + x0 * sc
+          const py = cy + ringY * sc
+          a === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py)
+        }
+        ctx.closePath()
+        ctx.strokeStyle = `rgba(255,160,30,${latticeAlpha * Math.max(0.3, 1 - Math.abs(yFrac))})`
+        ctx.lineWidth = 0.5
+        ctx.stroke()
+      })
+
+      // Bright amber core
+      const core = ctx.createRadialGradient(cx - 12, cy - 12, 0, cx, cy, 38)
+      core.addColorStop(0, `rgba(255,255,210,${brightness})`)
+      core.addColorStop(0.22, `rgba(255,215,60,${brightness * 0.88})`)
+      core.addColorStop(0.55, `rgba(255,120,0,${brightness * 0.52})`)
+      core.addColorStop(1, 'rgba(200,40,0,0)')
       ctx.beginPath()
-      ctx.arc(cx, cy, 30, 0, Math.PI * 2)
+      ctx.arc(cx, cy, 38, 0, Math.PI * 2)
       ctx.fillStyle = core
       ctx.fill()
 
       particles.forEach(p => {
-        p.angle += 0.006 * p.cfg.spd * speedMul
+        p.angle += 0.0055 * p.cfg.spd * speedMul
 
-        // 3D position on orbital plane
         const x0 = Math.cos(p.angle) * p.cfg.r
         const y0 = Math.sin(p.angle) * p.cfg.r
 
-        // Rotate around Y then X
         const x1 = x0 * Math.cos(p.cfg.ty)
         const z1 = -x0 * Math.sin(p.cfg.ty)
         const y2 = y0 * Math.cos(p.cfg.tx) - z1 * Math.sin(p.cfg.tx)
         const z2 = y0 * Math.sin(p.cfg.tx) + z1 * Math.cos(p.cfg.tx)
 
-        // Perspective projection
         const sc = 320 / (320 - z2)
         const px = cx + x1 * sc
         const py = cy + y2 * sc
         const depth = Math.max(0.08, Math.min(1, (z2 + p.cfg.r) / (p.cfg.r * 2)))
 
         p.trail.push({ x: px, y: py })
-        if (p.trail.length > 22) p.trail.shift()
+        if (p.trail.length > 26) p.trail.shift()
 
-        // Glowing trail
         for (let t = 1; t < p.trail.length; t++) {
-          const alpha = (t / p.trail.length) * depth * 0.65
+          const frac = t / p.trail.length
+          const alpha = frac * depth * 0.7
+          const r = Math.round(255)
+          const g = Math.round(140 + 60 * frac)
+          const b = Math.round(0 + 30 * frac)
           ctx.beginPath()
           ctx.moveTo(p.trail[t - 1].x, p.trail[t - 1].y)
           ctx.lineTo(p.trail[t].x, p.trail[t].y)
-          ctx.strokeStyle = `rgba(0,205,255,${alpha})`
-          ctx.lineWidth = Math.max(0.3, p.size * (t / p.trail.length) * sc * 0.55)
+          ctx.strokeStyle = `rgba(${r},${g},${b},${alpha})`
+          ctx.lineWidth = Math.max(0.3, p.size * frac * sc * 0.55)
           ctx.stroke()
         }
 
-        // Particle dot with glow
         ctx.save()
-        ctx.shadowBlur = 10 * depth
-        ctx.shadowColor = 'rgba(0,220,255,0.9)'
+        ctx.shadowBlur = 12 * depth
+        ctx.shadowColor = 'rgba(255,200,0,0.9)'
         ctx.beginPath()
         ctx.arc(px, py, Math.max(0.5, p.size * sc * depth), 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(90,225,255,${0.55 + depth * 0.45})`
+        ctx.fillStyle = `rgba(255,230,80,${0.55 + depth * 0.45})`
         ctx.fill()
         ctx.restore()
       })
@@ -1554,53 +1589,96 @@ export default function Home() {
   function speak(text) {
     if (typeof window === 'undefined' || !window.speechSynthesis) return
     window.speechSynthesis.cancel()
+
+    // Strip markdown so it doesn't get read aloud
+    const clean = text
+      .replace(/\*\*(.*?)\*\*/g, '$1')
+      .replace(/\*(.*?)\*/g, '$1')
+      .replace(/#{1,6}\s+/g, '')
+      .replace(/```[\s\S]*?```/g, 'code block omitted.')
+      .replace(/`([^`]+)`/g, '$1')
+      .replace(/\n\n+/g, '. ')
+      .replace(/\n/g, ', ')
+      .replace(/[•\-]\s+/g, '')
+      .replace(/\d+\.\s+/g, '')
+      .trim()
+
     setTimeout(() => {
-      const utter = new SpeechSynthesisUtterance(text)
-      // Butler cadence: measured pace, low authoritative pitch
-      utter.rate = 0.93
-      utter.pitch = 0.72
+      const utter = new SpeechSynthesisUtterance(clean)
+      utter.rate = 0.90
+      utter.pitch = 0.68
       utter.volume = 1.0
-      // Priority order for a British male butler voice
       const voices = window.speechSynthesis.getVoices()
-      const v = voices.find(v => v.name === 'Daniel')              // iOS/macOS British male
-        || voices.find(v => v.name === 'Arthur')                   // newer macOS British male
-        || voices.find(v => v.name === 'Google UK English Male')   // Chrome/Android
-        || voices.find(v => v.name.includes('Microsoft George'))   // Windows British male
+      const v = voices.find(v => v.name === 'Daniel')
+        || voices.find(v => v.name === 'Arthur')
+        || voices.find(v => v.name === 'Google UK English Male')
+        || voices.find(v => v.name.includes('Microsoft George'))
         || voices.find(v => v.name.includes('Microsoft Harry'))
         || voices.find(v => v.lang === 'en-GB' && !v.name.toLowerCase().includes('female'))
         || voices.find(v => v.lang.startsWith('en') && !v.name.toLowerCase().includes('female'))
       if (v) utter.voice = v
       utter.onstart = () => setIsSpeaking(true)
-      utter.onend   = () => setIsSpeaking(false)
-      utter.onerror = () => setIsSpeaking(false)
+      utter.onend = () => {
+        setIsSpeaking(false)
+        // Auto-restart listening after JARVIS finishes speaking (non-iOS only)
+        const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent)
+        if (voiceEnabledRef.current && !loadingRef.current && !isIOS) {
+          setTimeout(startListening, 700)
+        }
+      }
+      utter.onerror = () => {
+        setIsSpeaking(false)
+        const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent)
+        if (voiceEnabledRef.current && !loadingRef.current && !isIOS) {
+          setTimeout(startListening, 700)
+        }
+      }
       window.speechSynthesis.speak(utter)
     }, 50)
   }
 
   function startListening() {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition
-    if (!SR) { alert('Voice input is not supported in this browser. Try Chrome or Safari.'); return }
+    if (!SR || !voiceEnabledRef.current) return
     window.speechSynthesis.cancel()
     try { recognitionRef.current?.abort() } catch (_) {}
     const rec = new SR()
     rec.lang = 'en-US'
     rec.interimResults = false
     rec.maxAlternatives = 1
+    let gotResult = false
     rec.onstart = () => setIsListening(true)
     rec.onresult = (e) => {
-      const transcript = e.results[0][0].transcript
+      gotResult = true
+      const transcript = e.results[0][0].transcript.trim()
       setIsListening(false)
-      send(transcript)
+      if (transcript.length > 1) {
+        send(transcript) // speak() inside send() will restart listening when done
+      } else if (voiceEnabledRef.current && !loadingRef.current) {
+        setTimeout(startListening, 400)
+      }
     }
     rec.onerror = (e) => {
       setIsListening(false)
       if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
-        alert('Microphone access was denied.\n\niOS: Go to Settings → Privacy & Security → Microphone and allow Safari.\nAlso check Settings → General → Keyboard → Enable Dictation is ON.')
+        setVoiceEnabled(false)
+        voiceEnabledRef.current = false
+        alert('Microphone access was denied.\n\niOS: Go to Settings → Privacy & Security → Microphone and enable it for Safari.\nChrome: click the lock icon in the address bar.')
       } else if (e.error === 'network') {
-        alert('Speech recognition requires a connection to Apple\'s servers.\n\nMake sure you\'re connected to the internet and that Siri & Dictation is enabled in Settings → Siri & Search.')
+        alert('Speech recognition needs internet. Make sure Siri & Dictation is enabled in Settings.')
+      } else if (e.error !== 'aborted' && voiceEnabledRef.current && !loadingRef.current) {
+        setTimeout(startListening, 1500)
       }
     }
-    rec.onend = () => setIsListening(false)
+    rec.onend = () => {
+      setIsListening(false)
+      // Restart listening if we didn't get a result and voice is still on
+      // (the onresult handler already handles restarts when speech was detected)
+      const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent)
+      if (!gotResult && voiceEnabledRef.current && !loadingRef.current && !isSpeakingRef.current && !isIOS) {
+        setTimeout(startListening, 700)
+      }
+    }
     rec.start()
     recognitionRef.current = rec
   }
@@ -1610,66 +1688,124 @@ export default function Home() {
     setIsListening(false)
   }
 
-  function startWakeMode() {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition
-    if (!SR) { alert('Voice recognition not supported in this browser. Try Chrome or Safari.'); return }
-    setWakeMode(true)
-
-    function listenForWake() {
-      if (!wakeModeRef.current) return
-      const rec = new SR()
-      rec.lang = 'en-US'
-      rec.continuous = false
-      rec.interimResults = false
-      rec.maxAlternatives = 1
-
-      rec.onresult = (e) => {
-        const transcript = e.results[0][0].transcript.toLowerCase().trim()
-        if (transcript.includes('jarvis')) {
-          // Pull out whatever they said after the wake word
-          const afterWake = transcript.replace(/.*jarvis\s*/i, '').trim()
-          if (afterWake.length > 2) {
-            // Full command in one phrase — send it directly
-            send(afterWake)
-          } else {
-            // Just said "Hey JARVIS" — start a command session
-            setIsListening(true)
-            const cmdRec = new SR()
-            cmdRec.lang = 'en-US'
-            cmdRec.continuous = false
-            cmdRec.interimResults = false
-            cmdRec.onresult = (e2) => {
-              const cmd = e2.results[0][0].transcript
-              setIsListening(false)
-              send(cmd)
-            }
-            cmdRec.onerror = () => setIsListening(false)
-            cmdRec.onend   = () => {
-              setIsListening(false)
-              setTimeout(() => { if (wakeModeRef.current) listenForWake() }, 600)
-            }
-            cmdRec.start()
-            recognitionRef.current = cmdRec
-            return // don't restart wake loop yet — cmdRec.onend handles it
-          }
-        }
-      }
-
-      rec.onerror = () => { if (wakeModeRef.current) setTimeout(listenForWake, 1000) }
-      rec.onend   = () => { if (wakeModeRef.current) setTimeout(listenForWake, 300) }
-      rec.start()
-      wakeRecognitionRef.current = rec
-    }
-
-    listenForWake()
+  function stopVoice() {
+    setVoiceEnabled(false)
+    voiceEnabledRef.current = false
+    window.speechSynthesis?.cancel()
+    try { recognitionRef.current?.abort() } catch (_) {}
+    setIsListening(false)
+    setIsSpeaking(false)
   }
 
-  function stopWakeMode() {
-    setWakeMode(false)
-    wakeModeRef.current = false
-    try { wakeRecognitionRef.current?.stop() } catch (_) {}
-    try { recognitionRef.current?.stop() } catch (_) {}
-    setIsListening(false)
+  async function fetchTeamScore(sport, league, teamAbbr, teamName) {
+    try {
+      const url = `https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/scoreboard`
+      const res = await fetch(url)
+      const data = await res.json()
+      for (const event of (data.events || [])) {
+        const comp = event.competitions?.[0]
+        const teams = comp?.competitors || []
+        const match = teams.some(t =>
+          t.team?.abbreviation?.toUpperCase() === teamAbbr.toUpperCase() ||
+          t.team?.name?.toLowerCase().includes(teamAbbr.toLowerCase())
+        )
+        if (match) {
+          const status = comp?.status?.type?.description || 'Scheduled'
+          const home = teams.find(t => t.homeAway === 'home')
+          const away = teams.find(t => t.homeAway === 'away')
+          const awayName = away?.team?.shortDisplayName || away?.team?.name || '?'
+          const homeName = home?.team?.shortDisplayName || home?.team?.name || '?'
+          const awayScore = away?.score ?? ''
+          const homeScore = home?.score ?? ''
+          const scoreStr = (awayScore !== '' && homeScore !== '') ? ` ${awayScore}-${homeScore}` : ''
+          return `${teamName}: ${awayName} @ ${homeName}${scoreStr} (${status})`
+        }
+      }
+      return null
+    } catch (_) {
+      return null
+    }
+  }
+
+  async function buildLiveContext(userInput) {
+    const q = userInput.toLowerCase()
+    const parts = []
+
+    const wantsNews = q.includes('news') || q.includes('headline') || q.includes('fox')
+    const wantsSports = q.includes('sport') || q.includes('score') || q.includes('game') ||
+      q.includes('colts') || q.includes('thunder') || q.includes('wildcat') ||
+      q.includes('reds') || q.includes('rams') || q.includes('nfl') || q.includes('nba') ||
+      q.includes('mlb') || q.includes('basketball') || q.includes('football') || q.includes('baseball')
+    const wantsCalendar = q.includes('calendar') || q.includes('schedule') || q.includes('today') ||
+      q.includes('happening') || q.includes('plans') || q.includes('event') || q.includes('appointment') ||
+      q.includes('do we have') || q.includes('what') && q.includes('day')
+    const wantsWeather = q.includes('weather') || q.includes('forecast') || q.includes('temperature') ||
+      q.includes('rain') || q.includes('snow') || q.includes('cold') || q.includes('hot') || q.includes('outside')
+
+    const fetches = []
+
+    if (wantsNews) {
+      fetches.push(
+        fetch('/api/news').then(r => r.json()).then(d => {
+          if (d.headlines?.length) {
+            parts.push('CURRENT FOX NEWS HEADLINES:\n' + d.headlines.map((h, i) => `${i + 1}. ${h}`).join('\n'))
+          }
+        }).catch(() => {})
+      )
+    }
+
+    if (wantsSports) {
+      fetches.push(
+        Promise.all([
+          fetchTeamScore('football', 'nfl', 'IND', 'Indianapolis Colts'),
+          fetchTeamScore('football', 'nfl', 'LAR', 'Los Angeles Rams'),
+          fetchTeamScore('basketball', 'nba', 'OKC', 'Oklahoma City Thunder'),
+          fetchTeamScore('baseball', 'mlb', 'CIN', 'Cincinnati Reds'),
+          fetchTeamScore('football', 'college-football', 'UK', 'Kentucky Wildcats Football'),
+          fetchTeamScore('basketball', 'mens-college-basketball', 'UK', 'Kentucky Wildcats Basketball'),
+        ]).then(scores => {
+          const valid = scores.filter(Boolean)
+          if (valid.length) parts.push('CURRENT/RECENT SPORTS SCORES:\n' + valid.join('\n'))
+          else parts.push('SPORTS: No games currently in progress for the Colts, Rams, Thunder, Reds, or Kentucky Wildcats.')
+        })
+      )
+    }
+
+    if (wantsCalendar) {
+      fetches.push(
+        fetch('/api/calendar').then(r => r.json()).then(d => {
+          if (d.events?.length) {
+            const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'America/New_York' })
+            parts.push(`TODAY'S CALENDAR (${today}):\n` + d.events.map(e => `• ${e.allDay ? 'All day' : e.time} — ${e.summary}`).join('\n'))
+          } else if (d.error) {
+            parts.push('CALENDAR: ' + d.error)
+          } else {
+            parts.push('CALENDAR: No events scheduled for today.')
+          }
+        }).catch(() => {})
+      )
+    }
+
+    if (wantsWeather) {
+      fetches.push(
+        fetch('https://api.open-meteo.com/v1/forecast?latitude=38.0406&longitude=-84.5037&current=temperature_2m,weathercode,windspeed_10m&daily=temperature_2m_max,temperature_2m_min,weathercode&temperature_unit=fahrenheit&windspeed_unit=mph&forecast_days=2')
+          .then(r => r.json()).then(d => {
+            const c = d.current
+            const wc = { 0: 'Clear', 1: 'Mainly Clear', 2: 'Partly Cloudy', 3: 'Overcast', 45: 'Foggy', 48: 'Foggy', 51: 'Drizzle', 61: 'Rain', 71: 'Snow', 80: 'Showers', 95: 'Thunderstorm' }
+            const wi = { 0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️', 45: '🌫️', 48: '🌫️', 51: '🌦️', 61: '🌧️', 71: '🌨️', 80: '🌦️', 95: '⛈️' }
+            const tCode = d.daily.weathercode[1]
+            const tHigh = Math.round(d.daily.temperature_2m_max[1])
+            const tLow = Math.round(d.daily.temperature_2m_min[1])
+            parts.push(
+              `CURRENT WEATHER (Lexington, KY): ${wi[c.weathercode] || '🌡️'} ${wc[c.weathercode] || ''} | ${Math.round(c.temperature_2m)}°F | Wind ${Math.round(c.windspeed_10m)}mph\n` +
+              `TOMORROW: ${wi[tCode] || '🌡️'} ${wc[tCode] || ''} | High ${tHigh}°F / Low ${tLow}°F`
+            )
+          }).catch(() => {})
+      )
+    }
+
+    await Promise.all(fetches)
+    return parts.length ? '\n\n--- LIVE DATA ---\n' + parts.join('\n\n') + '\n--- END LIVE DATA ---' : ''
   }
 
   async function send(voiceInput) {
@@ -1684,7 +1820,6 @@ export default function Home() {
       window.speechSynthesis.speak(new SpeechSynthesisUtterance(''))
     }
 
-    // Create user message with optional image
     const userMsg = {
       role: 'user',
       content: textToSend || (uploadedImage ? "Can you help me solve this math problem step by step?" : ""),
@@ -1697,63 +1832,16 @@ export default function Home() {
     const userInput = textToSend.toLowerCase()
     setInput('')
     setLoading(true)
-    
-    try {
-      // Check for special commands first (weather/news)
-      if (userInput.includes('weather') && (userInput.includes('tomorrow') || userInput.includes('forecast'))) {
-        // Weather forecast code stays the same...
-        const response = await fetch('https://api.open-meteo.com/v1/forecast?latitude=38.0406&longitude=-84.5037&daily=temperature_2m_max,temperature_2m_min,weathercode&temperature_unit=fahrenheit&forecast_days=2')
-        const data = await response.json()
-        const tomorrowData = data.daily
-        const tomorrowCode = tomorrowData.weathercode[1]
-        const tomorrowHigh = Math.round(tomorrowData.temperature_2m_max[1])
-        const tomorrowLow = Math.round(tomorrowData.temperature_2m_min[1])
-        
-        const icons = { 0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️', 45: '🌫️', 48: '🌫️', 51: '🌦️', 61: '🌧️', 71: '🌨️', 80: '🌦️', 95: '⛈️' }
-        const descs = { 0: 'Clear', 1: 'Mainly Clear', 2: 'Partly Cloudy', 3: 'Overcast', 45: 'Foggy', 51: 'Drizzle', 61: 'Rain', 71: 'Snow', 80: 'Showers', 95: 'Thunderstorm' }
-        
-        const weatherReply = `Tomorrow's weather in Lexington: ${icons[tomorrowCode] || '🌡️'} ${descs[tomorrowCode] || 'Mixed conditions'}\n\nHigh: ${tomorrowHigh}°F\nLow: ${tomorrowLow}°F\n\nPlan accordingly, ${user}!`
-        setMessages(m => [...m, { role: 'assistant', content: weatherReply, name: 'JARVIS' }])
-        logChatExchange(user, userMsg.content, weatherReply, !!uploadedImage)
-        if (voiceEnabledRef.current) speak(weatherReply)
-        setLoading(false)
-        return
-      }
 
-      if (userInput.includes('news') || userInput.includes('headlines')) {
-        // News code stays the same...
-        const response = await fetch('https://newsapi.org/v2/top-headlines?country=us&pageSize=5&apiKey=demo')
-        let newsReply = "Here are today's top headlines:\n\n"
-        
-        if (!response.ok) {
-          newsReply = `I don't have access to live news feeds right now, ${user}. For the latest updates, I'd recommend:\n\n• BBC News (bbc.com/news)\n• Reuters (reuters.com)\n• AP News (apnews.com)\n• NPR (npr.org)\n\nIs there anything specific you'd like to know about?`
-        } else {
-          const data = await response.json()
-          if (data.articles && data.articles.length > 0) {
-            data.articles.slice(0, 4).forEach((article, i) => {
-              newsReply += `${i + 1}. ${article.title}\n`
-            })
-            newsReply += "\nFor full articles, check your preferred news app or website."
-          }
-        }
-        
-        setMessages(m => [...m, { role: 'assistant', content: newsReply, name: 'JARVIS' }])
-        logChatExchange(user, userMsg.content, newsReply, !!uploadedImage)
-        if (voiceEnabledRef.current) speak(newsReply)
-        setLoading(false)
-        return
-      }
-      
-      // Send to Claude API (handles both text and image messages).
-      // Pick the right system prompt based on who's chatting — adults get the
-      // less-restricted context, kids get the strict age-appropriate version.
+    try {
+      const liveContext = await buildLiveContext(userInput)
       const activeContext = (user === 'Dad' || user === 'Mom')
         ? FAMILY_CONTEXT_ADULTS
         : FAMILY_CONTEXT_KIDS
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: newMessages, user, context: activeContext })
+        body: JSON.stringify({ messages: newMessages, user, context: activeContext + liveContext })
       })
       const data = await res.json()
       setMessages(m => [...m, { role: 'assistant', content: data.reply, name: 'JARVIS' }])
@@ -1902,17 +1990,19 @@ export default function Home() {
               <button
                 className={`voice-toggle${voiceEnabled ? ' on' : ''}`}
                 onClick={() => {
-                  const next = !voiceEnabled
-                  setVoiceEnabled(next)
-                  if (!next) window.speechSynthesis?.cancel()
+                  if (voiceEnabled) {
+                    stopVoice()
+                  } else {
+                    setVoiceEnabled(true)
+                    voiceEnabledRef.current = true
+                    if (typeof window !== 'undefined' && window.speechSynthesis) {
+                      window.speechSynthesis.speak(new SpeechSynthesisUtterance(''))
+                    }
+                    setTimeout(startListening, 300)
+                  }
                 }}
-                title={voiceEnabled ? 'Voice on' : 'Voice off'}
-              >{voiceEnabled ? '🔊 ON' : '🔇 OFF'}</button>
-              <button
-                className={`wake-btn${wakeMode ? ' on' : ''}`}
-                onClick={wakeMode ? stopWakeMode : startWakeMode}
-                title={wakeMode ? 'Wake mode on — say "Hey JARVIS"' : 'Enable wake word'}
-              >{wakeMode ? '👂 WAKE ON' : '👂 WAKE'}</button>
+                title={voiceEnabled ? 'Voice on — tap to disable' : 'Enable voice mode'}
+              >{voiceEnabled ? (isSpeaking ? '🔊 SPEAKING' : isListening ? '👂 LISTENING' : '🎙 VOICE ON') : '🎙 VOICE OFF'}</button>
             </div>
           </div>
         ) : (
@@ -2362,7 +2452,21 @@ export default function Home() {
                 return (
                   <button
                     key={f}
-                    onClick={() => { setUser(f); setUserSelected(true); setMessages([]) }}
+                    onClick={() => {
+                      setUser(f)
+                      setUserSelected(true)
+                      setMessages([])
+                      // For kids, auto-start voice immediately (adults have password screen next)
+                      if (f !== 'Dad' && f !== 'Mom') {
+                        setVoiceEnabled(true)
+                        voiceEnabledRef.current = true
+                        if (typeof window !== 'undefined' && window.speechSynthesis) {
+                          window.speechSynthesis.speak(new SpeechSynthesisUtterance(''))
+                          const greeting = `Hello ${f}, JARVIS online. How can I help you today?`
+                          setTimeout(() => speak(greeting), 180)
+                        }
+                      }
+                    }}
                     style={{
                       padding: '18px 12px',
                       background: isAdult
@@ -2425,6 +2529,13 @@ export default function Home() {
                   setAdultChatUnlocked(true)
                   setAdultChatPassInput('')
                   setMessages([])
+                  setVoiceEnabled(true)
+                  voiceEnabledRef.current = true
+                  if (typeof window !== 'undefined' && window.speechSynthesis) {
+                    window.speechSynthesis.speak(new SpeechSynthesisUtterance(''))
+                    const greeting = user === 'Dad' ? 'Good day, sir. JARVIS at your disposal.' : 'Good day, ma\'am. How may I assist?'
+                    setTimeout(() => speak(greeting), 180)
+                  }
                 }
               }}
               autoFocus
@@ -2436,6 +2547,13 @@ export default function Home() {
                   setAdultChatUnlocked(true)
                   setAdultChatPassInput('')
                   setMessages([])
+                  setVoiceEnabled(true)
+                  voiceEnabledRef.current = true
+                  if (typeof window !== 'undefined' && window.speechSynthesis) {
+                    window.speechSynthesis.speak(new SpeechSynthesisUtterance(''))
+                    const greeting = user === 'Dad' ? 'Good day, sir. JARVIS at your disposal.' : 'Good day, ma\'am. How may I assist?'
+                    setTimeout(() => speak(greeting), 180)
+                  }
                 }
               }}
             >UNLOCK</button>
@@ -2474,13 +2592,12 @@ export default function Home() {
               {/* Main ambient JARVIS display */}
               <div className="jarvis-display">
                 {/* Canvas particle orb */}
-                <div className={`orb-section${isListening ? ' listening' : wakeMode ? ' wake' : ''}`}>
+                <div className={`orb-section${isSpeaking ? ' speaking' : loading ? ' thinking' : isListening ? ' listening' : ''}`}>
                   <canvas ref={orbCanvasRef} />
                 </div>
 
                 {/* Status labels */}
                 {isListening && <div className="listen-label">Listening...</div>}
-                {wakeMode && !isListening && <div className="wake-label">Say "Hey JARVIS"</div>}
 
                 {/* Welcome / idle state */}
                 {messages.length === 0 && !loading && !isListening && (
