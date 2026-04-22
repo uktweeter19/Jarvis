@@ -257,6 +257,16 @@ const styles = `
   .jarvis-idle{display:flex;flex-direction:column;align-items:center;gap:6px;opacity:0.6;text-align:center;}
   .jarvis-idle h2{font-family:'Rajdhani',sans-serif;font-size:12px;letter-spacing:6px;color:#00b4ff;}
   .jarvis-idle p{font-size:10px;color:rgba(0,180,255,0.55);max-width:220px;line-height:1.8;}
+  /* ── VOICE ── */
+  .orb-section.listening{animation:listenGlow 0.9s ease-in-out infinite;}
+  @keyframes listenGlow{0%,100%{filter:drop-shadow(0 0 8px rgba(0,255,160,0.4));}50%{filter:drop-shadow(0 0 24px rgba(0,255,160,0.9));}}
+  .listen-label{font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(0,255,160,0.75);letter-spacing:5px;text-transform:uppercase;animation:procBlink 0.9s ease-in-out infinite;margin-bottom:6px;}
+  .mic-btn{width:40px;height:40px;background:rgba(0,20,50,0.8);border:1px solid rgba(0,180,255,0.25);cursor:pointer;display:flex;align-items:center;justify-content:center;clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);color:rgba(0,180,255,0.55);font-size:15px;transition:all 0.2s;flex-shrink:0;}
+  .mic-btn:hover{border-color:rgba(0,180,255,0.6);color:#00d4ff;box-shadow:0 0 14px rgba(0,180,255,0.4);}
+  .mic-btn.listening{background:linear-gradient(135deg,#003322,#006644);border-color:rgba(0,255,160,0.8);color:rgba(0,255,160,0.95);box-shadow:0 0 18px rgba(0,255,160,0.55);animation:micPulse 0.9s ease-in-out infinite;}
+  @keyframes micPulse{0%,100%{box-shadow:0 0 12px rgba(0,255,160,0.4);}50%{box-shadow:0 0 26px rgba(0,255,160,0.85);}}
+  .voice-toggle{padding:4px 10px;border:1px solid rgba(0,180,255,0.2);background:transparent;color:rgba(0,180,255,0.45);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;cursor:pointer;border-radius:20px;transition:all 0.2s;white-space:nowrap;}
+  .voice-toggle.on{border-color:#00d4ff;color:#00d4ff;background:rgba(0,180,255,0.1);box-shadow:0 0 8px rgba(0,180,255,0.3);}
   .input-area{padding:10px 16px;border-top:1px solid rgba(0,180,255,0.15);background:rgba(2,11,24,0.9);backdrop-filter:blur(10px);flex-shrink:0;}
   .input-row{display:flex;gap:8px;align-items:flex-end;}
   .input-wrap{flex:1;position:relative;}
@@ -578,6 +588,10 @@ export default function Home() {
   const orbStateRef = useRef('idle')
   const [displayedText, setDisplayedText] = useState('')
   const [isTyping, setIsTyping] = useState(false)
+  const [isListening, setIsListening] = useState(false)
+  const [voiceEnabled, setVoiceEnabled] = useState(false)
+  const recognitionRef = useRef(null)
+  const voiceEnabledRef = useRef(false)
   // Tracks which bulletin IDs have already triggered a notification on this device.
   // Initialized when bulletins first load; after that, any NEW id triggers a pop-up.
   const seenBulletinIdsRef = useRef(null)
@@ -1516,20 +1530,76 @@ export default function Home() {
     }
   }
 
-  async function send() {
-    if ((!input.trim() && !uploadedImage) || loading) return
-    
-    // Create user message with optional image
-    const userMsg = { 
-      role: 'user', 
-      content: input || (uploadedImage ? "Can you help me solve this math problem step by step?" : ""), 
-      name: user,
-      image: imagePreview 
+  // Keep voiceEnabledRef in sync so the async send() always reads the live value
+  // (state closures inside async functions can be stale)
+  useEffect(() => { voiceEnabledRef.current = voiceEnabled }, [voiceEnabled])
+
+  function speak(text) {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return
+    window.speechSynthesis.cancel()
+    const utter = new SpeechSynthesisUtterance(text)
+    utter.rate = 1.0
+    utter.pitch = 0.82
+    utter.volume = 1.0
+    const pickVoice = () => {
+      const voices = window.speechSynthesis.getVoices()
+      const v = voices.find(v => v.name === 'Google UK English Male')
+        || voices.find(v => v.name === 'Daniel')
+        || voices.find(v => v.name === 'Arthur')
+        || voices.find(v => v.name.includes('Microsoft David'))
+        || voices.find(v => v.lang === 'en-GB')
+        || voices.find(v => v.lang.startsWith('en') && !v.name.toLowerCase().includes('female'))
+      if (v) utter.voice = v
+      window.speechSynthesis.speak(utter)
     }
-    
+    if (window.speechSynthesis.getVoices().length === 0) {
+      window.speechSynthesis.onvoiceschanged = pickVoice
+    } else {
+      pickVoice()
+    }
+  }
+
+  function startListening() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition
+    if (!SR) { alert('Voice input is not supported in this browser. Try Chrome or Safari.'); return }
+    window.speechSynthesis.cancel()
+    try { recognitionRef.current?.abort() } catch (_) {}
+    const rec = new SR()
+    rec.lang = 'en-US'
+    rec.interimResults = false
+    rec.maxAlternatives = 1
+    rec.onstart = () => setIsListening(true)
+    rec.onresult = (e) => {
+      const transcript = e.results[0][0].transcript
+      setIsListening(false)
+      send(transcript)
+    }
+    rec.onerror = () => setIsListening(false)
+    rec.onend = () => setIsListening(false)
+    rec.start()
+    recognitionRef.current = rec
+  }
+
+  function stopListening() {
+    try { recognitionRef.current?.stop() } catch (_) {}
+    setIsListening(false)
+  }
+
+  async function send(voiceInput) {
+    const textToSend = typeof voiceInput === 'string' ? voiceInput : input
+    if ((!textToSend.trim() && !uploadedImage) || loading) return
+
+    // Create user message with optional image
+    const userMsg = {
+      role: 'user',
+      content: textToSend || (uploadedImage ? "Can you help me solve this math problem step by step?" : ""),
+      name: user,
+      image: imagePreview
+    }
+
     const newMessages = [...messages, userMsg]
     setMessages(newMessages)
-    const userInput = input.toLowerCase()
+    const userInput = textToSend.toLowerCase()
     setInput('')
     setLoading(true)
     
@@ -1550,10 +1620,11 @@ export default function Home() {
         const weatherReply = `Tomorrow's weather in Lexington: ${icons[tomorrowCode] || '🌡️'} ${descs[tomorrowCode] || 'Mixed conditions'}\n\nHigh: ${tomorrowHigh}°F\nLow: ${tomorrowLow}°F\n\nPlan accordingly, ${user}!`
         setMessages(m => [...m, { role: 'assistant', content: weatherReply, name: 'JARVIS' }])
         logChatExchange(user, userMsg.content, weatherReply, !!uploadedImage)
+        if (voiceEnabledRef.current) speak(weatherReply)
         setLoading(false)
         return
       }
-      
+
       if (userInput.includes('news') || userInput.includes('headlines')) {
         // News code stays the same...
         const response = await fetch('https://newsapi.org/v2/top-headlines?country=us&pageSize=5&apiKey=demo')
@@ -1573,6 +1644,7 @@ export default function Home() {
         
         setMessages(m => [...m, { role: 'assistant', content: newsReply, name: 'JARVIS' }])
         logChatExchange(user, userMsg.content, newsReply, !!uploadedImage)
+        if (voiceEnabledRef.current) speak(newsReply)
         setLoading(false)
         return
       }
@@ -1591,6 +1663,7 @@ export default function Home() {
       const data = await res.json()
       setMessages(m => [...m, { role: 'assistant', content: data.reply, name: 'JARVIS' }])
       logChatExchange(user, userMsg.content, data.reply, !!uploadedImage)
+      if (voiceEnabledRef.current) speak(data.reply)
       setLoading(false)
       if (uploadedImage) clearImage()
     } catch (e) {
@@ -1731,6 +1804,15 @@ export default function Home() {
             <div className="hud-stats">
               <div className="hud-stat"><span>{time}</span><span>LOCAL TIME</span></div>
               <div className="hud-stat"><span style={{ color: '#00ff88' }}>ONLINE</span><span>STATUS</span></div>
+              <button
+                className={`voice-toggle${voiceEnabled ? ' on' : ''}`}
+                onClick={() => {
+                  const next = !voiceEnabled
+                  setVoiceEnabled(next)
+                  if (!next) window.speechSynthesis?.cancel()
+                }}
+                title={voiceEnabled ? 'Voice response on — click to mute' : 'Voice response off — click to enable'}
+              >{voiceEnabled ? '🔊 VOICE ON' : '🔇 VOICE OFF'}</button>
             </div>
           </div>
         ) : (
@@ -2291,13 +2373,16 @@ export default function Home() {
 
               {/* Main ambient JARVIS display */}
               <div className="jarvis-display">
-                {/* Canvas particle orb — state drives speed via orbStateRef */}
-                <div className="orb-section">
+                {/* Canvas particle orb — glows green while listening */}
+                <div className={`orb-section${isListening ? ' listening' : ''}`}>
                   <canvas ref={orbCanvasRef} />
                 </div>
 
+                {/* Listening indicator */}
+                {isListening && <div className="listen-label">Listening...</div>}
+
                 {/* Welcome / idle state */}
-                {messages.length === 0 && !loading && (
+                {messages.length === 0 && !loading && !isListening && (
                   <div className="jarvis-idle">
                     <h2>SYSTEMS ONLINE</h2>
                     <p>Good to see you, {user}. All systems operational. How may I assist?</p>
@@ -2400,9 +2485,16 @@ export default function Home() {
                 <div className="input-wrap">
                   <textarea value={input} onChange={e => setInput(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }}
-                    placeholder="Awaiting your command..." rows={1} style={{ lineHeight: '20px' }} />
+                    placeholder={isListening ? 'Listening...' : 'Awaiting your command...'} rows={1} style={{ lineHeight: '20px' }} />
                 </div>
-                <button className="send-btn" onClick={send} disabled={loading}>➤</button>
+                {/* Mic button */}
+                <button
+                  className={`mic-btn${isListening ? ' listening' : ''}`}
+                  onClick={isListening ? stopListening : startListening}
+                  title={isListening ? 'Stop listening' : 'Speak to JARVIS'}
+                  disabled={loading}
+                >🎤</button>
+                <button className="send-btn" onClick={() => send()} disabled={loading}>➤</button>
               </div>
             </div>
           </>
