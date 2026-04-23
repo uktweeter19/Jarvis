@@ -502,15 +502,15 @@ const styles = `
   .parent-lock-input:focus{border-color:rgba(0,86,179,0.6);}
   .parent-lock-btn{background:linear-gradient(135deg,#0056b3,#003580);border:none;padding:10px 30px;color:white;font-family:'Inter',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;cursor:pointer;border-radius:10px;box-shadow:0 4px 18px rgba(0,86,179,0.5);}
   .parent-filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px;}
-  .log-entry{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 14px;}
-  .log-entry.flagged{background:rgba(255,80,80,0.08);border:1px solid rgba(255,80,80,0.3);border-left:3px solid #ff5050;}
+  .parent-panel .log-entry{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.10);border-radius:10px;padding:12px 14px;opacity:1;}
+  .parent-panel .log-entry.flagged{background:rgba(255,80,80,0.08);border:1px solid rgba(255,80,80,0.3);border-left:3px solid #ff5050;}
   .log-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:11px;}
   .log-user{font-weight:700;color:#fff;letter-spacing:1px;text-transform:uppercase;}
-  .log-time{color:rgba(255,255,255,0.4);}
+  .log-time{color:rgba(255,255,255,0.6);}
   .log-flag-tag{display:inline-block;background:rgba(255,80,80,0.2);color:#ff7070;font-size:9px;font-weight:600;padding:2px 7px;border-radius:10px;margin-left:6px;letter-spacing:0.5px;text-transform:uppercase;border:1px solid rgba(255,80,80,0.3);}
-  .log-user-msg{font-size:12px;color:rgba(255,255,255,0.9);background:rgba(0,86,179,0.1);border-left:2px solid #0056b3;padding:7px 10px;border-radius:4px;margin-bottom:6px;line-height:1.5;word-wrap:break-word;}
-  .log-assistant-msg{font-size:12px;color:rgba(255,255,255,0.7);background:rgba(0,180,255,0.05);border-left:2px solid rgba(0,180,255,0.4);padding:7px 10px;border-radius:4px;line-height:1.5;word-wrap:break-word;}
-  .log-label{font-size:8px;font-weight:700;letter-spacing:1px;color:rgba(255,255,255,0.3);margin-bottom:3px;text-transform:uppercase;}
+  .log-user-msg{font-size:13px;color:#fff;background:rgba(0,86,179,0.12);border-left:2px solid #0056b3;padding:8px 10px;border-radius:4px;margin-bottom:6px;line-height:1.55;word-wrap:break-word;}
+  .log-assistant-msg{font-size:13px;color:rgba(255,255,255,0.88);background:rgba(0,180,255,0.06);border-left:2px solid rgba(0,180,255,0.45);padding:8px 10px;border-radius:4px;line-height:1.55;word-wrap:break-word;}
+  .log-label{font-size:9px;font-weight:700;letter-spacing:1px;color:rgba(255,255,255,0.5);margin-bottom:3px;text-transform:uppercase;}
   .parent-summary{display:flex;gap:10px;margin-bottom:4px;}
   .parent-stat{flex:1;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:10px 12px;text-align:center;}
   .parent-stat-num{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:#fff;}
@@ -1158,6 +1158,29 @@ export default function Home() {
     }
     if (window.speechSynthesis.getVoices().length > 0) lock()
     else window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.onvoiceschanged = null; lock() }
+  }, [])
+
+  // Re-unlock AudioContext when user returns to the app after backgrounding.
+  // iOS suspends the AudioContext when the page is hidden; it must be resumed
+  // inside a user gesture. We register a one-time touchstart/mousedown so the
+  // very next tap (mic, input, send, anywhere) re-activates audio.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    function handleVisible() {
+      if (document.visibilityState !== 'visible') return
+      const ac = audioCtxRef.current
+      if (!ac) return
+      ac.resume().catch(() => {})
+      function resumeOnGesture() {
+        ac.resume().catch(() => {})
+        document.removeEventListener('touchstart', resumeOnGesture)
+        document.removeEventListener('mousedown', resumeOnGesture)
+      }
+      document.addEventListener('touchstart', resumeOnGesture, { once: true, passive: true })
+      document.addEventListener('mousedown', resumeOnGesture, { once: true })
+    }
+    document.addEventListener('visibilitychange', handleVisible)
+    return () => document.removeEventListener('visibilitychange', handleVisible)
   }, [])
 
   // Canvas: JARVIS MCU HUD — concentric rings, spins when thinking, +35% when speaking
