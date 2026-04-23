@@ -237,8 +237,8 @@ const styles = `
   @keyframes orbListenPulse{0%,100%{filter:drop-shadow(0 0 30px rgba(0,255,160,0.45));}50%{filter:drop-shadow(0 0 55px rgba(0,255,160,0.7));}}
   .orb-section.speaking{filter:drop-shadow(0 0 50px rgba(255,180,0,0.65)) drop-shadow(0 0 90px rgba(140,0,240,0.5));animation:orbSpeakPulse 1.3s ease-in-out infinite;}
   @keyframes orbSpeakPulse{0%,100%{filter:drop-shadow(0 0 50px rgba(255,180,0,0.55));}50%{filter:drop-shadow(0 0 90px rgba(255,200,0,0.85));}}
-  .orb-section.thinking{filter:drop-shadow(0 0 55px rgba(80,140,255,0.7)) drop-shadow(0 0 100px rgba(40,0,200,0.5));animation:orbThinkPulse 1.2s ease-in-out infinite;}
-  @keyframes orbThinkPulse{0%,100%{filter:drop-shadow(0 0 40px rgba(80,140,255,0.5));}50%{filter:drop-shadow(0 0 100px rgba(120,180,255,0.9)) drop-shadow(0 0 200px rgba(60,80,255,0.5));}}
+  .orb-section.thinking{filter:drop-shadow(0 0 55px rgba(255,160,0,0.8)) drop-shadow(0 0 110px rgba(255,100,0,0.5));animation:orbThinkPulse 1.4s ease-in-out infinite;}
+  @keyframes orbThinkPulse{0%,100%{filter:drop-shadow(0 0 35px rgba(255,140,0,0.5));transform:scale(1);}50%{filter:drop-shadow(0 0 90px rgba(255,210,0,0.95)) drop-shadow(0 0 160px rgba(255,120,0,0.55));transform:scale(1.10);}}
   /* ── WAVEFORM ── */
   .waveform{display:flex;align-items:center;gap:3px;height:22px;margin-bottom:10px;}
   .wave-bar{width:3px;border-radius:2px;background:linear-gradient(to top,rgba(180,60,0,0.7),rgba(255,200,30,0.95));}
@@ -1160,7 +1160,7 @@ export default function Home() {
     else window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.onvoiceschanged = null; lock() }
   }, [])
 
-  // Canvas cosmic nebula cloud — centered blob, purple/blue/white-pink (matches reference image)
+  // Canvas: golden orb cloud with floating particles — pulses larger when thinking
   useEffect(() => {
     if (tab !== 'chat' || !userSelected) return
     if ((user === 'Dad' || user === 'Mom') && !adultChatUnlocked) return
@@ -1177,60 +1177,38 @@ export default function Home() {
     ctx.scale(dpr, dpr)
 
     const rng = Math.random
-    const cx = W * 0.50   // cloud center X
-    const cy = H * 0.47   // cloud center Y
-    const R  = Math.min(W, H) * 0.43  // cloud radius
+    const cx = W * 0.50
+    const cy = H * 0.47
+    const baseR = Math.min(W, H) * 0.30   // base cloud radius
 
-    // Box-Muller gaussian sample centered on cloud
+    // Box-Muller gaussian sample centered on orb
     function gaussPt(sigma) {
       const u1 = Math.max(1e-9, rng()), u2 = rng()
       const mag = sigma * Math.sqrt(-2 * Math.log(u1))
-      return {
-        x: cx + mag * Math.cos(2 * Math.PI * u2),
-        y: cy + mag * Math.sin(2 * Math.PI * u2)
-      }
+      return { x: cx + mag * Math.cos(2 * Math.PI * u2), y: cy + mag * Math.sin(2 * Math.PI * u2) }
     }
 
-    // ── Particle layers (blob-shaped, centered) ────────────────────────
-    // Inner core: white/cream/pink particles
-    const innerPts = Array.from({ length: 650 }, () => {
-      const p = gaussPt(R * 0.17)
-      return { ...p, ph: rng() * Math.PI * 2, sp: 0.30 + rng() * 0.50, r: 1.0 + rng() * 2.0, type: 0 }
-    })
-    // Mid cloud: purple/violet particles
-    const midPts = Array.from({ length: 1700 }, () => {
-      const p = gaussPt(R * 0.44)
-      return { ...p, ph: rng() * Math.PI * 2, sp: 0.20 + rng() * 0.42, r: 0.7 + rng() * 1.6, type: 1 }
-    })
-    // Outer wisp tendrils: deep blue, very sparse
-    const outerPts = Array.from({ length: 950 }, () => {
-      const p = gaussPt(R * 0.70)
-      return { ...p, ph: rng() * Math.PI * 2, sp: 0.15 + rng() * 0.30, r: 0.5 + rng() * 1.4, type: 2 }
-    })
-    const allPts = [...innerPts, ...midPts, ...outerPts]
+    // ── Cloud body particles (gaussian blob, golden colors) ────────────
+    const innerPts = Array.from({ length: 600 }, () => ({
+      ...gaussPt(baseR * 0.16), ph: rng()*Math.PI*2, sp: 0.30+rng()*0.50, r: 1.0+rng()*2.0, type: 0
+    }))
+    const midPts = Array.from({ length: 1500 }, () => ({
+      ...gaussPt(baseR * 0.42), ph: rng()*Math.PI*2, sp: 0.20+rng()*0.40, r: 0.7+rng()*1.5, type: 1
+    }))
+    const outerPts = Array.from({ length: 800 }, () => ({
+      ...gaussPt(baseR * 0.68), ph: rng()*Math.PI*2, sp: 0.12+rng()*0.28, r: 0.5+rng()*1.2, type: 2
+    }))
+    const cloudPts = [...innerPts, ...midPts, ...outerPts]
 
-    // ── Internal lightning arc state ───────────────────────────────────
-    let lastArcMs = 0, arcs = []
-    function makeArcs() {
-      const n = 5 + Math.floor(rng() * 7)
-      return Array.from({ length: n }, () => {
-        // Random start inside the inner cloud area
-        const ang = rng() * Math.PI * 2
-        const rad = rng() * R * 0.42
-        let curX = cx + Math.cos(ang) * rad
-        let curY = cy + Math.sin(ang) * rad
-        const nSeg = 2 + Math.floor(rng() * 3)
-        const pts = [{ x: curX, y: curY }]
-        for (let i = 0; i < nSeg; i++) {
-          const a2 = rng() * Math.PI * 2
-          const len = 16 + rng() * 48
-          curX += Math.cos(a2) * len
-          curY += Math.sin(a2) * len
-          pts.push({ x: curX, y: curY })
-        }
-        return { pts, alpha: 0.60 + rng() * 0.40 }
-      })
-    }
+    // ── Floating orbital particles (drift around the orb) ─────────────
+    const floatPts = Array.from({ length: 110 }, () => ({
+      angle: rng() * Math.PI * 2,
+      orbitR: baseR * (1.20 + rng() * 0.90),
+      speed: (0.004 + rng() * 0.007) * (rng() < 0.5 ? 1 : -1),
+      ph: rng() * Math.PI * 2,
+      r: 1.2 + rng() * 2.2,
+      bright: 0.45 + rng() * 0.55
+    }))
 
     let t = 0
 
@@ -1240,113 +1218,89 @@ export default function Home() {
       const isThinking = loadingRef.current
       t += 0.005 * spd
 
-      // Pure black background — cloud bleeds into void like reference
-      ctx.fillStyle = 'rgba(0,0,10,1)'
+      // Thinking: cloud grows and pulses
+      const thinkPulse = isThinking ? 1.0 + 0.22 * Math.abs(Math.sin(t * 2.8)) : 1.0
+      const R = baseR * thinkPulse
+
+      // Black background
+      ctx.fillStyle = 'rgba(0,0,8,1)'
       ctx.fillRect(0, 0, W, H)
 
-      // ── Layered radial glow blobs (additive blending) ──────────────
+      // ── Layered golden glow (additive blending) ────────────────────
       ctx.globalCompositeOperation = 'lighter'
 
-      // Outermost diffuse blue haze
-      const g1 = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 1.18)
-      g1.addColorStop(0.25, `rgba(25,45,190,${(0.14 * br).toFixed(2)})`)
-      g1.addColorStop(0.65, `rgba(18,55,210,${(0.19 * br).toFixed(2)})`)
+      // Wide outer amber haze
+      const g1 = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 1.55)
+      g1.addColorStop(0.20, `rgba(160,65,0,${(0.12*br).toFixed(2)})`)
+      g1.addColorStop(0.60, `rgba(110,40,0,${(0.15*br).toFixed(2)})`)
       g1.addColorStop(1,    'rgba(0,0,0,0)')
       ctx.fillStyle = g1; ctx.fillRect(0, 0, W, H)
 
-      // Mid blue-purple glow
-      const g2 = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 0.78)
-      g2.addColorStop(0,    `rgba(75,35,195,${(0.22 * br).toFixed(2)})`)
-      g2.addColorStop(0.55, `rgba(110,55,205,${(0.17 * br).toFixed(2)})`)
+      // Mid orange glow
+      const g2 = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 0.85)
+      g2.addColorStop(0,    `rgba(255,115,8,${(0.26*br).toFixed(2)})`)
+      g2.addColorStop(0.50, `rgba(210,75,3,${(0.18*br).toFixed(2)})`)
       g2.addColorStop(1,    'rgba(0,0,0,0)')
       ctx.fillStyle = g2; ctx.fillRect(0, 0, W, H)
 
-      // Inner purple-pink glow
-      const g3 = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 0.44)
-      g3.addColorStop(0,    `rgba(175,55,165,${(0.30 * br).toFixed(2)})`)
-      g3.addColorStop(0.55, `rgba(195,75,175,${(0.20 * br).toFixed(2)})`)
+      // Inner amber-gold
+      const g3 = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 0.46)
+      g3.addColorStop(0,    `rgba(255,195,40,${(0.40*br).toFixed(2)})`)
+      g3.addColorStop(0.55, `rgba(255,140,15,${(0.28*br).toFixed(2)})`)
       g3.addColorStop(1,    'rgba(0,0,0,0)')
       ctx.fillStyle = g3; ctx.fillRect(0, 0, W, H)
 
-      // Hot white-cream core
+      // Bright white-gold hot core
       const g4 = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 0.20)
-      g4.addColorStop(0,    `rgba(255,245,235,${(0.85 * br).toFixed(2)})`)
-      g4.addColorStop(0.40, `rgba(255,155,155,${(0.52 * br).toFixed(2)})`)
-      g4.addColorStop(0.80, `rgba(195,75,120,${(0.24 * br).toFixed(2)})`)
+      g4.addColorStop(0,    `rgba(255,252,210,${(0.92*br).toFixed(2)})`)
+      g4.addColorStop(0.45, `rgba(255,220,90,${(0.62*br).toFixed(2)})`)
+      g4.addColorStop(0.85, `rgba(255,150,20,${(0.25*br).toFixed(2)})`)
       g4.addColorStop(1,    'rgba(0,0,0,0)')
       ctx.fillStyle = g4; ctx.fillRect(0, 0, W, H)
 
-      // Thinking: electric blue inner surge
-      if (isThinking) {
-        const gt = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 0.58)
-        gt.addColorStop(0,    `rgba(160,210,255,${(0.32 * br).toFixed(2)})`)
-        gt.addColorStop(0.45, `rgba(80,145,255,${(0.20 * br).toFixed(2)})`)
-        gt.addColorStop(1,    'rgba(0,0,0,0)')
-        ctx.fillStyle = gt; ctx.fillRect(0, 0, W, H)
-      }
-
       ctx.globalCompositeOperation = 'source-over'
 
-      // ── Cloud particles ────────────────────────────────────────────
-      allPts.forEach(p => {
-        const px = p.x + Math.sin(p.ph + t * p.sp) * R * 0.030
-        const py = p.y + Math.cos(p.ph * 1.28 + t * p.sp * 0.74) * R * 0.022
+      // ── Cloud body particles ───────────────────────────────────────
+      cloudPts.forEach(p => {
+        const px = p.x + Math.sin(p.ph + t * p.sp) * R * 0.032
+        const py = p.y + Math.cos(p.ph * 1.28 + t * p.sp * 0.75) * R * 0.024
         if (px < 0 || px > W || py < 0 || py > H) return
 
-        // Distance from cloud center (normalized)
         const dx = px - cx, dy = py - cy
-        const dist = Math.sqrt(dx * dx + dy * dy) / R
+        const dist = Math.sqrt(dx*dx + dy*dy) / R
 
         let ri, gi, bi, a
         if (p.type === 0) {
-          // Core: white/cream → pink
-          const fade = Math.max(0, 1 - dist * 3.8)
-          ri = 255; gi = Math.round(215 + fade * 40); bi = Math.round(200 + fade * 55)
-          a  = (0.20 * fade + 0.03) * br
+          const fade = Math.max(0, 1 - dist * 4.2)
+          ri = 255; gi = Math.round(235 + fade * 20); bi = Math.round(150 + fade * 60)
+          a  = (0.22 * fade + 0.04) * br
         } else if (p.type === 1) {
-          // Mid: purple/violet
-          const fade = Math.max(0, 1 - dist * 1.9)
-          ri = Math.round(95 + fade * 65); gi = Math.round(50 + fade * 30); bi = Math.round(205 + fade * 30)
-          a  = (0.17 * fade + 0.025) * br
+          const fade = Math.max(0, 1 - dist * 2.1)
+          ri = 255; gi = Math.round(145 + fade * 65); bi = Math.round(8 + fade * 20)
+          a  = (0.18 * fade + 0.03) * br
         } else {
-          // Outer: deep blue wisps
-          const fade = Math.max(0, 1 - dist * 1.25)
-          ri = Math.round(30 + fade * 30); gi = Math.round(55 + fade * 45); bi = Math.round(195 + fade * 45)
-          a  = (0.13 * fade) * br
+          const fade = Math.max(0, 1 - dist * 1.45)
+          ri = 220; gi = Math.round(85 + fade * 45); bi = 5
+          a  = (0.12 * fade) * br
         }
 
-        if (a < 0.018) return
+        if (a < 0.016) return
         ctx.fillStyle = `rgba(${ri},${gi},${bi},${a.toFixed(2)})`
-        ctx.fillRect(px - p.r * 0.5, py - p.r * 0.5, p.r, p.r)
+        ctx.fillRect(px - p.r*0.5, py - p.r*0.5, p.r, p.r)
       })
 
-      // ── Internal electrical arcs (thinking — inside cloud only) ───
-      if (isThinking) {
-        const now = Date.now()
-        if (now - lastArcMs > 65 + rng() * 130) {
-          arcs = makeArcs()
-          lastArcMs = now
-        }
-        const flash = 0.50 + 0.50 * Math.abs(Math.sin(t * 24))
-        ctx.lineCap = 'round'
-        arcs.forEach(arc => {
-          const a = arc.alpha * flash
-          arc.pts.forEach((p, i) => {
-            if (i === 0) return
-            const prev = arc.pts[i - 1]
-            // Outer glow
-            ctx.strokeStyle = `rgba(190,220,255,${(0.28 * a).toFixed(2)})`
-            ctx.lineWidth = 5
-            ctx.beginPath(); ctx.moveTo(prev.x, prev.y); ctx.lineTo(p.x, p.y); ctx.stroke()
-            // Bright white core
-            ctx.strokeStyle = `rgba(255,255,255,${(0.88 * a).toFixed(2)})`
-            ctx.lineWidth = 0.9
-            ctx.beginPath(); ctx.moveTo(prev.x, prev.y); ctx.lineTo(p.x, p.y); ctx.stroke()
-          })
-        })
-      } else {
-        arcs = []; lastArcMs = 0
-      }
+      // ── Floating orbital particles ─────────────────────────────────
+      floatPts.forEach(fp => {
+        fp.angle += fp.speed * spd
+        const orb = fp.orbitR * thinkPulse
+        const radOsc = 1 + 0.09 * Math.sin(fp.ph + t * 0.55)
+        const px = cx + Math.cos(fp.angle) * orb * radOsc
+        const py = cy + Math.sin(fp.angle) * orb * radOsc
+        if (px < 0 || px > W || py < 0 || py > H) return
+        const a = (0.45 + 0.55 * Math.abs(Math.sin(fp.ph + t * 0.8))) * fp.bright * br
+        ctx.fillStyle = `rgba(255,175,35,${(a * 0.65).toFixed(2)})`
+        ctx.fillRect(px - fp.r*0.5, py - fp.r*0.5, fp.r, fp.r)
+      })
 
       orbRafRef.current = requestAnimationFrame(draw)
     }
