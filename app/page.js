@@ -1163,54 +1163,33 @@ export default function Home() {
     if (orbRafRef.current) cancelAnimationFrame(orbRafRef.current)
 
     const dpr = window.devicePixelRatio || 1
-    // Wide landscape canvas — fills the section like the reference image
-    const W = Math.min(320, Math.floor((canvas.parentElement?.offsetWidth || 320) * 0.96))
-    const H = Math.round(W * 0.62)
+    const W = Math.min(390, Math.floor((canvas.parentElement?.offsetWidth || 380) * 0.99))
+    const H = Math.round(W * 0.58)
     canvas.width = W * dpr
     canvas.height = H * dpr
     canvas.style.width = W + 'px'
     canvas.style.height = H + 'px'
     const ctx = canvas.getContext('2d')
     ctx.scale(dpr, dpr)
-    const CX = W / 2, CY = H / 2
 
-    // Wide horizontal energy-wave cloud using additive blending.
-    // Tier 0: hot orange/amber core spread across the lower-middle of the wave.
-    // Tier 1: warm gold mid-level spanning the full width.
-    // Tier 2: cool blue-white wisps rising above — additive overlay makes the
-    //         overlap regions turn bright white (matching the reference image).
-    const BLOBS = [
-      // Tier 0 — hot orange core, spread across full width in a low band
-      ...Array.from({ length: 9 }, (_, i) => ({
-        bx: W * ((i+0.5)/9) - CX,
-        by: 12 + Math.random()*18,
-        ax: 18+Math.random()*22, ay: 14+Math.random()*16,
-        fx: 0.18+Math.random()*0.28, fy: 0.14+Math.random()*0.22,
-        px: Math.random()*Math.PI*2, py: Math.random()*Math.PI*2,
-        r: 42+Math.random()*32, tier: 0
-      })),
-      // Tier 1 — warm gold, full width undulating wave
-      ...Array.from({ length: 11 }, (_, i) => {
-        const xf = i/10
-        return {
-          bx: W*xf - CX + (Math.random()-0.5)*18,
-          by: 8*Math.sin(xf*Math.PI*2.5) + (Math.random()-0.5)*12,
-          ax: 20+Math.random()*24, ay: 16+Math.random()*20,
-          fx: 0.12+Math.random()*0.2, fy: 0.10+Math.random()*0.17,
-          px: Math.random()*Math.PI*2, py: Math.random()*Math.PI*2,
-          r: 36+Math.random()*28, tier: 1
-        }
-      }),
-      // Tier 2 — cool blue-white wisps rising upward from the wave peaks
-      ...Array.from({ length: 11 }, (_, i) => ({
-        bx: W*((i+0.5)/11) - CX + (Math.random()-0.5)*22,
-        by: -12 - Math.random()*38,
-        ax: 16+Math.random()*20, ay: 18+Math.random()*24,
-        fx: 0.07+Math.random()*0.14, fy: 0.06+Math.random()*0.13,
-        px: Math.random()*Math.PI*2, py: Math.random()*Math.PI*2,
-        r: 28+Math.random()*32, tier: 2
-      }))
-    ]
+    // Particle-wave cloud matching the reference image.
+    // Dense grid of tiny dots arranged on an undulating wave surface,
+    // colored orange-hot at the glowing core zones, white at peaks, blue-grey mist above.
+    const COLS = Math.round(W / 3.6)   // ~100 columns
+    const ROWS = 26                      // layers stacked above the wave
+    const pts = []
+    for (let c = 0; c < COLS; c++) {
+      for (let r = 0; r < ROWS; r++) {
+        pts.push({ xN: c / (COLS - 1), rN: r / (ROWS - 1) })
+      }
+    }
+
+    // Compound wave — creates 4-5 peaks across the width like the reference
+    function wv(xN, t) {
+      return Math.sin(xN * Math.PI * 4.4 + t * 0.55) * 0.38
+           + Math.sin(xN * Math.PI * 8.8 + t * 0.38) * 0.15
+           + Math.cos(xN * Math.PI * 2.2 + t * 0.22) * 0.10
+    }
 
     let t = 0
 
@@ -1218,41 +1197,55 @@ export default function Home() {
       ctx.clearRect(0, 0, W, H)
       const spd = orbSpeedMultRef.current
       const br  = orbBrightnessRef.current
-      t += 0.005 * spd
+      t += 0.009 * spd
 
-      // 'lighter' = additive light blending.
-      // Where orange tier and blue-white tier overlap → bright white (like the image).
+      // Orange hot-spot atmosphere blobs (additive) — left-center glow zones
       ctx.globalCompositeOperation = 'lighter'
+      ;[[0.18, 1.0], [0.38, 0.55], [0.62, 0.35]].forEach(([xF, str]) => {
+        const hx = xF * W
+        const hy = H * 0.62 + wv(xF, t) * H * 0.28
+        const g = ctx.createRadialGradient(hx, hy, 0, hx, hy, W * 0.20)
+        g.addColorStop(0,   `rgba(255,125,12,${0.32*br*str})`)
+        g.addColorStop(0.5, `rgba(200,65,4,${0.12*br*str})`)
+        g.addColorStop(1,   'rgba(80,15,0,0)')
+        ctx.fillStyle = g
+        ctx.fillRect(0, 0, W, H)
+      })
+      ctx.globalCompositeOperation = 'source-over'
 
-      BLOBS.forEach(b => {
-        const x = CX + b.bx + b.ax * Math.sin(t * b.fx + b.px)
-        const y = CY + b.by + b.ay * Math.cos(t * b.fy + b.py)
-        const g = ctx.createRadialGradient(x, y, 0, x, y, b.r)
+      // Draw particles — tiny dots on the wave surface
+      pts.forEach(({ xN, rN }) => {
+        const wave   = wv(xN, t)
+        const surfY  = H * 0.56 + wave * H * 0.30   // wave surface Y
+        const y      = surfY - rN * H * 0.58          // stack rows upward
+        if (y < -1 || y > H + 1) return
+        const x = xN * W
 
-        if (b.tier === 0) {          // hot orange/amber
-          g.addColorStop(0,    `rgba(255,150,20,${0.38*br})`)
-          g.addColorStop(0.30, `rgba(255,90,5,${0.20*br})`)
-          g.addColorStop(0.65, `rgba(180,40,0,${0.07*br})`)
-          g.addColorStop(1,    'rgba(80,0,20,0)')
-        } else if (b.tier === 1) {   // warm gold
-          g.addColorStop(0,    `rgba(255,195,45,${0.26*br})`)
-          g.addColorStop(0.38, `rgba(210,110,12,${0.12*br})`)
-          g.addColorStop(0.72, `rgba(120,30,0,${0.04*br})`)
-          g.addColorStop(1,    'rgba(40,0,20,0)')
-        } else {                      // cool blue-white wisps
-          g.addColorStop(0,    `rgba(200,225,255,${0.18*br})`)
-          g.addColorStop(0.40, `rgba(140,185,240,${0.08*br})`)
-          g.addColorStop(0.75, `rgba(80,120,200,${0.03*br})`)
-          g.addColorStop(1,    'rgba(20,40,120,0)')
+        // Hot zones: left portion where wave dips low (valley = orange glow)
+        const isHot = xN < 0.42 && wave < -0.06
+        const sz    = Math.max(0.55, 1.4 - rN * 0.7)
+
+        let ri, gi, bi, a
+        if (isHot && rN < 0.40) {
+          // orange/amber — glowing hot core
+          ri = 255; gi = Math.round(105 + rN * 130); bi = Math.round(12 + rN * 35)
+          a  = (0.58 - rN * 0.45) * br
+        } else if (rN < 0.45) {
+          // warm cream/peach — mid-surface
+          const f = rN / 0.45
+          ri = Math.round(248 - f*22); gi = Math.round(215 - f*35); bi = Math.round(165 + f*65)
+          a  = (0.44 - f * 0.18) * br
+        } else {
+          // cool blue-white mist — rising above the peaks
+          const f = (rN - 0.45) / 0.55
+          ri = Math.round(178 + f*55); gi = Math.round(200 + f*35); bi = 238
+          a  = Math.max(0, (0.30 + f*0.10) * (1 - f*0.55)) * br
         }
 
-        ctx.fillStyle = g
-        ctx.beginPath()
-        ctx.arc(x, y, b.r, 0, Math.PI*2)
-        ctx.fill()
+        ctx.fillStyle = `rgba(${ri},${gi},${bi},${a.toFixed(2)})`
+        ctx.fillRect(x, y, sz, sz)
       })
 
-      ctx.globalCompositeOperation = 'source-over'
       orbRafRef.current = requestAnimationFrame(draw)
     }
 
@@ -1754,7 +1747,10 @@ export default function Home() {
       q.includes('mlb') || q.includes('basketball') || q.includes('football') || q.includes('baseball')
     const wantsCalendar = q.includes('calendar') || q.includes('schedule') || q.includes('today') ||
       q.includes('happening') || q.includes('plans') || q.includes('event') || q.includes('appointment') ||
-      q.includes('do we have') || q.includes('what') && q.includes('day')
+      q.includes('do we have') || q.includes('monday') || q.includes('tuesday') || q.includes('wednesday') ||
+      q.includes('thursday') || q.includes('friday') || q.includes('saturday') || q.includes('sunday') ||
+      q.includes('this week') || q.includes('tomorrow') || q.includes('weekend') ||
+      (q.includes('what') && q.includes('day'))
     const wantsWeather = q.includes('weather') || q.includes('forecast') || q.includes('temperature') ||
       q.includes('rain') || q.includes('snow') || q.includes('cold') || q.includes('hot') || q.includes('outside')
 
@@ -1791,14 +1787,18 @@ export default function Home() {
       fetches.push(
         fetch('/api/calendar').then(r => r.json()).then(d => {
           if (d.events?.length) {
-            const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'America/New_York' })
-            parts.push(`TODAY'S CALENDAR (${today}):\n` + d.events.map(e => `• ${e.allDay ? 'All day' : e.time} — ${e.summary}`).join('\n'))
+            // Group events by day name for a clear 7-day view
+            const byDay = {}
+            d.events.forEach(e => {
+              if (!byDay[e.dayName]) byDay[e.dayName] = []
+              byDay[e.dayName].push(`  • ${e.allDay ? 'All day' : e.time} — ${e.summary}`)
+            })
+            const lines = Object.entries(byDay).map(([day, evs]) => `${day.toUpperCase()}:\n${evs.join('\n')}`).join('\n\n')
+            parts.push(`FAMILY CALENDAR (next 7 days):\n${lines}`)
           } else if (d.error) {
             parts.push('CALENDAR ERROR: ' + d.error)
-          } else if (d.errors?.length) {
-            parts.push('CALENDAR ACCESS ERROR: ' + d.errors.join('; ') + ' — The calendar may need to be made public in Google Calendar settings.')
           } else {
-            parts.push('CALENDAR: No events scheduled for today.')
+            parts.push('CALENDAR: No events found in the next 7 days.')
           }
         }).catch(() => {})
       )
