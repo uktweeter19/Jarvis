@@ -137,7 +137,9 @@ SPECIAL CAPABILITY: You can analyze images of math problems and provide detailed
 
 You have access to family tools: a chores tracker, a shared shopping list, and a daily briefing system. When kids ask about chores or shopping, remind them they can use the Chores and Shopping tabs.
 
-Keep responses concise and conversational. Address each kid by name. Keep it encouraging, big-brother-ish, faith-grounded, and age-appropriate.`
+Keep responses concise and conversational. Address each kid by name. Keep it encouraging, big-brother-ish, faith-grounded, and age-appropriate.
+
+CALENDAR: When answering questions about the schedule, ONLY use events from the FAMILY CALENDAR data provided to you. NEVER invent, assume, or guess any events, practices, games, or appointments — even if they seem likely given what you know about the family. If no events are listed for a day, say "I don't see anything on the calendar for that day." Do not fill in gaps with family knowledge.`
 
 const FAMILY_CONTEXT_ADULTS = `You are JARVIS, the intelligent family assistant for the Deatherage family in Lexington, Kentucky. You are a proudly American, Christian-values-rooted household AI.
 
@@ -154,7 +156,9 @@ You are currently chatting with Kevin (Dad) or Emily (Mom) — both adults. Trea
 
 Conversations with Mom and Dad are private and are not logged for parent review. The content restrictions that apply to the kids' chats do NOT apply here. You can discuss difficult adult topics factually and helpfully. (Claude's baseline safety policies still apply — you won't help with things like weapons manufacturing, illegal instructions, or content sexualizing minors — but ordinary adult subject matter is fine.)
 
-Be direct, practical, and warm — you're talking to adults who have a household to run and a business to manage. Keep responses helpful, clear, and useful.`
+Be direct, practical, and warm — you're talking to adults who have a household to run and a business to manage. Keep responses helpful, clear, and useful.
+
+CALENDAR: When answering questions about the schedule, ONLY use events from the FAMILY CALENDAR data provided to you. NEVER invent, assume, or guess any events, practices, games, or appointments — even if they seem likely given what you know about the family. If no events are listed for a day, say "I don't see anything on the calendar for that day." Do not fill in gaps with family knowledge.`
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;600;700&family=Share+Tech+Mono&family=Inter:wght@400;500;600;700&display=swap');
@@ -1156,7 +1160,7 @@ export default function Home() {
     else window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.onvoiceschanged = null; lock() }
   }, [])
 
-  // Canvas energy-cloud animation — full-screen volumetric particle cloud with lightning storm
+  // Canvas cosmic nebula cloud — centered blob, purple/blue/white-pink (matches reference image)
   useEffect(() => {
     if (tab !== 'chat' || !userSelected) return
     if ((user === 'Dad' || user === 'Mom') && !adultChatUnlocked) return
@@ -1165,7 +1169,6 @@ export default function Home() {
     if (orbRafRef.current) cancelAnimationFrame(orbRafRef.current)
 
     const dpr = window.devicePixelRatio || 1
-    // Fill the entire orb-section container (which is position:absolute;inset:0)
     const W = canvas.parentElement?.clientWidth || window.innerWidth
     const H = canvas.parentElement?.clientHeight || Math.round(window.innerHeight * 0.52)
     canvas.width = Math.round(W * dpr)
@@ -1174,185 +1177,175 @@ export default function Home() {
     ctx.scale(dpr, dpr)
 
     const rng = Math.random
+    const cx = W * 0.50   // cloud center X
+    const cy = H * 0.47   // cloud center Y
+    const R  = Math.min(W, H) * 0.43  // cloud radius
 
-    // ── Volumetric particle cloud ──────────────────────────────────────────
-    // Core particles: dense orange-amber cluster, lower-center-left
-    const corePts = Array.from({ length: 1100 }, () => ({
-      x: W * (0.04 + rng() * 0.58),
-      y: H * (0.28 + rng() * 0.58),
-      ph: rng() * Math.PI * 2,
-      sp: 0.35 + rng() * 0.75,
-      r: 1.0 + rng() * 2.0,
-      type: 0
-    }))
-    // Mid particles: warm cream/peach, spread across most of the canvas
-    const midPts = Array.from({ length: 1800 }, () => ({
-      x: W * (0.02 + rng() * 0.92),
-      y: H * (0.10 + rng() * 0.82),
-      ph: rng() * Math.PI * 2,
-      sp: 0.25 + rng() * 0.55,
-      r: 0.7 + rng() * 1.3,
-      type: 1
-    }))
-    // Mist particles: blue-white wisps, higher and sparser
-    const mistPts = Array.from({ length: 900 }, () => ({
-      x: W * (rng() * 0.98),
-      y: H * (rng() * 0.70),
-      ph: rng() * Math.PI * 2,
-      sp: 0.18 + rng() * 0.38,
-      r: 0.5 + rng() * 1.5,
-      type: 2
-    }))
-    const allPts = [...corePts, ...midPts, ...mistPts]
-
-    // ── Lightning state ────────────────────────────────────────────────────
-    let lastLightningMs = 0
-    let bolts = []
-
-    function makeBolt() {
-      const n = 2 + Math.floor(rng() * 3)
-      return Array.from({ length: n }, () => {
-        const sx = W * (0.12 + rng() * 0.76)
-        let cx = sx, cy = -4
-        const pts = [{ x: cx, y: cy }]
-        while (cy < H * 0.90) {
-          cx = Math.max(6, Math.min(W - 6, cx + (rng() - 0.5) * 80))
-          cy += 22 + rng() * 38
-          pts.push({ x: cx, y: cy })
-          // Occasional branch
-          if (rng() < 0.28 && pts.length > 2) {
-            let bx = cx, by = cy
-            const bLen = 1 + Math.floor(rng() * 3)
-            const branch = [{ x: bx, y: by }]
-            for (let i = 0; i < bLen; i++) {
-              bx = Math.max(6, Math.min(W - 6, bx + (rng() - 0.5) * 60))
-              by += 18 + rng() * 28
-              branch.push({ x: bx, y: by })
-            }
-            pts._branch = branch
-          }
-        }
-        return { pts, alpha: 0.65 + rng() * 0.35 }
-      })
+    // Box-Muller gaussian sample centered on cloud
+    function gaussPt(sigma) {
+      const u1 = Math.max(1e-9, rng()), u2 = rng()
+      const mag = sigma * Math.sqrt(-2 * Math.log(u1))
+      return {
+        x: cx + mag * Math.cos(2 * Math.PI * u2),
+        y: cy + mag * Math.sin(2 * Math.PI * u2)
+      }
     }
 
-    function drawBoltPath(boltPts, lineWidth, color) {
-      ctx.strokeStyle = color
-      ctx.lineWidth = lineWidth
-      ctx.lineJoin = 'bevel'
-      ctx.beginPath()
-      boltPts.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y))
-      ctx.stroke()
-      if (boltPts._branch) {
-        ctx.beginPath()
-        boltPts._branch.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y))
-        ctx.stroke()
-      }
+    // ── Particle layers (blob-shaped, centered) ────────────────────────
+    // Inner core: white/cream/pink particles
+    const innerPts = Array.from({ length: 650 }, () => {
+      const p = gaussPt(R * 0.17)
+      return { ...p, ph: rng() * Math.PI * 2, sp: 0.30 + rng() * 0.50, r: 1.0 + rng() * 2.0, type: 0 }
+    })
+    // Mid cloud: purple/violet particles
+    const midPts = Array.from({ length: 1700 }, () => {
+      const p = gaussPt(R * 0.44)
+      return { ...p, ph: rng() * Math.PI * 2, sp: 0.20 + rng() * 0.42, r: 0.7 + rng() * 1.6, type: 1 }
+    })
+    // Outer wisp tendrils: deep blue, very sparse
+    const outerPts = Array.from({ length: 950 }, () => {
+      const p = gaussPt(R * 0.70)
+      return { ...p, ph: rng() * Math.PI * 2, sp: 0.15 + rng() * 0.30, r: 0.5 + rng() * 1.4, type: 2 }
+    })
+    const allPts = [...innerPts, ...midPts, ...outerPts]
+
+    // ── Internal lightning arc state ───────────────────────────────────
+    let lastArcMs = 0, arcs = []
+    function makeArcs() {
+      const n = 5 + Math.floor(rng() * 7)
+      return Array.from({ length: n }, () => {
+        // Random start inside the inner cloud area
+        const ang = rng() * Math.PI * 2
+        const rad = rng() * R * 0.42
+        let curX = cx + Math.cos(ang) * rad
+        let curY = cy + Math.sin(ang) * rad
+        const nSeg = 2 + Math.floor(rng() * 3)
+        const pts = [{ x: curX, y: curY }]
+        for (let i = 0; i < nSeg; i++) {
+          const a2 = rng() * Math.PI * 2
+          const len = 16 + rng() * 48
+          curX += Math.cos(a2) * len
+          curY += Math.sin(a2) * len
+          pts.push({ x: curX, y: curY })
+        }
+        return { pts, alpha: 0.60 + rng() * 0.40 }
+      })
     }
 
     let t = 0
 
     function draw() {
-      ctx.clearRect(0, 0, W, H)
       const spd = orbSpeedMultRef.current
       const br  = orbBrightnessRef.current
       const isThinking = loadingRef.current
-      t += 0.006 * spd
+      t += 0.005 * spd
 
-      // ── Large additive glow blobs (the hot orange energy core) ─────────
+      // Pure black background — cloud bleeds into void like reference
+      ctx.fillStyle = 'rgba(0,0,10,1)'
+      ctx.fillRect(0, 0, W, H)
+
+      // ── Layered radial glow blobs (additive blending) ──────────────
       ctx.globalCompositeOperation = 'lighter'
 
-      const hotSpots = [
-        [0.24, 0.62, 0.38, 1.00],  // main left-center blob
-        [0.42, 0.55, 0.28, 0.70],  // secondary center blob
-        [0.14, 0.72, 0.24, 0.55],  // lower-left ember
-        [0.60, 0.48, 0.20, 0.38],  // right accent
-      ]
-      hotSpots.forEach(([xF, yF, rad, str]) => {
-        const hx = xF * W + Math.sin(t * 0.38 + xF * 5) * W * 0.035
-        const hy = yF * H + Math.cos(t * 0.28 + yF * 5) * H * 0.025
-        const gr = W * rad
-        const g = ctx.createRadialGradient(hx, hy, 0, hx, hy, gr)
-        g.addColorStop(0,    `rgba(255,118,6,${(0.42 * br * str).toFixed(2)})`)
-        g.addColorStop(0.30, `rgba(215,65,2,${(0.20 * br * str).toFixed(2)})`)
-        g.addColorStop(0.65, `rgba(120,28,0,${(0.07 * br * str).toFixed(2)})`)
-        g.addColorStop(1,    'rgba(0,0,0,0)')
-        ctx.fillStyle = g
-        ctx.fillRect(0, 0, W, H)
-      })
+      // Outermost diffuse blue haze
+      const g1 = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 1.18)
+      g1.addColorStop(0.25, `rgba(25,45,190,${(0.14 * br).toFixed(2)})`)
+      g1.addColorStop(0.65, `rgba(18,55,210,${(0.19 * br).toFixed(2)})`)
+      g1.addColorStop(1,    'rgba(0,0,0,0)')
+      ctx.fillStyle = g1; ctx.fillRect(0, 0, W, H)
 
-      // Blue-electric ambient glow when thinking
+      // Mid blue-purple glow
+      const g2 = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 0.78)
+      g2.addColorStop(0,    `rgba(75,35,195,${(0.22 * br).toFixed(2)})`)
+      g2.addColorStop(0.55, `rgba(110,55,205,${(0.17 * br).toFixed(2)})`)
+      g2.addColorStop(1,    'rgba(0,0,0,0)')
+      ctx.fillStyle = g2; ctx.fillRect(0, 0, W, H)
+
+      // Inner purple-pink glow
+      const g3 = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 0.44)
+      g3.addColorStop(0,    `rgba(175,55,165,${(0.30 * br).toFixed(2)})`)
+      g3.addColorStop(0.55, `rgba(195,75,175,${(0.20 * br).toFixed(2)})`)
+      g3.addColorStop(1,    'rgba(0,0,0,0)')
+      ctx.fillStyle = g3; ctx.fillRect(0, 0, W, H)
+
+      // Hot white-cream core
+      const g4 = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 0.20)
+      g4.addColorStop(0,    `rgba(255,245,235,${(0.85 * br).toFixed(2)})`)
+      g4.addColorStop(0.40, `rgba(255,155,155,${(0.52 * br).toFixed(2)})`)
+      g4.addColorStop(0.80, `rgba(195,75,120,${(0.24 * br).toFixed(2)})`)
+      g4.addColorStop(1,    'rgba(0,0,0,0)')
+      ctx.fillStyle = g4; ctx.fillRect(0, 0, W, H)
+
+      // Thinking: electric blue inner surge
       if (isThinking) {
-        const eg = ctx.createRadialGradient(W * 0.5, H * 0.45, 0, W * 0.5, H * 0.45, W * 0.65)
-        eg.addColorStop(0,   `rgba(70,130,255,${(0.28 * br).toFixed(2)})`)
-        eg.addColorStop(0.45, `rgba(35,60,200,${(0.12 * br).toFixed(2)})`)
-        eg.addColorStop(1,   'rgba(0,0,0,0)')
-        ctx.fillStyle = eg
-        ctx.fillRect(0, 0, W, H)
+        const gt = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 0.58)
+        gt.addColorStop(0,    `rgba(160,210,255,${(0.32 * br).toFixed(2)})`)
+        gt.addColorStop(0.45, `rgba(80,145,255,${(0.20 * br).toFixed(2)})`)
+        gt.addColorStop(1,    'rgba(0,0,0,0)')
+        ctx.fillStyle = gt; ctx.fillRect(0, 0, W, H)
       }
 
       ctx.globalCompositeOperation = 'source-over'
 
-      // ── Particles ──────────────────────────────────────────────────────
+      // ── Cloud particles ────────────────────────────────────────────
       allPts.forEach(p => {
-        const px = p.x + Math.sin(p.ph + t * p.sp) * W * 0.030
-        const py = p.y + Math.cos(p.ph * 1.3 + t * p.sp * 0.72) * H * 0.020
+        const px = p.x + Math.sin(p.ph + t * p.sp) * R * 0.030
+        const py = p.y + Math.cos(p.ph * 1.28 + t * p.sp * 0.74) * R * 0.022
         if (px < 0 || px > W || py < 0 || py > H) return
 
-        let ri, gi, bi, a
+        // Distance from cloud center (normalized)
+        const dx = px - cx, dy = py - cy
+        const dist = Math.sqrt(dx * dx + dy * dy) / R
 
+        let ri, gi, bi, a
         if (p.type === 0) {
-          // Core: orange-amber, density-weighted toward center-left
-          const dx = (px / W - 0.28) * 1.6
-          const dy = (py / H - 0.60)
-          const glow = Math.exp(-(dx * dx + dy * dy) * 2.8)
-          ri = 255
-          gi = Math.round(75 + glow * 110)
-          bi = Math.round(6 + glow * 22)
-          a  = (0.60 * glow + 0.08) * br
-          if (a < 0.04) return
+          // Core: white/cream → pink
+          const fade = Math.max(0, 1 - dist * 3.8)
+          ri = 255; gi = Math.round(215 + fade * 40); bi = Math.round(200 + fade * 55)
+          a  = (0.20 * fade + 0.03) * br
         } else if (p.type === 1) {
-          // Mid: warm cream/peach
-          const dx = (px / W - 0.44) * 1.1
-          const dy = (py / H - 0.50)
-          const fade = Math.max(0, 1 - (dx * dx + dy * dy) * 1.5)
-          ri = 245; gi = 205; bi = 155
-          a  = (0.25 * fade + 0.035) * br
-          if (a < 0.035) return
+          // Mid: purple/violet
+          const fade = Math.max(0, 1 - dist * 1.9)
+          ri = Math.round(95 + fade * 65); gi = Math.round(50 + fade * 30); bi = Math.round(205 + fade * 30)
+          a  = (0.17 * fade + 0.025) * br
         } else {
-          // Mist: blue-white, fades from top down
-          const distFromTop = py / H
-          ri = Math.round(185 + distFromTop * 55)
-          gi = Math.round(208 + distFromTop * 32)
-          bi = 242
-          a  = Math.max(0, (0.20 - distFromTop * 0.14) * br)
-          if (a < 0.025) return
+          // Outer: deep blue wisps
+          const fade = Math.max(0, 1 - dist * 1.25)
+          ri = Math.round(30 + fade * 30); gi = Math.round(55 + fade * 45); bi = Math.round(195 + fade * 45)
+          a  = (0.13 * fade) * br
         }
 
+        if (a < 0.018) return
         ctx.fillStyle = `rgba(${ri},${gi},${bi},${a.toFixed(2)})`
-        ctx.fillRect(px, py, p.r, p.r)
+        ctx.fillRect(px - p.r * 0.5, py - p.r * 0.5, p.r, p.r)
       })
 
-      // ── Lightning storm (thinking state) ──────────────────────────────
+      // ── Internal electrical arcs (thinking — inside cloud only) ───
       if (isThinking) {
         const now = Date.now()
-        if (now - lastLightningMs > 150 + rng() * 280) {
-          bolts = makeBolt()
-          lastLightningMs = now
+        if (now - lastArcMs > 65 + rng() * 130) {
+          arcs = makeArcs()
+          lastArcMs = now
         }
-        const flash = 0.45 + 0.55 * Math.abs(Math.sin(t * 20))
-        bolts.forEach(bolt => {
-          const a = bolt.alpha * flash
-          // Wide electric glow
-          drawBoltPath(bolt.pts, 10, `rgba(60,100,255,${(0.18 * a).toFixed(2)})`)
-          // Mid glow
-          drawBoltPath(bolt.pts, 4,  `rgba(160,210,255,${(0.55 * a).toFixed(2)})`)
-          // Bright core
-          drawBoltPath(bolt.pts, 1.2, `rgba(255,255,255,${(0.92 * a).toFixed(2)})`)
+        const flash = 0.50 + 0.50 * Math.abs(Math.sin(t * 24))
+        ctx.lineCap = 'round'
+        arcs.forEach(arc => {
+          const a = arc.alpha * flash
+          arc.pts.forEach((p, i) => {
+            if (i === 0) return
+            const prev = arc.pts[i - 1]
+            // Outer glow
+            ctx.strokeStyle = `rgba(190,220,255,${(0.28 * a).toFixed(2)})`
+            ctx.lineWidth = 5
+            ctx.beginPath(); ctx.moveTo(prev.x, prev.y); ctx.lineTo(p.x, p.y); ctx.stroke()
+            // Bright white core
+            ctx.strokeStyle = `rgba(255,255,255,${(0.88 * a).toFixed(2)})`
+            ctx.lineWidth = 0.9
+            ctx.beginPath(); ctx.moveTo(prev.x, prev.y); ctx.lineTo(p.x, p.y); ctx.stroke()
+          })
         })
       } else {
-        bolts = []
-        lastLightningMs = 0
+        arcs = []; lastArcMs = 0
       }
 
       orbRafRef.current = requestAnimationFrame(draw)
@@ -1974,7 +1967,11 @@ export default function Home() {
       '\n--- END LIVE DATA ---\n' +
       '\nCRITICAL: The data above is REAL and was fetched live this instant. ' +
       'Use it to answer the question directly. Do NOT say you cannot access real-time information or the internet — you have it right there. ' +
-      'Relay it naturally in your JARVIS butler voice.'
+      'Relay it naturally in your JARVIS butler voice.\n' +
+      'CALENDAR RULE: For any calendar question, ONLY report events that are explicitly listed in the FAMILY CALENDAR section above. ' +
+      'NEVER invent, guess, assume, or suggest any appointments, practices, games, or activities — even if they seem plausible given what you know about the family. ' +
+      'If a specific day has no events listed above, say exactly that: "I don\'t see anything on the calendar for that day." ' +
+      'Do not fill in gaps with family knowledge (e.g. do not say "Lincoln probably has practice" or invent a time).'
     )
   }
 
