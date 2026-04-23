@@ -1151,112 +1151,86 @@ export default function Home() {
     canvas.style.height = SIZE + 'px'
     const ctx = canvas.getContext('2d')
     ctx.scale(dpr, dpr)
-    const cx = SIZE / 2, cy = SIZE / 2
+    const CX = SIZE / 2, CY = SIZE / 2
 
-    // Free-floating cloud particles — no orbital paths
-    const NPART = 200
-    const particles = Array.from({ length: NPART }, () => {
-      const angle = Math.random() * Math.PI * 2
-      const dist = Math.pow(Math.random(), 0.45) * 88
-      const tilt = (Math.random() - 0.5) * Math.PI
-      const bX = dist * Math.cos(angle) * Math.cos(tilt)
-      const bY = dist * Math.sin(tilt) * 0.75
-      const bZ = dist * Math.sin(angle) * Math.cos(tilt)
-      const colorR = Math.random()
-      return {
-        bX, bY, bZ,
-        // Two independent drift sinusoids per axis for organic motion
-        ax: (Math.random()-0.5)*18, bx: (Math.random()-0.5)*10,
-        ay: (Math.random()-0.5)*14, by: (Math.random()-0.5)*8,
-        fx: 0.06+Math.random()*0.18, gx: 0.18+Math.random()*0.28,
-        fy: 0.05+Math.random()*0.16, gy: 0.15+Math.random()*0.25,
-        px: Math.random()*Math.PI*2, py: Math.random()*Math.PI*2,
-        qx: Math.random()*Math.PI*2, qy: Math.random()*Math.PI*2,
-        size: 0.7 + Math.random() * 2.4,
-        alpha: 0.25 + Math.random() * 0.75,
-        dist,
-        // color: white-hot core particles, gold mid, orange-red outer
-        colorR
-      }
-    })
-
-    // Large volumetric cloud blobs — create the nebula volume
-    const blobs = Array.from({ length: 9 }, () => ({
-      ox: (Math.random()-0.5) * 55, oy: (Math.random()-0.5) * 45,
-      phase: Math.random() * Math.PI * 2,
-      sx: 0.15+Math.random()*0.3, sy: 0.12+Math.random()*0.25,
-      r: 38 + Math.random() * 52
-    }))
+    // Additive-blend cloud blob system.
+    // 'lighter' compositing means overlapping blobs get brighter naturally —
+    // the same technique used in the reference nebula/energy cloud images.
+    // Wisp blobs extend far beyond the center so the shape is never a clean sphere.
+    const BLOBS = [
+      // Tier 0 — white-hot inner core (4 blobs, tight, very bright)
+      ...Array.from({ length: 4 }, (_, i) => ({
+        bx: (Math.random()-0.5)*18, by: (Math.random()-0.5)*18,
+        ax: 9+Math.random()*11,     ay: 8+Math.random()*10,
+        fx: 0.5+Math.random()*0.8,  fy: 0.4+Math.random()*0.7,
+        px: i*Math.PI*0.5,          py: i*Math.PI*0.5+0.9,
+        r: 32+Math.random()*22, tier: 0
+      })),
+      // Tier 1 — amber cloud body (8 blobs, offset outward, medium drift)
+      ...Array.from({ length: 8 }, (_, i) => {
+        const a = (i/8)*Math.PI*2
+        return {
+          bx: Math.cos(a)*(22+Math.random()*22), by: Math.sin(a)*(18+Math.random()*20),
+          ax: 14+Math.random()*20, ay: 12+Math.random()*16,
+          fx: 0.18+Math.random()*0.28, fy: 0.15+Math.random()*0.25,
+          px: Math.random()*Math.PI*2, py: Math.random()*Math.PI*2,
+          r: 24+Math.random()*22, tier: 1
+        }
+      }),
+      // Tier 2 — dim wispy tendrils (8 blobs, far offsets, slow wide drift)
+      // These drift past the 140px canvas edge, creating the irregular cloud arms
+      ...Array.from({ length: 8 }, (_, i) => {
+        const a = (i/8)*Math.PI*2 + Math.random()*0.6
+        return {
+          bx: Math.cos(a)*(60+Math.random()*30), by: Math.sin(a)*(50+Math.random()*28),
+          ax: 25+Math.random()*28, ay: 20+Math.random()*22,
+          fx: 0.06+Math.random()*0.15, fy: 0.05+Math.random()*0.13,
+          px: Math.random()*Math.PI*2, py: Math.random()*Math.PI*2,
+          r: 18+Math.random()*18, tier: 2
+        }
+      })
+    ]
 
     let t = 0
 
     function draw() {
       ctx.clearRect(0, 0, SIZE, SIZE)
-      const speedMul = orbSpeedMultRef.current
-      const brightness = orbBrightnessRef.current
-      t += 0.007 * speedMul
+      const spd = orbSpeedMultRef.current
+      const br  = orbBrightnessRef.current
+      t += 0.006 * spd
 
-      // Layer 1 — outer atmospheric purple haze
-      const atmos = ctx.createRadialGradient(cx, cy, 20, cx, cy, 148)
-      atmos.addColorStop(0, 'rgba(120,0,200,0)')
-      atmos.addColorStop(0.45, `rgba(75,0,155,${0.09 * brightness})`)
-      atmos.addColorStop(0.8, `rgba(40,0,100,${0.06 * brightness})`)
-      atmos.addColorStop(1, 'rgba(10,0,40,0)')
-      ctx.fillStyle = atmos
-      ctx.fillRect(0, 0, SIZE, SIZE)
+      // Additive blending — overlapping blobs accumulate brightness,
+      // isolated edges stay transparent — natural cloud luminosity
+      ctx.globalCompositeOperation = 'lighter'
 
-      // Layer 2 — drifting volumetric cloud blobs
-      blobs.forEach(b => {
-        const bx = cx + b.ox * Math.sin(t * b.sx + b.phase)
-        const by = cy + b.oy * Math.cos(t * b.sy + b.phase * 1.4)
-        const g = ctx.createRadialGradient(bx, by, 0, bx, by, b.r)
-        g.addColorStop(0, `rgba(255,185,25,${0.13 * brightness})`)
-        g.addColorStop(0.38, `rgba(210,80,5,${0.065 * brightness})`)
-        g.addColorStop(0.72, `rgba(130,20,60,${0.03 * brightness})`)
-        g.addColorStop(1, 'rgba(60,0,80,0)')
+      BLOBS.forEach(b => {
+        const x = CX + b.bx + b.ax * Math.sin(t * b.fx + b.px)
+        const y = CY + b.by + b.ay * Math.cos(t * b.fy + b.py)
+        const g = ctx.createRadialGradient(x, y, 0, x, y, b.r)
+
+        if (b.tier === 0) {
+          g.addColorStop(0,    `rgba(255,255,210,${0.52*br})`)
+          g.addColorStop(0.28, `rgba(255,205,40,${0.28*br})`)
+          g.addColorStop(0.62, `rgba(255,110,10,${0.11*br})`)
+          g.addColorStop(1,    `rgba(130,0,80,0)`)
+        } else if (b.tier === 1) {
+          g.addColorStop(0,    `rgba(255,160,18,${0.20*br})`)
+          g.addColorStop(0.42, `rgba(190,60,8,${0.09*br})`)
+          g.addColorStop(0.78, `rgba(90,0,55,${0.03*br})`)
+          g.addColorStop(1,    `rgba(40,0,70,0)`)
+        } else {
+          g.addColorStop(0,    `rgba(190,90,18,${0.12*br})`)
+          g.addColorStop(0.48, `rgba(110,18,55,${0.045*br})`)
+          g.addColorStop(1,    `rgba(35,0,70,0)`)
+        }
+
         ctx.fillStyle = g
-        ctx.beginPath(); ctx.arc(bx, by, b.r, 0, Math.PI * 2); ctx.fill()
-      })
-
-      // Layer 3 — bright pulsing core
-      const pulse = 1 + 0.07 * Math.sin(t * 2.6) + 0.03 * Math.sin(t * 5.8)
-      const coreR = 40 * pulse
-      const core = ctx.createRadialGradient(cx-5, cy-5, 0, cx, cy, coreR * 2.2)
-      core.addColorStop(0, `rgba(255,255,235,${brightness})`)
-      core.addColorStop(0.12, `rgba(255,235,80,${brightness * 0.95})`)
-      core.addColorStop(0.3, `rgba(255,145,15,${brightness * 0.7})`)
-      core.addColorStop(0.55, `rgba(210,50,100,${brightness * 0.28})`)
-      core.addColorStop(0.8, `rgba(100,0,180,${brightness * 0.1})`)
-      core.addColorStop(1, 'rgba(40,0,120,0)')
-      ctx.beginPath(); ctx.arc(cx, cy, coreR * 2.2, 0, Math.PI * 2)
-      ctx.fillStyle = core; ctx.fill()
-
-      // Layer 4 — free-floating cloud particles (no trails, no orbits)
-      particles.forEach(p => {
-        const dx = p.ax * Math.sin(t * p.fx + p.px) + p.bx * Math.sin(t * p.gx + p.qx)
-        const dy = p.ay * Math.cos(t * p.fy + p.py) + p.by * Math.cos(t * p.gy + p.qy)
-        const ppx = cx + p.bX + dx
-        const ppy = cy + p.bY + dy
-        // Depth factor from Z so particles behind center are dimmer
-        const depth = 0.35 + 0.65 * (p.bZ + 88) / 176
-        const distFactor = p.dist / 88
-        // Color: white-hot near center, gold mid, orange-purple at edges
-        const rr = 255
-        const gg = p.colorR < 0.55
-          ? Math.round(220 - 80 * distFactor)
-          : Math.round(130 - 60 * distFactor)
-        const bb = p.colorR > 0.8 ? Math.round(180 * (1 - distFactor)) : Math.round(distFactor * 30)
-        const a = p.alpha * depth * brightness * (0.6 + 0.4 * (1 - distFactor))
-        ctx.save()
-        ctx.shadowBlur = (6 + p.size * 4) * depth
-        ctx.shadowColor = `rgba(255,175,20,${a * 0.7})`
         ctx.beginPath()
-        ctx.arc(ppx, ppy, Math.max(0.4, p.size * depth * 0.85), 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(${rr},${gg},${bb},${Math.min(1, a)})`
+        ctx.arc(x, y, b.r, 0, Math.PI*2)
         ctx.fill()
-        ctx.restore()
       })
 
+      ctx.globalCompositeOperation = 'source-over'
       orbRafRef.current = requestAnimationFrame(draw)
     }
 
@@ -1652,47 +1626,61 @@ export default function Home() {
 
   function startListening() {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition
-    if (!SR || !voiceEnabledRef.current) return
-    window.speechSynthesis.cancel()
+    if (!SR || !voiceEnabledRef.current || isSpeakingRef.current || loadingRef.current) return
+    // Hard-stop any existing session before starting a new one
     try { recognitionRef.current?.abort() } catch (_) {}
+    recognitionRef.current = null
+    window.speechSynthesis?.cancel()
+
     const rec = new SR()
     rec.lang = 'en-US'
     rec.interimResults = false
     rec.maxAlternatives = 1
+    rec.continuous = false
     let gotResult = false
+    let ended = false
+
     rec.onstart = () => setIsListening(true)
+
     rec.onresult = (e) => {
       gotResult = true
       const transcript = e.results[0][0].transcript.trim()
       setIsListening(false)
       if (transcript.length > 1) {
-        send(transcript) // speak() inside send() will restart listening when done
+        send(transcript)
       } else if (voiceEnabledRef.current && !loadingRef.current) {
-        setTimeout(startListening, 400)
+        setTimeout(startListening, 500)
       }
     }
+
     rec.onerror = (e) => {
+      if (ended) return
       setIsListening(false)
       if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
         setVoiceEnabled(false)
         voiceEnabledRef.current = false
-        alert('Microphone access was denied.\n\niOS: Go to Settings → Privacy & Security → Microphone and enable it for Safari.\nChrome: click the lock icon in the address bar.')
+        alert('Microphone access was denied.\n\niOS: Settings → Privacy & Security → Microphone → enable Safari.\nChrome: click the lock icon in the address bar.')
       } else if (e.error === 'network') {
-        alert('Speech recognition needs internet. Make sure Siri & Dictation is enabled in Settings.')
+        alert('Speech recognition needs internet. On iOS, make sure Siri & Dictation is on in Settings.')
       } else if (e.error !== 'aborted' && voiceEnabledRef.current && !loadingRef.current) {
-        setTimeout(startListening, 1500)
+        setTimeout(startListening, 1800)
       }
     }
+
     rec.onend = () => {
+      ended = true
       setIsListening(false)
-      // Restart listening if we didn't get a result and voice is still on
-      // (the onresult handler already handles restarts when speech was detected)
       if (!gotResult && voiceEnabledRef.current && !loadingRef.current && !isSpeakingRef.current) {
-        setTimeout(startListening, 700)
+        setTimeout(startListening, 800)
       }
     }
-    rec.start()
-    recognitionRef.current = rec
+
+    try {
+      rec.start()
+      recognitionRef.current = rec
+    } catch (_) {
+      setTimeout(startListening, 1000)
+    }
   }
 
   function stopListening() {
