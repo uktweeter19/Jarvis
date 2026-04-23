@@ -90,10 +90,10 @@ const FAMILY_INFO = `Family members and personalities:
 
 - Kevin (Dad): 40s, works at Longship as the Director of Risk and Compliance. He handles insurance matters, claims, and works with lawyers on freight and logistics issues. Played football at the University of Kentucky. He runs all over town to make every one of the kids' sporting events. Big sports fan — loves the Kentucky Wildcats, the Cincinnati Reds, and the Indianapolis Colts.
 - Emily (Mom): 41, birthday April 17. Owns and runs her own hair salon. Works at church. The best mom the kids could ask for — always puts them before herself. Loves nice things, nice dining, and taking trips. The heart of the family.
-- Lincoln: 14, birthday November 28. Loves sports — plays football and lifts weights. Big fan of the Kentucky Wildcats (football and basketball), the Oklahoma City Thunder, and the Los Angeles Rams. Great student, very competitive, goes to church. Goes to the gym with Dad.
-- Camille: 13, birthday May 15. The girly girl of the family. Runs track, used to dance, very athletic. Great student, very social, loves shopping, makeup, hair, and health and beauty products. Goes to church. Goes to the gym with Dad.
-- Cicily: 13, birthday March 13. Plays soccer. Really smart, an amazing artist — loves to draw and create. Loves to read. Goes to the gym with Dad.
-- Carter: 11, birthday May 2. Loves science, space, math, board games, puzzles, and rocks. Runs track and does archery. Goes to church.
+- Lincoln: 14, birthday November 28. Plays football (organized) and lifts weights. Also a fan of basketball and enjoys playing it casually for fun — he is NOT on a basketball team and does not compete in basketball. Big fan of the Kentucky Wildcats (football and basketball), the Oklahoma City Thunder, and the Los Angeles Rams. Great student, very competitive, goes to church. Goes to the gym with Dad.
+- Camille: 13, birthday May 15. Runs track (organized). Used to dance. Very athletic and social — loves shopping, makeup, hair, and health and beauty products. Great student. Goes to church. Goes to the gym with Dad.
+- Cicily: 13, birthday March 13. Plays soccer (organized). Really smart, an amazing artist — loves to draw and create. Loves to read. Goes to the gym with Dad.
+- Carter: 11, birthday May 2. Loves science, space, math, board games, puzzles, and rocks. Runs track (organized) and does archery. Goes to church.
 
 Family pets (shared by everyone): Mia the dog, Kingy the cat, Lloyd the snake, and Shelly the turtle.
 
@@ -107,7 +107,12 @@ IMPORTANT — Topics to avoid with the kids: Do not discuss family finances, col
 
 IMPORTANT — How to USE this info about the kids: Use these details to quietly tailor your responses — match their interests, remember their sport, pick up on what they like. DO NOT directly quote or recite these descriptions back to the kids. For example, don't tell Carter "you love science, space, and rocks!" or tell Camille "you're the girly girl!" — that would feel weird and embarrassing. Don't label a kid as shy, quiet, reserved, smart, competitive, or any other personality trait to their face; just let those qualities inform how you naturally respond. The goal is for replies to FEEL personal, not for JARVIS to narrate who they are.
 
-CRITICAL — Only use facts you have actually been told. Do NOT invent, assume, or fill in details about the family that aren't explicitly stated above. If three of the kids do an activity and you don't know whether the fourth does, you DO NOT know if the fourth does — do not guess. If a kid asks you something about themselves or their family that you weren't told, say you're not sure rather than making something up. Pattern-matching ("the others do, so this one probably does too") is forbidden. Accuracy matters more than sounding confident.`
+CRITICAL — Only use facts you have actually been told. Do NOT invent, assume, or fill in details about the family that aren't explicitly stated above. If three of the kids do an activity and you don't know whether the fourth does, you DO NOT know if the fourth does — do not guess. If a kid asks you something about themselves or their family that you weren't told, say you're not sure rather than making something up. Pattern-matching ("the others do, so this one probably does too") is forbidden. Accuracy matters more than sounding confident.
+
+ORGANIZED vs. RECREATIONAL — This is critical: only say a family member is "on a team," "competes," or plays a sport "for school/a league" if it is explicitly noted above as organized. Specifically:
+- Lincoln plays football (organized) and enjoys basketball recreationally. NEVER say Lincoln is on a basketball team, plays basketball for a team, or competes in basketball. He shoots hoops for fun — that's it.
+- You may suggest activities similar to what they enjoy (e.g., "you might like watching Thunder highlights") but never invent participation in an activity they haven't been confirmed to do.
+- Loving a sport as a fan does NOT mean they play it competitively. Lincoln loves basketball — that means he cheers for the Thunder, not that he plays for a team.`
 
 const FAMILY_CONTEXT_KIDS = `You are JARVIS, the intelligent family assistant for the Deatherage family in Lexington, Kentucky. You are a proudly American, Christian-values-rooted household AI.
 
@@ -137,7 +142,14 @@ SPECIAL CAPABILITY: You can analyze images of math problems and provide detailed
 
 You have access to family tools: a chores tracker, a shared shopping list, and a daily briefing system. When kids ask about chores or shopping, remind them they can use the Chores and Shopping tabs.
 
-Keep responses concise and conversational. Address each kid by name. Keep it encouraging, big-brother-ish, faith-grounded, and age-appropriate.
+Keep responses encouraging, big-brother-ish, faith-grounded, and age-appropriate.
+
+RESPONSE STYLE — Be brief and direct:
+- 2–3 sentences for most answers. Only go longer if the question genuinely needs it (step-by-step help, explanations).
+- News: 2–3 bullet points, one sentence each. No lengthy commentary.
+- Weather: one sentence on conditions + one practical tip if useful (bring an umbrella, bundle up, etc.). Stop there.
+- Never open with filler like "Great question!", "Of course!", "Certainly!", or "Absolutely!". Just answer.
+- Don't restate what the user just said before answering. Get straight to the point.
 
 CALENDAR: When answering questions about the schedule, ONLY use events from the FAMILY CALENDAR data provided to you. NEVER invent, assume, or guess any events, practices, games, or appointments — even if they seem likely given what you know about the family. If no events are listed for a day, say "I don't see anything on the calendar for that day." Do not fill in gaps with family knowledge.`
 
@@ -156,7 +168,14 @@ You are currently chatting with Kevin (Dad) or Emily (Mom) — both adults. Trea
 
 Conversations with Mom and Dad are private and are not logged for parent review. The content restrictions that apply to the kids' chats do NOT apply here. You can discuss difficult adult topics factually and helpfully. (Claude's baseline safety policies still apply — you won't help with things like weapons manufacturing, illegal instructions, or content sexualizing minors — but ordinary adult subject matter is fine.)
 
-Be direct, practical, and warm — you're talking to adults who have a household to run and a business to manage. Keep responses helpful, clear, and useful.
+Be direct, practical, and warm — you're talking to adults who have a household to run and a business to manage.
+
+RESPONSE STYLE — Be brief and direct:
+- 2–3 sentences for most answers. Only go longer when the question genuinely requires detail.
+- News: 2–3 bullet points, one sentence each. No lengthy commentary.
+- Weather: one sentence on conditions + one practical tip if useful (umbrella, layers, etc.). Stop there.
+- Never open with filler like "Great question!", "Of course!", "Certainly!", or "Absolutely!". Just answer.
+- Don't restate what the user just said. Get straight to the point.
 
 CALENDAR: When answering questions about the schedule, ONLY use events from the FAMILY CALENDAR data provided to you. NEVER invent, assume, or guess any events, practices, games, or appointments — even if they seem likely given what you know about the family. If no events are listed for a day, say "I don't see anything on the calendar for that day." Do not fill in gaps with family knowledge.`
 
@@ -1597,11 +1616,37 @@ export default function Home() {
     saveGifts(updated)
   }
 
-  function saveShopping(updated) { 
+  function saveShopping(updated) {
     setShopping(updated)
     saveToFirebase('shopping', updated)
   }
-  
+
+  // Per-user memory: store last 15 exchanges in Firebase, inject last 6 as context.
+  // Zero additional API cost — just extra tokens in the existing Claude request.
+  async function loadUserMemories(userName) {
+    try {
+      const data = await firebase.get(`memories/${userName}`)
+      return Array.isArray(data) ? data : []
+    } catch { return [] }
+  }
+
+  async function appendUserMemory(userName, userMsg, reply) {
+    try {
+      const existing = await firebase.get(`memories/${userName}`)
+      const arr = Array.isArray(existing) ? existing : []
+      arr.push({ userMsg: userMsg.slice(0, 400), reply: reply.slice(0, 600), ts: Date.now() })
+      await firebase.set(`memories/${userName}`, arr.slice(-15))
+    } catch {}
+  }
+
+  function buildMemoryContext(memories, userName) {
+    if (!memories.length) return ''
+    const lines = memories.slice(-6).map(m =>
+      `${userName}: ${m.userMsg}\nJARVIS: ${m.reply}`
+    ).join('\n\n')
+    return `\n\nMEMORY — PREVIOUS CONVERSATIONS WITH ${userName.toUpperCase()} (oldest first, most recent last):\n${lines}\n\nDraw on these naturally when relevant — reference past topics, pick up threads — but don't force it or announce "last time you said...".`
+  }
+
   function saveChores(updated) { 
     setChores(updated)
     saveToFirebase('chores', updated)
@@ -1781,10 +1826,11 @@ export default function Home() {
 
   function startListening() {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition
-    if (!SR || !voiceEnabledRef.current || loadingRef.current) return
+    if (!SR || !voiceEnabledRef.current || isSpeakingRef.current || loadingRef.current) return
     // Hard-stop any existing session before starting a new one
     try { recognitionRef.current?.abort() } catch (_) {}
     recognitionRef.current = null
+    window.speechSynthesis?.cancel()
 
     const rec = new SR()
     rec.lang = 'en-US'
@@ -1794,29 +1840,12 @@ export default function Home() {
     let gotResult = false
     let ended = false
 
-    rec.onstart = () => { if (!isSpeakingRef.current) setIsListening(true) }
+    rec.onstart = () => setIsListening(true)
 
     rec.onresult = (e) => {
       gotResult = true
       const transcript = e.results[0][0].transcript.trim()
       setIsListening(false)
-
-      // While JARVIS is speaking, only act on stop commands
-      if (isSpeakingRef.current) {
-        const lower = transcript.toLowerCase()
-        const isStop = /^(stop|jarvis stop|stop it|be quiet|quiet|cancel|ok stop|okay stop|shut up|enough|stop talking)$/.test(lower)
-        if (isStop) {
-          window.speechSynthesis?.cancel()
-          if (currentAudioRef.current) { currentAudioRef.current.pause(); currentAudioRef.current = null }
-          setIsSpeaking(false)
-          isSpeakingRef.current = false
-          if (voiceEnabledRef.current) setTimeout(startListening, 500)
-        } else if (voiceEnabledRef.current) {
-          setTimeout(startListening, 300)
-        }
-        return
-      }
-
       if (transcript.length > 1) {
         send(transcript)
       } else if (voiceEnabledRef.current && !loadingRef.current) {
@@ -1841,9 +1870,8 @@ export default function Home() {
     rec.onend = () => {
       ended = true
       setIsListening(false)
-      if (!gotResult && voiceEnabledRef.current && !loadingRef.current) {
-        // Keep looping quickly during speech so user can say "stop" at any time
-        setTimeout(startListening, isSpeakingRef.current ? 250 : 800)
+      if (!gotResult && voiceEnabledRef.current && !loadingRef.current && !isSpeakingRef.current) {
+        setTimeout(startListening, 800)
       }
     }
 
@@ -2058,18 +2086,23 @@ export default function Home() {
     }
 
     try {
-      const liveContext = await buildLiveContext(userInput)
+      const [liveContext, memories] = await Promise.all([
+        buildLiveContext(userInput),
+        loadUserMemories(user)
+      ])
+      const memoryContext = buildMemoryContext(memories, user)
       const activeContext = (user === 'Dad' || user === 'Mom')
         ? FAMILY_CONTEXT_ADULTS
         : FAMILY_CONTEXT_KIDS
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: newMessages, user, context: activeContext + liveContext + shoppingActionNote })
+        body: JSON.stringify({ messages: newMessages, user, context: activeContext + memoryContext + liveContext + shoppingActionNote })
       })
       const data = await res.json()
       setMessages(m => [...m, { role: 'assistant', content: data.reply, name: 'JARVIS' }])
       logChatExchange(user, userMsg.content, data.reply, !!uploadedImage)
+      appendUserMemory(user, textToSend, data.reply) // fire-and-forget, no await
       if (voiceEnabledRef.current) speak(data.reply)
       setLoading(false)
       if (uploadedImage) clearImage()
@@ -2212,9 +2245,16 @@ export default function Home() {
               <div className="hud-stat"><span>{time}</span><span>LOCAL TIME</span></div>
               <div className="hud-stat"><span style={{ color: '#00ff88' }}>ONLINE</span><span>STATUS</span></div>
               <button
-                className={`voice-toggle${voiceEnabled ? ' on' : ''}`}
+                className={`voice-toggle${voiceEnabled ? ' on' : ''}${isSpeaking ? ' speaking' : ''}`}
                 onClick={() => {
-                  if (voiceEnabled) {
+                  if (isSpeaking) {
+                    // Tap while speaking = interrupt JARVIS immediately
+                    window.speechSynthesis?.cancel()
+                    if (currentAudioRef.current) { currentAudioRef.current.pause(); currentAudioRef.current = null }
+                    setIsSpeaking(false)
+                    isSpeakingRef.current = false
+                    if (voiceEnabledRef.current) setTimeout(startListening, 400)
+                  } else if (voiceEnabled) {
                     stopVoice()
                   } else {
                     unlockAudio()
@@ -2226,8 +2266,8 @@ export default function Home() {
                     setTimeout(startListening, 300)
                   }
                 }}
-                title={voiceEnabled ? 'Voice on — tap to disable' : 'Enable voice mode'}
-              >{voiceEnabled ? (isSpeaking ? '🔊 SPEAKING' : isListening ? '👂 LISTENING' : '🎙 VOICE ON') : '🎙 VOICE OFF'}</button>
+                title={isSpeaking ? 'Tap to stop JARVIS' : voiceEnabled ? 'Voice on — tap to disable' : 'Enable voice mode'}
+              >{isSpeaking ? '⏹ STOP' : voiceEnabled ? (isListening ? '👂 LISTENING' : '🎙 VOICE ON') : '🎙 VOICE OFF'}</button>
             </div>
           </div>
         ) : (
