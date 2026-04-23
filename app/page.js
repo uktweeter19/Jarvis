@@ -225,15 +225,16 @@ const styles = `
   @keyframes logFade{from{opacity:0;}to{opacity:0.3;}}
   .log-sep{height:1px;margin:4px 20px 0;background:linear-gradient(90deg,transparent,rgba(255,160,0,0.25),transparent);flex-shrink:0;}
   /* ── ORB (canvas) ── */
-  .jarvis-display{flex:1;display:flex;flex-direction:column;align-items:center;padding:4px 6px 8px;position:relative;overflow:hidden;background:radial-gradient(ellipse at 50% 42%,rgba(100,0,160,0.18) 0%,rgba(30,0,50,0.35) 55%,transparent 80%);}
-  .orb-section{display:flex;justify-content:center;width:100%;flex-shrink:0;margin-bottom:4px;filter:drop-shadow(0 0 28px rgba(255,140,0,0.45)) drop-shadow(0 0 55px rgba(100,0,180,0.3));transition:filter 0.4s ease;}
-  .orb-section canvas{width:100% !important;max-width:320px;height:auto !important;}
+  .jarvis-display{flex:1;display:flex;flex-direction:column;position:relative;overflow:hidden;background:radial-gradient(ellipse at 50% 42%,rgba(100,0,160,0.18) 0%,rgba(30,0,50,0.35) 55%,transparent 80%);}
+  .orb-section{position:absolute;inset:0;z-index:0;filter:drop-shadow(0 0 28px rgba(255,140,0,0.45)) drop-shadow(0 0 55px rgba(100,0,180,0.3));transition:filter 0.4s ease;pointer-events:none;}
+  .orb-section canvas{width:100% !important;max-width:none !important;height:100% !important;display:block;}
+  .jarvis-display-content{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;width:100%;flex:1;padding:8px 6px 12px;overflow-y:auto;}
   .orb-section.listening{filter:drop-shadow(0 0 30px rgba(0,255,160,0.45)) drop-shadow(0 0 60px rgba(140,0,240,0.35));animation:orbListenPulse 1.1s ease-in-out infinite;}
-  @keyframes orbListenPulse{0%,100%{transform:scaleY(1.04);}50%{transform:scaleY(1.10);}}
+  @keyframes orbListenPulse{0%,100%{filter:drop-shadow(0 0 30px rgba(0,255,160,0.45));}50%{filter:drop-shadow(0 0 55px rgba(0,255,160,0.7));}}
   .orb-section.speaking{filter:drop-shadow(0 0 50px rgba(255,180,0,0.65)) drop-shadow(0 0 90px rgba(140,0,240,0.5));animation:orbSpeakPulse 1.3s ease-in-out infinite;}
-  @keyframes orbSpeakPulse{0%,100%{transform:scaleY(1.12);}50%{transform:scaleY(1.24);}}
-  .orb-section.thinking{filter:drop-shadow(0 0 38px rgba(140,0,240,0.6)) drop-shadow(0 0 70px rgba(100,0,180,0.38));animation:orbThinkPulse 1.8s ease-in-out infinite;}
-  @keyframes orbThinkPulse{0%,100%{transform:scaleY(1.06);}50%{transform:scaleY(1.14);}}
+  @keyframes orbSpeakPulse{0%,100%{filter:drop-shadow(0 0 50px rgba(255,180,0,0.55));}50%{filter:drop-shadow(0 0 90px rgba(255,200,0,0.85));}}
+  .orb-section.thinking{filter:drop-shadow(0 0 55px rgba(80,140,255,0.7)) drop-shadow(0 0 100px rgba(40,0,200,0.5));animation:orbThinkPulse 1.2s ease-in-out infinite;}
+  @keyframes orbThinkPulse{0%,100%{filter:drop-shadow(0 0 40px rgba(80,140,255,0.5));}50%{filter:drop-shadow(0 0 100px rgba(120,180,255,0.9)) drop-shadow(0 0 200px rgba(60,80,255,0.5));}}
   /* ── WAVEFORM ── */
   .waveform{display:flex;align-items:center;gap:3px;height:22px;margin-bottom:10px;}
   .wave-bar{width:3px;border-radius:2px;background:linear-gradient(to top,rgba(180,60,0,0.7),rgba(255,200,30,0.95));}
@@ -607,6 +608,7 @@ export default function Home() {
   const isSpeakingRef = useRef(false)
   const currentAudioRef = useRef(null)
   const lockedVoiceRef = useRef(null) // locked once on mount, never changes
+  const audioCtxRef = useRef(null)   // AudioContext — survives iOS gesture expiry
   // Tracks which bulletin IDs have already triggered a notification on this device.
   // Initialized when bulletins first load; after that, any NEW id triggers a pop-up.
   const seenBulletinIdsRef = useRef(null)
@@ -1154,7 +1156,7 @@ export default function Home() {
     else window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.onvoiceschanged = null; lock() }
   }, [])
 
-  // Canvas particle-orb animation — starts when the chat canvas enters the DOM
+  // Canvas energy-cloud animation — full-screen volumetric particle cloud with lightning storm
   useEffect(() => {
     if (tab !== 'chat' || !userSelected) return
     if ((user === 'Dad' || user === 'Mom') && !adultChatUnlocked) return
@@ -1163,32 +1165,89 @@ export default function Home() {
     if (orbRafRef.current) cancelAnimationFrame(orbRafRef.current)
 
     const dpr = window.devicePixelRatio || 1
-    const W = Math.min(390, Math.floor((canvas.parentElement?.offsetWidth || 380) * 0.99))
-    const H = Math.round(W * 0.58)
-    canvas.width = W * dpr
-    canvas.height = H * dpr
-    canvas.style.width = W + 'px'
-    canvas.style.height = H + 'px'
+    // Fill the entire orb-section container (which is position:absolute;inset:0)
+    const W = canvas.parentElement?.clientWidth || window.innerWidth
+    const H = canvas.parentElement?.clientHeight || Math.round(window.innerHeight * 0.52)
+    canvas.width = Math.round(W * dpr)
+    canvas.height = Math.round(H * dpr)
     const ctx = canvas.getContext('2d')
     ctx.scale(dpr, dpr)
 
-    // Particle-wave cloud matching the reference image.
-    // Dense grid of tiny dots arranged on an undulating wave surface,
-    // colored orange-hot at the glowing core zones, white at peaks, blue-grey mist above.
-    const COLS = Math.round(W / 3.6)   // ~100 columns
-    const ROWS = 26                      // layers stacked above the wave
-    const pts = []
-    for (let c = 0; c < COLS; c++) {
-      for (let r = 0; r < ROWS; r++) {
-        pts.push({ xN: c / (COLS - 1), rN: r / (ROWS - 1) })
-      }
+    const rng = Math.random
+
+    // ── Volumetric particle cloud ──────────────────────────────────────────
+    // Core particles: dense orange-amber cluster, lower-center-left
+    const corePts = Array.from({ length: 1100 }, () => ({
+      x: W * (0.04 + rng() * 0.58),
+      y: H * (0.28 + rng() * 0.58),
+      ph: rng() * Math.PI * 2,
+      sp: 0.35 + rng() * 0.75,
+      r: 1.0 + rng() * 2.0,
+      type: 0
+    }))
+    // Mid particles: warm cream/peach, spread across most of the canvas
+    const midPts = Array.from({ length: 1800 }, () => ({
+      x: W * (0.02 + rng() * 0.92),
+      y: H * (0.10 + rng() * 0.82),
+      ph: rng() * Math.PI * 2,
+      sp: 0.25 + rng() * 0.55,
+      r: 0.7 + rng() * 1.3,
+      type: 1
+    }))
+    // Mist particles: blue-white wisps, higher and sparser
+    const mistPts = Array.from({ length: 900 }, () => ({
+      x: W * (rng() * 0.98),
+      y: H * (rng() * 0.70),
+      ph: rng() * Math.PI * 2,
+      sp: 0.18 + rng() * 0.38,
+      r: 0.5 + rng() * 1.5,
+      type: 2
+    }))
+    const allPts = [...corePts, ...midPts, ...mistPts]
+
+    // ── Lightning state ────────────────────────────────────────────────────
+    let lastLightningMs = 0
+    let bolts = []
+
+    function makeBolt() {
+      const n = 2 + Math.floor(rng() * 3)
+      return Array.from({ length: n }, () => {
+        const sx = W * (0.12 + rng() * 0.76)
+        let cx = sx, cy = -4
+        const pts = [{ x: cx, y: cy }]
+        while (cy < H * 0.90) {
+          cx = Math.max(6, Math.min(W - 6, cx + (rng() - 0.5) * 80))
+          cy += 22 + rng() * 38
+          pts.push({ x: cx, y: cy })
+          // Occasional branch
+          if (rng() < 0.28 && pts.length > 2) {
+            let bx = cx, by = cy
+            const bLen = 1 + Math.floor(rng() * 3)
+            const branch = [{ x: bx, y: by }]
+            for (let i = 0; i < bLen; i++) {
+              bx = Math.max(6, Math.min(W - 6, bx + (rng() - 0.5) * 60))
+              by += 18 + rng() * 28
+              branch.push({ x: bx, y: by })
+            }
+            pts._branch = branch
+          }
+        }
+        return { pts, alpha: 0.65 + rng() * 0.35 }
+      })
     }
 
-    // Compound wave — creates 4-5 peaks across the width like the reference
-    function wv(xN, t) {
-      return Math.sin(xN * Math.PI * 4.4 + t * 0.55) * 0.38
-           + Math.sin(xN * Math.PI * 8.8 + t * 0.38) * 0.15
-           + Math.cos(xN * Math.PI * 2.2 + t * 0.22) * 0.10
+    function drawBoltPath(boltPts, lineWidth, color) {
+      ctx.strokeStyle = color
+      ctx.lineWidth = lineWidth
+      ctx.lineJoin = 'bevel'
+      ctx.beginPath()
+      boltPts.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y))
+      ctx.stroke()
+      if (boltPts._branch) {
+        ctx.beginPath()
+        boltPts._branch.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y))
+        ctx.stroke()
+      }
     }
 
     let t = 0
@@ -1197,54 +1256,104 @@ export default function Home() {
       ctx.clearRect(0, 0, W, H)
       const spd = orbSpeedMultRef.current
       const br  = orbBrightnessRef.current
-      t += 0.009 * spd
+      const isThinking = loadingRef.current
+      t += 0.006 * spd
 
-      // Orange hot-spot atmosphere blobs (additive) — left-center glow zones
+      // ── Large additive glow blobs (the hot orange energy core) ─────────
       ctx.globalCompositeOperation = 'lighter'
-      ;[[0.18, 1.0], [0.38, 0.55], [0.62, 0.35]].forEach(([xF, str]) => {
-        const hx = xF * W
-        const hy = H * 0.62 + wv(xF, t) * H * 0.28
-        const g = ctx.createRadialGradient(hx, hy, 0, hx, hy, W * 0.20)
-        g.addColorStop(0,   `rgba(255,125,12,${0.32*br*str})`)
-        g.addColorStop(0.5, `rgba(200,65,4,${0.12*br*str})`)
-        g.addColorStop(1,   'rgba(80,15,0,0)')
+
+      const hotSpots = [
+        [0.24, 0.62, 0.38, 1.00],  // main left-center blob
+        [0.42, 0.55, 0.28, 0.70],  // secondary center blob
+        [0.14, 0.72, 0.24, 0.55],  // lower-left ember
+        [0.60, 0.48, 0.20, 0.38],  // right accent
+      ]
+      hotSpots.forEach(([xF, yF, rad, str]) => {
+        const hx = xF * W + Math.sin(t * 0.38 + xF * 5) * W * 0.035
+        const hy = yF * H + Math.cos(t * 0.28 + yF * 5) * H * 0.025
+        const gr = W * rad
+        const g = ctx.createRadialGradient(hx, hy, 0, hx, hy, gr)
+        g.addColorStop(0,    `rgba(255,118,6,${(0.42 * br * str).toFixed(2)})`)
+        g.addColorStop(0.30, `rgba(215,65,2,${(0.20 * br * str).toFixed(2)})`)
+        g.addColorStop(0.65, `rgba(120,28,0,${(0.07 * br * str).toFixed(2)})`)
+        g.addColorStop(1,    'rgba(0,0,0,0)')
         ctx.fillStyle = g
         ctx.fillRect(0, 0, W, H)
       })
+
+      // Blue-electric ambient glow when thinking
+      if (isThinking) {
+        const eg = ctx.createRadialGradient(W * 0.5, H * 0.45, 0, W * 0.5, H * 0.45, W * 0.65)
+        eg.addColorStop(0,   `rgba(70,130,255,${(0.28 * br).toFixed(2)})`)
+        eg.addColorStop(0.45, `rgba(35,60,200,${(0.12 * br).toFixed(2)})`)
+        eg.addColorStop(1,   'rgba(0,0,0,0)')
+        ctx.fillStyle = eg
+        ctx.fillRect(0, 0, W, H)
+      }
+
       ctx.globalCompositeOperation = 'source-over'
 
-      // Draw particles — tiny dots on the wave surface
-      pts.forEach(({ xN, rN }) => {
-        const wave   = wv(xN, t)
-        const surfY  = H * 0.56 + wave * H * 0.30   // wave surface Y
-        const y      = surfY - rN * H * 0.58          // stack rows upward
-        if (y < -1 || y > H + 1) return
-        const x = xN * W
-
-        // Hot zones: left portion where wave dips low (valley = orange glow)
-        const isHot = xN < 0.42 && wave < -0.06
-        const sz    = Math.max(0.55, 1.4 - rN * 0.7)
+      // ── Particles ──────────────────────────────────────────────────────
+      allPts.forEach(p => {
+        const px = p.x + Math.sin(p.ph + t * p.sp) * W * 0.030
+        const py = p.y + Math.cos(p.ph * 1.3 + t * p.sp * 0.72) * H * 0.020
+        if (px < 0 || px > W || py < 0 || py > H) return
 
         let ri, gi, bi, a
-        if (isHot && rN < 0.40) {
-          // orange/amber — glowing hot core
-          ri = 255; gi = Math.round(105 + rN * 130); bi = Math.round(12 + rN * 35)
-          a  = (0.58 - rN * 0.45) * br
-        } else if (rN < 0.45) {
-          // warm cream/peach — mid-surface
-          const f = rN / 0.45
-          ri = Math.round(248 - f*22); gi = Math.round(215 - f*35); bi = Math.round(165 + f*65)
-          a  = (0.44 - f * 0.18) * br
+
+        if (p.type === 0) {
+          // Core: orange-amber, density-weighted toward center-left
+          const dx = (px / W - 0.28) * 1.6
+          const dy = (py / H - 0.60)
+          const glow = Math.exp(-(dx * dx + dy * dy) * 2.8)
+          ri = 255
+          gi = Math.round(75 + glow * 110)
+          bi = Math.round(6 + glow * 22)
+          a  = (0.60 * glow + 0.08) * br
+          if (a < 0.04) return
+        } else if (p.type === 1) {
+          // Mid: warm cream/peach
+          const dx = (px / W - 0.44) * 1.1
+          const dy = (py / H - 0.50)
+          const fade = Math.max(0, 1 - (dx * dx + dy * dy) * 1.5)
+          ri = 245; gi = 205; bi = 155
+          a  = (0.25 * fade + 0.035) * br
+          if (a < 0.035) return
         } else {
-          // cool blue-white mist — rising above the peaks
-          const f = (rN - 0.45) / 0.55
-          ri = Math.round(178 + f*55); gi = Math.round(200 + f*35); bi = 238
-          a  = Math.max(0, (0.30 + f*0.10) * (1 - f*0.55)) * br
+          // Mist: blue-white, fades from top down
+          const distFromTop = py / H
+          ri = Math.round(185 + distFromTop * 55)
+          gi = Math.round(208 + distFromTop * 32)
+          bi = 242
+          a  = Math.max(0, (0.20 - distFromTop * 0.14) * br)
+          if (a < 0.025) return
         }
 
         ctx.fillStyle = `rgba(${ri},${gi},${bi},${a.toFixed(2)})`
-        ctx.fillRect(x, y, sz, sz)
+        ctx.fillRect(px, py, p.r, p.r)
       })
+
+      // ── Lightning storm (thinking state) ──────────────────────────────
+      if (isThinking) {
+        const now = Date.now()
+        if (now - lastLightningMs > 150 + rng() * 280) {
+          bolts = makeBolt()
+          lastLightningMs = now
+        }
+        const flash = 0.45 + 0.55 * Math.abs(Math.sin(t * 20))
+        bolts.forEach(bolt => {
+          const a = bolt.alpha * flash
+          // Wide electric glow
+          drawBoltPath(bolt.pts, 10, `rgba(60,100,255,${(0.18 * a).toFixed(2)})`)
+          // Mid glow
+          drawBoltPath(bolt.pts, 4,  `rgba(160,210,255,${(0.55 * a).toFixed(2)})`)
+          // Bright core
+          drawBoltPath(bolt.pts, 1.2, `rgba(255,255,255,${(0.92 * a).toFixed(2)})`)
+        })
+      } else {
+        bolts = []
+        lastLightningMs = 0
+      }
 
       orbRafRef.current = requestAnimationFrame(draw)
     }
@@ -1610,11 +1719,34 @@ export default function Home() {
       .then(r => r.json())
       .then(data => {
         if (data.fallback || !data.audioContent) {
-          // Retry once before falling back to browser voice
           if (_retry < 1) { setTimeout(() => speak(text, _retry + 1), 600); return }
-          speakBrowser(clean)
-          return
+          speakBrowser(clean); return
         }
+
+        // Prefer AudioContext (works on iOS without a fresh gesture after async fetch)
+        const actx = audioCtxRef.current
+        if (actx && actx.state !== 'closed') {
+          try {
+            const raw = atob(data.audioContent)
+            const bytes = new Uint8Array(raw.length)
+            for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i)
+            actx.decodeAudioData(bytes.buffer, (buffer) => {
+              const src = actx.createBufferSource()
+              src.buffer = buffer
+              src.connect(actx.destination)
+              src.onended = afterSpeak
+              // Wrap so currentAudioRef.current.pause() works on stop
+              currentAudioRef.current = { pause: () => { try { src.stop(0) } catch (_) {} }, _ctx: true }
+              src.start(0)
+            }, () => {
+              if (_retry < 1) setTimeout(() => speak(text, _retry + 1), 600)
+              else speakBrowser(clean)
+            })
+            return
+          } catch (_) { /* fall through to Audio element */ }
+        }
+
+        // Fallback: HTMLAudioElement (works on non-iOS or when AudioContext unavailable)
         const audio = new Audio('data:audio/mp3;base64,' + data.audioContent)
         currentAudioRef.current = audio
         audio.onended = afterSpeak
@@ -1704,6 +1836,18 @@ export default function Home() {
     try { recognitionRef.current?.abort() } catch (_) {}
     setIsListening(false)
     setIsSpeaking(false)
+  }
+
+  // Must be called inside a user-gesture handler (button click, etc.)
+  // Creates/resumes the AudioContext so subsequent audio.play() calls work on iOS
+  function unlockAudio() {
+    if (typeof window === 'undefined') return
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext
+      if (!AC) return
+      if (!audioCtxRef.current) audioCtxRef.current = new AC()
+      if (audioCtxRef.current.state === 'suspended') audioCtxRef.current.resume()
+    } catch (_) {}
   }
 
   async function fetchTeamScore(sport, league, teamAbbr, teamName) {
@@ -1843,8 +1987,8 @@ export default function Home() {
     window.speechSynthesis?.cancel()
     setIsSpeaking(false)
 
-    // iOS audio unlock: prime speechSynthesis within the user-gesture context
-    // so the later speak() call (after async fetch) is allowed to play
+    // Unlock AudioContext within the gesture so async TTS playback works on iOS
+    unlockAudio()
     if (voiceEnabledRef.current && typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.speak(new SpeechSynthesisUtterance(''))
     }
@@ -2022,6 +2166,7 @@ export default function Home() {
                   if (voiceEnabled) {
                     stopVoice()
                   } else {
+                    unlockAudio()
                     setVoiceEnabled(true)
                     voiceEnabledRef.current = true
                     if (typeof window !== 'undefined' && window.speechSynthesis) {
@@ -2487,6 +2632,7 @@ export default function Home() {
                       setMessages([])
                       // For kids, auto-start voice immediately (adults have password screen next)
                       if (f !== 'Dad' && f !== 'Mom') {
+                        unlockAudio()
                         setVoiceEnabled(true)
                         voiceEnabledRef.current = true
                         if (typeof window !== 'undefined' && window.speechSynthesis) {
@@ -2555,6 +2701,7 @@ export default function Home() {
               onChange={e => setAdultChatPassInput(e.target.value)}
               onKeyDown={e => {
                 if (e.key === 'Enter' && adultChatPassInput === PARENT_PASSWORD) {
+                  unlockAudio()
                   setAdultChatUnlocked(true)
                   setAdultChatPassInput('')
                   setMessages([])
@@ -2573,6 +2720,7 @@ export default function Home() {
               className="parent-lock-btn"
               onClick={() => {
                 if (adultChatPassInput === PARENT_PASSWORD) {
+                  unlockAudio()
                   setAdultChatUnlocked(true)
                   setAdultChatPassInput('')
                   setMessages([])
@@ -2620,52 +2768,55 @@ export default function Home() {
 
               {/* Main ambient JARVIS display */}
               <div className="jarvis-display">
-                {/* Canvas particle orb */}
+                {/* Canvas particle orb — full-screen background */}
                 <div className={`orb-section${isSpeaking ? ' speaking' : loading ? ' thinking' : isListening ? ' listening' : ''}`}>
                   <canvas ref={orbCanvasRef} />
                 </div>
 
-                {/* Status labels */}
-                {isListening && <div className="listen-label">Listening...</div>}
+                {/* All content overlays the full-screen canvas */}
+                <div className="jarvis-display-content">
+                  {/* Status labels */}
+                  {isListening && <div className="listen-label">Listening...</div>}
 
-                {/* Welcome / idle state */}
-                {messages.length === 0 && !loading && !isListening && (
-                  <div className="jarvis-idle">
-                    <h2>SYSTEMS ONLINE</h2>
-                    <p>Good to see you, {user}. All systems operational. How may I assist?</p>
-                  </div>
-                )}
+                  {/* Welcome / idle state */}
+                  {messages.length === 0 && !loading && !isListening && (
+                    <div className="jarvis-idle">
+                      <h2>SYSTEMS ONLINE</h2>
+                      <p>Good to see you, {user}. All systems operational. How may I assist?</p>
+                    </div>
+                  )}
 
-                {/* Processing / thinking state */}
-                {loading && (
-                  <div className="proc-wrap">
-                    <div className="waveform processing">
-                      {[...Array(12)].map((_, i) => <div key={i} className="wave-bar" />)}
+                  {/* Processing / thinking state */}
+                  {loading && (
+                    <div className="proc-wrap">
+                      <div className="waveform processing">
+                        {[...Array(12)].map((_, i) => <div key={i} className="wave-bar" />)}
+                      </div>
+                      <div className="proc-label">Analyzing query...</div>
                     </div>
-                    <div className="proc-label">Analyzing query...</div>
-                  </div>
-                )}
+                  )}
 
-                {/* Latest JARVIS response with typewriter */}
-                {!loading && latestAsstMsg && (
-                  <>
-                    <div className="j-label">J · A · R · V · I · S</div>
-                    <div className={`waveform ${isTyping ? 'active' : 'idle'}`}>
-                      {[...Array(12)].map((_, i) => <div key={i} className="wave-bar" />)}
-                    </div>
-                    {latestAsstMsg.image && (
-                      <img
-                        src={latestAsstMsg.image}
-                        alt="Uploaded math problem"
-                        style={{ maxWidth: '100%', borderRadius: 8, marginBottom: 10, border: '1px solid rgba(0,180,255,0.3)' }}
-                      />
-                    )}
-                    <div className="response-text">
-                      {displayedText}
-                      {isTyping && <span className="typing-cursor" />}
-                    </div>
-                  </>
-                )}
+                  {/* Latest JARVIS response with typewriter */}
+                  {!loading && latestAsstMsg && (
+                    <>
+                      <div className="j-label">J · A · R · V · I · S</div>
+                      <div className={`waveform ${isTyping ? 'active' : 'idle'}`}>
+                        {[...Array(12)].map((_, i) => <div key={i} className="wave-bar" />)}
+                      </div>
+                      {latestAsstMsg.image && (
+                        <img
+                          src={latestAsstMsg.image}
+                          alt="Uploaded math problem"
+                          style={{ maxWidth: '100%', borderRadius: 8, marginBottom: 10, border: '1px solid rgba(0,180,255,0.3)' }}
+                        />
+                      )}
+                      <div className="response-text">
+                        {displayedText}
+                        {isTyping && <span className="typing-cursor" />}
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
             <div className="input-area">
