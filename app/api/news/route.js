@@ -1,5 +1,10 @@
 import { NextResponse } from 'next/server'
 
+function checkToken(req) {
+  const token = req.headers.get('x-jarvis-token')
+  return token && token === process.env.JARVIS_API_TOKEN
+}
+
 const FEEDS = [
   'https://moxie.foxnews.com/google-publisher/latest.xml',
   'https://feeds.foxnews.com/foxnews/latest',
@@ -8,7 +13,6 @@ const FEEDS = [
 
 function parseHeadlines(xml) {
   const headlines = []
-  // Match <title> inside <item> blocks — handles both CDATA and plain text
   const itemRe = /<item[\s\S]*?<\/item>/gi
   const titleRe = /<title>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/i
   let item
@@ -24,7 +28,9 @@ function parseHeadlines(xml) {
   return headlines
 }
 
-export async function GET() {
+export async function GET(req) {
+  if (!checkToken(req)) return NextResponse.json({ headlines: [], error: 'Unauthorized' }, { status: 401 })
+
   for (const url of FEEDS) {
     try {
       const res = await fetch(url, {
@@ -37,9 +43,7 @@ export async function GET() {
       if (!res.ok) continue
       const xml = await res.text()
       const headlines = parseHeadlines(xml)
-      if (headlines.length > 0) {
-        return NextResponse.json({ headlines, source: url })
-      }
+      if (headlines.length > 0) return NextResponse.json({ headlines, source: url })
     } catch (_) {
       continue
     }

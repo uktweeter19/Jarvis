@@ -1,11 +1,17 @@
 import { NextResponse } from 'next/server'
 
+function checkToken(req) {
+  const token = req.headers.get('x-jarvis-token')
+  return token && token === process.env.JARVIS_API_TOKEN
+}
+
 const CALENDARS = [
   'uktweeter19@gmail.com',
   'family021430976716499641216@group.calendar.google.com'
 ]
 
-export async function GET() {
+export async function GET(req) {
+  if (!checkToken(req)) return NextResponse.json({ events: [], error: 'Unauthorized' }, { status: 401 })
   const apiKey = process.env.GOOGLE_CALENDAR_API_KEY
   if (!apiKey) {
     return NextResponse.json({ error: 'GOOGLE_CALENDAR_API_KEY not set', events: [] })

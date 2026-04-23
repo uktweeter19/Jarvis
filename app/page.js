@@ -1,78 +1,39 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
 
-// Firebase configuration - Kevin's actual Firebase project
-const firebaseConfig = {
-  apiKey: "AIzaSyBCmRVCCXDiM6Uk8C6PWsazCQmJ3eDutMo",
-  authDomain: "jarvis-family-7e8c9.firebaseapp.com",
-  databaseURL: "https://jarvis-family-7e8c9-default-rtdb.firebaseio.com",
-  projectId: "jarvis-family-7e8c9",
-  storageBucket: "jarvis-family-7e8c9.firebasestorage.app",
-  messagingSenderId: "923628710126",
-  appId: "1:923628710126:web:ba579c26b24c2198056bff"
-}
-
-// Simple Firebase client (no SDK needed for basic REST API calls)
-class SimpleFirebase {
-  constructor(databaseURL) {
-    this.databaseURL = databaseURL
-  }
+// Firebase proxy — all reads/writes go through /api/db, credentials stay server-side
+class ProxyFirebase {
+  constructor() { this._token = null }
+  setToken(t) { this._token = t }
+  _h() { return { 'Content-Type': 'application/json', ...(this._token ? { 'x-jarvis-token': this._token } : {}) } }
 
   async get(path) {
     try {
-      const response = await fetch(`${this.databaseURL}/${path}.json`)
-      return await response.json()
-    } catch (error) {
-      console.error('Firebase get error:', error)
-      return null
-    }
+      const r = await fetch(`/api/db?path=${encodeURIComponent(path)}`, { headers: this._h() })
+      return await r.json()
+    } catch { return null }
   }
-
   async set(path, data) {
     try {
-      const response = await fetch(`${this.databaseURL}/${path}.json`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      })
-      return await response.json()
-    } catch (error) {
-      console.error('Firebase set error:', error)
-      return null
-    }
+      const r = await fetch(`/api/db?path=${encodeURIComponent(path)}`, { method: 'PUT', headers: this._h(), body: JSON.stringify(data) })
+      return await r.json()
+    } catch { return null }
   }
-
   async push(path, data) {
     try {
-      const response = await fetch(`${this.databaseURL}/${path}.json`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      })
-      return await response.json()
-    } catch (error) {
-      console.error('Firebase push error:', error)
-      return null
-    }
+      const r = await fetch(`/api/db?path=${encodeURIComponent(path)}`, { method: 'POST', headers: this._h(), body: JSON.stringify(data) })
+      return await r.json()
+    } catch { return null }
   }
-
   async delete(path) {
     try {
-      const response = await fetch(`${this.databaseURL}/${path}.json`, {
-        method: 'DELETE'
-      })
-      return await response.json()
-    } catch (error) {
-      console.error('Firebase delete error:', error)
-      return null
-    }
+      const r = await fetch(`/api/db?path=${encodeURIComponent(path)}`, { method: 'DELETE', headers: this._h() })
+      return await r.json()
+    } catch { return null }
   }
 }
 
-const firebase = new SimpleFirebase(firebaseConfig.databaseURL)
-
-const PASSWORD = 'deatherage2024'
-const PARENT_PASSWORD = '7198'
+const firebase = new ProxyFirebase()
 
 // Keywords that flag a kid's message for parent review.
 // Grouped by category. Lowercase. Matched as whole-word substrings.
@@ -587,6 +548,9 @@ export default function Home() {
   const [adultChatUnlocked, setAdultChatUnlocked] = useState(false)
   const [adultChatPassInput, setAdultChatPassInput] = useState('')
   const [parentViewFilter, setParentViewFilter] = useState('ALL') // ALL, FLAGGED, or user name
+  const [lockError, setLockError] = useState('')
+  const [lockLoading, setLockLoading] = useState(false)
+  const apiTokenRef = useRef(null)
   const bottomRef = useRef(null)
   const orbCanvasRef = useRef(null)
   const orbRafRef = useRef(null)
@@ -609,6 +573,24 @@ export default function Home() {
   // Initialized when bulletins first load; after that, any NEW id triggers a pop-up.
   const seenBulletinIdsRef = useRef(null)
   const family = ['Dad', 'Mom', 'Lincoln', 'Camille', 'Cicily', 'Carter']
+
+  async function authenticate(password, type) {
+    try {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password, type })
+      })
+      if (!res.ok) return false
+      const data = await res.json()
+      if (data.token) {
+        apiTokenRef.current = data.token
+        firebase.setToken(data.token)
+        return true
+      }
+      return false
+    } catch { return false }
+  }
 
   // Daily Bible verses - large collection for daily variety
   const bibleVerses = [
@@ -1658,7 +1640,7 @@ export default function Home() {
 
     fetch('/api/tts', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(apiTokenRef.current ? { 'x-jarvis-token': apiTokenRef.current } : {}) },
       body: JSON.stringify({ text: clean })
     })
       .then(r => r.json())
@@ -1784,7 +1766,7 @@ export default function Home() {
 
     if (wantsNews) {
       fetches.push(
-        fetch('/api/news').then(r => r.json()).then(d => {
+        fetch('/api/news', { headers: apiTokenRef.current ? { 'x-jarvis-token': apiTokenRef.current } : {} }).then(r => r.json()).then(d => {
           if (d.headlines?.length) {
             parts.push('CURRENT FOX NEWS HEADLINES:\n' + d.headlines.map((h, i) => `${i + 1}. ${h}`).join('\n'))
           }
@@ -1811,7 +1793,7 @@ export default function Home() {
 
     if (wantsCalendar) {
       fetches.push(
-        fetch('/api/calendar').then(r => r.json()).then(d => {
+        fetch('/api/calendar', { headers: apiTokenRef.current ? { 'x-jarvis-token': apiTokenRef.current } : {} }).then(r => r.json()).then(d => {
           if (d.events?.length) {
             const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'America/New_York' })
             parts.push(`TODAY'S CALENDAR (${today}):\n` + d.events.map(e => `• ${e.allDay ? 'All day' : e.time} — ${e.summary}`).join('\n'))
@@ -1889,7 +1871,7 @@ export default function Home() {
         : FAMILY_CONTEXT_KIDS
       const res = await fetch('/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(apiTokenRef.current ? { 'x-jarvis-token': apiTokenRef.current } : {}) },
         body: JSON.stringify({ messages: newMessages, user, context: activeContext + liveContext })
       })
       const data = await res.json()
@@ -1929,9 +1911,22 @@ export default function Home() {
           <div className="lock-title">DEATHERAGE</div>
           <div className="lock-sub">FAMILY SYSTEM · LEXINGTON KY</div>
           <input className="lock-input" type="password" placeholder="Enter password" value={pass}
-            onChange={e => setPass(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && pass === PASSWORD && setAuthed(true)} />
-          <button className="lock-btn" onClick={() => pass === PASSWORD && setAuthed(true)}>Unlock</button>
+            onChange={e => { setPass(e.target.value); setLockError('') }}
+            onKeyDown={async e => {
+              if (e.key !== 'Enter' || lockLoading) return
+              setLockLoading(true)
+              const ok = await authenticate(pass, 'main')
+              setLockLoading(false)
+              if (ok) { setAuthed(true) } else { setLockError('Wrong password'); setPass('') }
+            }} />
+          {lockError && <div style={{ color: '#ff6060', fontSize: 12, marginBottom: 8, letterSpacing: 1 }}>{lockError}</div>}
+          <button className="lock-btn" disabled={lockLoading} onClick={async () => {
+            if (lockLoading) return
+            setLockLoading(true)
+            const ok = await authenticate(pass, 'main')
+            setLockLoading(false)
+            if (ok) { setAuthed(true) } else { setLockError('Wrong password'); setPass('') }
+          }}>{lockLoading ? 'Checking...' : 'Unlock'}</button>
           <div className="lock-uk">GO WILDCATS 🐾</div>
         </div>
       </div>
@@ -2573,39 +2568,47 @@ export default function Home() {
               placeholder="••••"
               value={adultChatPassInput}
               onChange={e => setAdultChatPassInput(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter' && adultChatPassInput === PARENT_PASSWORD) {
-                  setAdultChatUnlocked(true)
-                  setAdultChatPassInput('')
-                  setMessages([])
-                  setVoiceEnabled(true)
-                  voiceEnabledRef.current = true
+              onKeyDown={async e => {
+                if (e.key !== 'Enter' || lockLoading) return
+                setLockLoading(true)
+                const ok = await authenticate(adultChatPassInput, 'parent')
+                setLockLoading(false)
+                if (ok) {
+                  setAdultChatUnlocked(true); setAdultChatPassInput(''); setMessages([])
+                  setVoiceEnabled(true); voiceEnabledRef.current = true
                   if (typeof window !== 'undefined' && window.speechSynthesis) {
                     window.speechSynthesis.speak(new SpeechSynthesisUtterance(''))
                     const greeting = user === 'Dad' ? 'Good day, sir. JARVIS at your disposal.' : 'Good day, ma\'am. How may I assist?'
                     setTimeout(() => speak(greeting), 180)
                   }
+                } else {
+                  setLockError('Wrong password'); setAdultChatPassInput('')
                 }
               }}
               autoFocus
             />
+            {lockError && <div style={{ color: '#ff6060', fontSize: 12, marginBottom: 8, letterSpacing: 1 }}>{lockError}</div>}
             <button
               className="parent-lock-btn"
-              onClick={() => {
-                if (adultChatPassInput === PARENT_PASSWORD) {
-                  setAdultChatUnlocked(true)
-                  setAdultChatPassInput('')
-                  setMessages([])
-                  setVoiceEnabled(true)
-                  voiceEnabledRef.current = true
+              disabled={lockLoading}
+              onClick={async () => {
+                if (lockLoading) return
+                setLockLoading(true)
+                const ok = await authenticate(adultChatPassInput, 'parent')
+                setLockLoading(false)
+                if (ok) {
+                  setAdultChatUnlocked(true); setAdultChatPassInput(''); setMessages([])
+                  setVoiceEnabled(true); voiceEnabledRef.current = true
                   if (typeof window !== 'undefined' && window.speechSynthesis) {
                     window.speechSynthesis.speak(new SpeechSynthesisUtterance(''))
                     const greeting = user === 'Dad' ? 'Good day, sir. JARVIS at your disposal.' : 'Good day, ma\'am. How may I assist?'
                     setTimeout(() => speak(greeting), 180)
                   }
+                } else {
+                  setLockError('Wrong password'); setAdultChatPassInput('')
                 }
               }}
-            >UNLOCK</button>
+            >{lockLoading ? 'Checking...' : 'UNLOCK'}</button>
             <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', marginTop: 8, letterSpacing: 1, textAlign: 'center', maxWidth: 260, lineHeight: 1.5 }}>
               Your conversation is private and not logged.
             </div>
@@ -2974,33 +2977,35 @@ export default function Home() {
                   type="password"
                   placeholder="••••"
                   value={parentPassInput}
-                  onChange={e => setParentPassInput(e.target.value)}
+                  onChange={e => { setParentPassInput(e.target.value); setLockError('') }}
                   onKeyDown={async e => {
-                    if (e.key === 'Enter' && parentPassInput === PARENT_PASSWORD) {
-                      setParentUnlocked(true)
-                      setParentPassInput('')
+                    if (e.key !== 'Enter' || lockLoading) return
+                    setLockLoading(true)
+                    const ok = await authenticate(parentPassInput, 'parent')
+                    setLockLoading(false)
+                    if (ok) {
+                      setParentUnlocked(true); setParentPassInput('')
                       const logs = await firebase.get('chatlogs')
-                      if (logs) {
-                        const arr = Object.values(logs).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-                        setChatLogs(arr)
-                      }
-                    }
+                      if (logs) setChatLogs(Object.values(logs).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)))
+                    } else { setLockError('Wrong password'); setParentPassInput('') }
                   }}
                 />
+                {lockError && <div style={{ color: '#ff6060', fontSize: 12, marginBottom: 8, letterSpacing: 1 }}>{lockError}</div>}
                 <button
                   className="parent-lock-btn"
+                  disabled={lockLoading}
                   onClick={async () => {
-                    if (parentPassInput === PARENT_PASSWORD) {
-                      setParentUnlocked(true)
-                      setParentPassInput('')
+                    if (lockLoading) return
+                    setLockLoading(true)
+                    const ok = await authenticate(parentPassInput, 'parent')
+                    setLockLoading(false)
+                    if (ok) {
+                      setParentUnlocked(true); setParentPassInput('')
                       const logs = await firebase.get('chatlogs')
-                      if (logs) {
-                        const arr = Object.values(logs).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-                        setChatLogs(arr)
-                      }
-                    }
+                      if (logs) setChatLogs(Object.values(logs).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)))
+                    } else { setLockError('Wrong password'); setParentPassInput('') }
                   }}
-                >UNLOCK</button>
+                >{lockLoading ? 'Checking...' : 'UNLOCK'}</button>
                 <button
                   className="reset-btn"
                   onClick={() => { setTab('chat'); setParentPassInput('') }}

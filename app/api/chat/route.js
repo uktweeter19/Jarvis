@@ -1,40 +1,48 @@
 import { NextResponse } from 'next/server'
 
+const RATE = new Map()
+
+function checkRate(ip, limit = 30, windowMs = 60_000) {
+  const now = Date.now()
+  const entry = RATE.get(ip) || { count: 0, start: now }
+  if (now - entry.start > windowMs) { entry.count = 0; entry.start = now }
+  entry.count++
+  RATE.set(ip, entry)
+  return entry.count <= limit
+}
+
+function checkToken(req) {
+  const token = req.headers.get('x-jarvis-token')
+  return token && token === process.env.JARVIS_API_TOKEN
+}
+
 export async function POST(req) {
+  if (!checkToken(req)) return NextResponse.json({ reply: 'Unauthorized' }, { status: 401 })
+
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+  if (!checkRate(ip)) return NextResponse.json({ reply: 'Too many requests. Please wait.' }, { status: 429 })
+
   try {
     const { messages, user, context } = await req.json()
 
-    // Transform messages — if a message has an image, split it into
-    // an image block + text block as required by the Anthropic API.
+    if (!Array.isArray(messages) || messages.length === 0) {
+      return NextResponse.json({ reply: 'Invalid request' }, { status: 400 })
+    }
+
     const formattedMessages = messages.map(m => {
       if (m.image && m.role === 'user') {
-        // m.image is a data URL like "data:image/jpeg;base64,/9j/4AAQ..."
-        // We need to split off the media type and the raw base64 data.
         const match = m.image.match(/^data:(image\/[a-zA-Z]+);base64,(.+)$/)
         if (match) {
-          const mediaType = match[1]
-          const base64Data = match[2]
           return {
             role: m.role,
             content: [
-              {
-                type: 'image',
-                source: {
-                  type: 'base64',
-                  media_type: mediaType,
-                  data: base64Data
-                }
-              },
-              {
-                type: 'text',
-                text: m.content || 'Please help me solve this math problem step by step.'
-              }
+              { type: 'image', source: { type: 'base64', media_type: match[1], data: match[2] } },
+              { type: 'text', text: (m.content || 'Please help me solve this math problem step by step.').slice(0, 4000) }
             ]
           }
         }
       }
-      // Normal text-only message
-      return { role: m.role, content: m.content }
+      return { role: m.role, content: String(m.content || '').slice(0, 4000) }
     })
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -47,17 +55,17 @@ export async function POST(req) {
       body: JSON.stringify({
         model: 'claude-sonnet-4-5',
         max_tokens: 2000,
-        system: context + ' Current user: ' + user,
+        system: String(context || '').slice(0, 8000) + ' Current user: ' + String(user || '').slice(0, 50),
         messages: formattedMessages
       })
     })
     const data = await response.json()
 
     if (!response.ok) {
-      return NextResponse.json({ reply: 'API Error: ' + JSON.stringify(data) })
+      return NextResponse.json({ reply: 'API Error: ' + (data.error?.message || 'unknown') })
     }
     return NextResponse.json({ reply: data.content[0].text })
-  } catch(e) {
+  } catch (e) {
     return NextResponse.json({ reply: 'Error: ' + e.message })
   }
 }
