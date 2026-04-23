@@ -198,38 +198,38 @@ const styles = `
   .user-btn.active{border:2px solid #00b4ff;color:#00d4ff;background:linear-gradient(135deg,#0056b3,#003580);box-shadow:0 0 15px rgba(0,180,255,0.5);font-weight:700;transform:scale(1.05);}
 
   /* ── CHAT — JARVIS ATMOSPHERE ── */
-  .arc-bg{position:fixed;inset:0;background:radial-gradient(ellipse at 50% 35%, #1a0030 0%, #0d0018 45%, #080010 100%);z-index:0;}
-  .arc-bg::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 59px,rgba(180,80,255,0.018) 60px),repeating-linear-gradient(90deg,transparent,transparent 59px,rgba(180,80,255,0.018) 60px);}
+  .arc-bg{position:fixed;inset:0;background:radial-gradient(ellipse at 50% 35%, #020e22 0%, #010c1e 45%, #050a18 100%);z-index:0;}
+  .arc-bg::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 59px,rgba(0,180,255,0.012) 60px),repeating-linear-gradient(90deg,transparent,transparent 59px,rgba(0,180,255,0.012) 60px);}
   .corner{position:fixed;width:70px;height:70px;opacity:0.5;pointer-events:none;z-index:1;}
-  .corner.tl{top:0;left:0;border-top:1px solid rgba(255,180,0,0.5);border-left:1px solid rgba(255,180,0,0.5);}
-  .corner.tr{top:0;right:0;border-top:1px solid rgba(255,180,0,0.5);border-right:1px solid rgba(255,180,0,0.5);}
-  .corner.bl{bottom:0;left:0;border-bottom:1px solid rgba(255,180,0,0.5);border-left:1px solid rgba(255,180,0,0.5);}
-  .corner.br{bottom:0;right:0;border-bottom:1px solid rgba(255,180,0,0.5);border-right:1px solid rgba(255,180,0,0.5);}
-  .scan{position:fixed;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,180,0,0.5),transparent);animation:scanMove 6s linear infinite;z-index:1;pointer-events:none;}
+  .corner.tl{top:0;left:0;border-top:1px solid rgba(0,210,255,0.35);border-left:1px solid rgba(0,210,255,0.35);}
+  .corner.tr{top:0;right:0;border-top:1px solid rgba(0,210,255,0.35);border-right:1px solid rgba(0,210,255,0.35);}
+  .corner.bl{bottom:0;left:0;border-bottom:1px solid rgba(0,210,255,0.35);border-left:1px solid rgba(0,210,255,0.35);}
+  .corner.br{bottom:0;right:0;border-bottom:1px solid rgba(0,210,255,0.35);border-right:1px solid rgba(0,210,255,0.35);}
+  .scan{position:fixed;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,210,255,0.5),transparent);animation:scanMove 6s linear infinite;z-index:1;pointer-events:none;}
   @keyframes scanMove{0%{top:-2px;}100%{top:100vh;}}
   .arc-reactor{position:relative;width:44px;height:44px;flex-shrink:0;}
-  .arc-outer{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(255,180,0,0.4);animation:reactorSpin 8s linear infinite;}
-  .arc-outer::before{content:'';position:absolute;top:-1px;left:50%;width:4px;height:4px;background:#ffb700;border-radius:50%;transform:translateX(-50%);box-shadow:0 0 8px #ffb700;}
-  .arc-mid{position:absolute;inset:6px;border-radius:50%;border:1px solid rgba(200,100,255,0.35);animation:reactorSpin 4s linear infinite reverse;}
-  .arc-core{position:absolute;inset:14px;border-radius:50%;background:radial-gradient(circle,#ffe066,#ff8c00);box-shadow:0 0 12px #ffb700,0 0 28px rgba(255,160,0,0.5);animation:corePulse 2s ease-in-out infinite;}
+  .arc-outer{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(0,200,255,0.45);animation:reactorSpin 8s linear infinite;}
+  .arc-outer::before{content:'';position:absolute;top:-1px;left:50%;width:4px;height:4px;background:#00d4ff;border-radius:50%;transform:translateX(-50%);box-shadow:0 0 8px #00d4ff;}
+  .arc-mid{position:absolute;inset:6px;border-radius:50%;border:1px solid rgba(0,150,255,0.4);animation:reactorSpin 4s linear infinite reverse;}
+  .arc-core{position:absolute;inset:14px;border-radius:50%;background:radial-gradient(circle,#a0eeff,#0090ff);box-shadow:0 0 12px #00b4ff,0 0 28px rgba(0,180,255,0.55);animation:corePulse 2s ease-in-out infinite;}
   @keyframes reactorSpin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
-  @keyframes corePulse{0%,100%{box-shadow:0 0 12px #ffb700,0 0 28px rgba(255,160,0,0.4);}50%{box-shadow:0 0 22px #ffe066,0 0 50px rgba(255,180,0,0.7),0 0 80px rgba(150,0,255,0.2);}}
-  .chat-header{padding:10px 20px;border-bottom:1px solid rgba(255,160,0,0.15);display:flex;align-items:center;justify-content:space-between;background:rgba(8,0,16,0.85);backdrop-filter:blur(14px);flex-shrink:0;}
-  .title-block h1{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;letter-spacing:8px;color:#ffb700;text-shadow:0 0 20px rgba(255,180,0,0.6),0 0 40px rgba(150,0,255,0.3);}
-  .title-block p{font-size:8px;color:rgba(255,180,0,0.4);letter-spacing:4px;text-transform:uppercase;}
-  .hud-stats{display:flex;gap:14px;font-size:9px;color:rgba(255,180,0,0.4);letter-spacing:1px;}
+  @keyframes corePulse{0%,100%{box-shadow:0 0 12px #00b4ff,0 0 28px rgba(0,180,255,0.45);}50%{box-shadow:0 0 22px #80f0ff,0 0 50px rgba(0,210,255,0.75),0 0 80px rgba(0,100,255,0.35);}}
+  .chat-header{padding:10px 20px;border-bottom:1px solid rgba(0,180,255,0.15);display:flex;align-items:center;justify-content:space-between;background:rgba(2,8,22,0.92);backdrop-filter:blur(14px);flex-shrink:0;}
+  .title-block h1{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;letter-spacing:8px;color:#00d4ff;text-shadow:0 0 20px rgba(0,200,255,0.7),0 0 40px rgba(0,100,255,0.4);}
+  .title-block p{font-size:8px;color:rgba(0,200,255,0.45);letter-spacing:4px;text-transform:uppercase;}
+  .hud-stats{display:flex;gap:14px;font-size:9px;color:rgba(0,200,255,0.4);letter-spacing:1px;}
   .hud-stat{display:flex;flex-direction:column;align-items:flex-end;gap:2px;}
-  .hud-stat span:first-child{color:#ffb700;font-size:10px;}
+  .hud-stat span:first-child{color:#00d4ff;font-size:10px;}
   /* ── AMBIENT JARVIS CHAT ── */
   .jarvis-chat{flex:1;overflow:hidden;display:flex;flex-direction:column;}
-  .chat-log{flex:0 0 auto;max-height:22%;overflow-y:auto;padding:8px 20px 4px;display:flex;flex-direction:column;gap:3px;background:rgba(20,0,35,0.4);}
+  .chat-log{flex:0 0 auto;max-height:22%;overflow-y:auto;padding:8px 20px 4px;display:flex;flex-direction:column;gap:3px;background:rgba(0,8,24,0.5);}
   .log-entry{font-family:'Share Tech Mono',monospace;font-size:10px;line-height:1.55;opacity:0.3;letter-spacing:0.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:logFade 0.4s ease-out;}
-  .log-entry.user{color:#ffb700;}
-  .log-entry.assistant{color:#e8ccff;}
+  .log-entry.user{color:#00d4ff;}
+  .log-entry.assistant{color:#a8d8ff;}
   @keyframes logFade{from{opacity:0;}to{opacity:0.3;}}
-  .log-sep{height:1px;margin:4px 20px 0;background:linear-gradient(90deg,transparent,rgba(255,160,0,0.25),transparent);flex-shrink:0;}
+  .log-sep{height:1px;margin:4px 20px 0;background:linear-gradient(90deg,transparent,rgba(0,180,255,0.2),transparent);flex-shrink:0;}
   /* ── ORB (canvas) ── */
-  .jarvis-display{flex:1;display:flex;flex-direction:column;position:relative;overflow:hidden;background:radial-gradient(ellipse at 50% 42%,rgba(100,0,160,0.18) 0%,rgba(30,0,50,0.35) 55%,transparent 80%);}
+  .jarvis-display{flex:1;display:flex;flex-direction:column;position:relative;overflow:hidden;background:radial-gradient(ellipse at 50% 42%,rgba(0,40,90,0.20) 0%,rgba(0,15,40,0.30) 55%,transparent 80%);}
   .orb-section{position:absolute;inset:0;z-index:0;filter:drop-shadow(0 0 22px rgba(0,200,255,0.35)) drop-shadow(0 0 50px rgba(0,100,220,0.20));transition:filter 0.4s ease;pointer-events:none;}
   .orb-section canvas{width:100% !important;max-width:none !important;height:100% !important;display:block;}
   .jarvis-display-content{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;width:100%;flex:1;padding:8px 6px 12px;overflow-y:auto;}
@@ -241,7 +241,7 @@ const styles = `
   @keyframes orbThinkPulse{0%,100%{filter:drop-shadow(0 0 35px rgba(0,190,255,0.50));}50%{filter:drop-shadow(0 0 90px rgba(0,235,255,0.95)) drop-shadow(0 0 180px rgba(0,160,255,0.45));}}
   /* ── WAVEFORM ── */
   .waveform{display:flex;align-items:center;gap:3px;height:22px;margin-bottom:10px;}
-  .wave-bar{width:3px;border-radius:2px;background:linear-gradient(to top,rgba(180,60,0,0.7),rgba(255,200,30,0.95));}
+  .wave-bar{width:3px;border-radius:2px;background:linear-gradient(to top,rgba(0,100,200,0.7),rgba(0,220,255,0.95));}
   .waveform.idle .wave-bar{animation:waveIdle 3s ease-in-out infinite;}
   .waveform.active .wave-bar{animation:waveActive 0.55s ease-in-out infinite;}
   .waveform.processing .wave-bar{animation:waveActive 0.32s ease-in-out infinite;}
@@ -258,35 +258,35 @@ const styles = `
   .wave-bar:nth-child(11){animation-delay:0.7s;}
   .wave-bar:nth-child(12){animation-delay:0.77s;}
   @keyframes waveIdle{0%,100%{height:3px;opacity:0.2;}50%{height:8px;opacity:0.35;}}
-  @keyframes waveActive{0%,100%{height:4px;opacity:0.6;}50%{height:20px;opacity:1;box-shadow:0 0 4px rgba(255,180,0,0.6);}}
-  .j-label{font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(255,180,0,0.45);letter-spacing:4px;margin-bottom:6px;text-transform:uppercase;text-align:center;width:100%;}
-  .response-text{font-family:'Share Tech Mono',monospace;font-size:13px;line-height:1.9;color:#f5e8cc;white-space:pre-wrap;width:100%;overflow-y:auto;max-height:38vh;}
-  .typing-cursor{display:inline-block;width:2px;height:13px;background:#ffb700;margin-left:1px;vertical-align:middle;animation:cursorBlink 0.7s step-end infinite;box-shadow:0 0 5px #ffb700;}
+  @keyframes waveActive{0%,100%{height:4px;opacity:0.6;}50%{height:20px;opacity:1;box-shadow:0 0 4px rgba(0,200,255,0.7);}}
+  .j-label{font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(0,200,255,0.45);letter-spacing:4px;margin-bottom:6px;text-transform:uppercase;text-align:center;width:100%;}
+  .response-text{font-family:'Share Tech Mono',monospace;font-size:13px;line-height:1.9;color:#d8f0ff;white-space:pre-wrap;width:100%;overflow-y:auto;max-height:38vh;}
+  .typing-cursor{display:inline-block;width:2px;height:13px;background:#00d4ff;margin-left:1px;vertical-align:middle;animation:cursorBlink 0.7s step-end infinite;box-shadow:0 0 5px #00d4ff;}
   @keyframes cursorBlink{0%,100%{opacity:1;}50%{opacity:0;}}
   .proc-wrap{display:flex;flex-direction:column;align-items:center;gap:8px;}
-  .proc-label{font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,160,0,0.6);letter-spacing:5px;text-transform:uppercase;animation:procBlink 1.4s ease-in-out infinite;}
+  .proc-label{font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(0,200,255,0.6);letter-spacing:5px;text-transform:uppercase;animation:procBlink 1.4s ease-in-out infinite;}
   @keyframes procBlink{0%,100%{opacity:0.35;}50%{opacity:1;}}
   .jarvis-idle{display:flex;flex-direction:column;align-items:center;gap:6px;opacity:0.7;text-align:center;}
-  .jarvis-idle h2{font-family:'Rajdhani',sans-serif;font-size:13px;letter-spacing:5px;color:#ffb700;text-shadow:0 0 20px rgba(255,160,0,0.5);}
-  .jarvis-idle p{font-size:11px;color:rgba(255,220,150,0.55);max-width:230px;line-height:1.9;}
+  .jarvis-idle h2{font-family:'Rajdhani',sans-serif;font-size:13px;letter-spacing:5px;color:#00d4ff;text-shadow:0 0 20px rgba(0,200,255,0.5);}
+  .jarvis-idle p{font-size:11px;color:rgba(150,230,255,0.55);max-width:230px;line-height:1.9;}
   /* ── VOICE ── */
   .listen-label{font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(0,255,160,0.85);letter-spacing:5px;text-transform:uppercase;animation:procBlink 0.9s ease-in-out infinite;margin-bottom:6px;}
-  .mic-btn{width:40px;height:40px;background:rgba(20,0,40,0.8);border:1px solid rgba(180,80,255,0.3);cursor:pointer;display:flex;align-items:center;justify-content:center;clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);color:rgba(200,120,255,0.6);font-size:15px;transition:all 0.2s;flex-shrink:0;}
-  .mic-btn:hover{border-color:rgba(200,100,255,0.7);color:#cc80ff;box-shadow:0 0 14px rgba(150,0,255,0.4);}
-  .mic-btn.listening{background:linear-gradient(135deg,#1a0033,#3d0070);border-color:rgba(200,100,255,0.9);color:rgba(230,150,255,0.95);box-shadow:0 0 18px rgba(180,0,255,0.6);animation:micPulse 0.9s ease-in-out infinite;}
-  @keyframes micPulse{0%,100%{box-shadow:0 0 12px rgba(180,0,255,0.4);}50%{box-shadow:0 0 28px rgba(180,0,255,0.85);}}
-  .voice-toggle{padding:5px 12px;border:1px solid rgba(255,160,0,0.25);background:transparent;color:rgba(255,180,0,0.5);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;cursor:pointer;border-radius:20px;transition:all 0.2s;white-space:nowrap;}
-  .voice-toggle.on{border-color:rgba(255,180,0,0.85);color:#ffb700;background:rgba(255,160,0,0.1);box-shadow:0 0 10px rgba(255,160,0,0.35);animation:voicePulse 2s ease-in-out infinite;}
-  @keyframes voicePulse{0%,100%{box-shadow:0 0 8px rgba(255,160,0,0.3);}50%{box-shadow:0 0 18px rgba(255,160,0,0.6);}}
-  .input-area{padding:10px 16px 14px;border-top:1px solid rgba(255,160,0,0.12);background:rgba(8,0,16,0.92);backdrop-filter:blur(14px);flex-shrink:0;}
+  .mic-btn{width:40px;height:40px;background:rgba(0,10,30,0.8);border:1px solid rgba(0,150,255,0.3);cursor:pointer;display:flex;align-items:center;justify-content:center;clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);color:rgba(0,180,255,0.6);font-size:15px;transition:all 0.2s;flex-shrink:0;}
+  .mic-btn:hover{border-color:rgba(0,200,255,0.7);color:#00d4ff;box-shadow:0 0 14px rgba(0,150,255,0.4);}
+  .mic-btn.listening{background:linear-gradient(135deg,#001830,#004070);border-color:rgba(0,200,255,0.9);color:rgba(100,230,255,0.95);box-shadow:0 0 18px rgba(0,180,255,0.6);animation:micPulse 0.9s ease-in-out infinite;}
+  @keyframes micPulse{0%,100%{box-shadow:0 0 12px rgba(0,180,255,0.4);}50%{box-shadow:0 0 28px rgba(0,200,255,0.85);}}
+  .voice-toggle{padding:5px 12px;border:1px solid rgba(0,180,255,0.25);background:transparent;color:rgba(0,200,255,0.5);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;cursor:pointer;border-radius:20px;transition:all 0.2s;white-space:nowrap;}
+  .voice-toggle.on{border-color:rgba(0,200,255,0.85);color:#00d4ff;background:rgba(0,180,255,0.1);box-shadow:0 0 10px rgba(0,180,255,0.35);animation:voicePulse 2s ease-in-out infinite;}
+  @keyframes voicePulse{0%,100%{box-shadow:0 0 8px rgba(0,180,255,0.3);}50%{box-shadow:0 0 18px rgba(0,200,255,0.65);}}
+  .input-area{padding:10px 16px 14px;border-top:1px solid rgba(0,180,255,0.12);background:rgba(2,6,18,0.95);backdrop-filter:blur(14px);flex-shrink:0;}
   .input-row{display:flex;gap:8px;align-items:flex-end;}
   .input-wrap{flex:1;position:relative;}
-  .input-wrap::before{content:'›';position:absolute;left:11px;top:50%;transform:translateY(-50%);color:rgba(255,180,0,0.4);font-size:16px;pointer-events:none;}
-  textarea{width:100%;background:rgba(25,0,40,0.7);border:1px solid rgba(255,160,0,0.18);border-radius:8px;padding:10px 12px 10px 26px;color:#f0ddb0;font-family:'Share Tech Mono',monospace;font-size:12px;resize:none;min-height:42px;max-height:100px;outline:none;transition:border-color 0.25s,box-shadow 0.25s;}
-  textarea:focus{border-color:rgba(255,180,0,0.45);box-shadow:0 0 16px rgba(255,160,0,0.15);}
-  textarea::placeholder{color:rgba(255,180,0,0.2);}
-  .send-btn{width:42px;height:42px;background:linear-gradient(135deg,#7a3800,#ff8c00);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);transition:all 0.2s;color:white;font-size:14px;box-shadow:0 0 16px rgba(255,140,0,0.35);}
-  .send-btn:hover{box-shadow:0 0 28px rgba(255,160,0,0.65);}
+  .input-wrap::before{content:'›';position:absolute;left:11px;top:50%;transform:translateY(-50%);color:rgba(0,200,255,0.4);font-size:16px;pointer-events:none;}
+  textarea{width:100%;background:rgba(0,8,24,0.8);border:1px solid rgba(0,180,255,0.18);border-radius:8px;padding:10px 12px 10px 26px;color:#d8f0ff;font-family:'Share Tech Mono',monospace;font-size:12px;resize:none;min-height:42px;max-height:100px;outline:none;transition:border-color 0.25s,box-shadow 0.25s;}
+  textarea:focus{border-color:rgba(0,200,255,0.45);box-shadow:0 0 16px rgba(0,180,255,0.15);}
+  textarea::placeholder{color:rgba(0,200,255,0.2);}
+  .send-btn{width:42px;height:42px;background:linear-gradient(135deg,#004088,#0090ff);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);transition:all 0.2s;color:white;font-size:14px;box-shadow:0 0 16px rgba(0,150,255,0.35);}
+  .send-btn:hover{box-shadow:0 0 28px rgba(0,200,255,0.65);}
   .send-btn:disabled{opacity:0.3;cursor:not-allowed;}
 
   /* ── LOCK SCREEN ── */
@@ -1758,11 +1758,10 @@ export default function Home() {
 
   function startListening() {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition
-    if (!SR || !voiceEnabledRef.current || isSpeakingRef.current || loadingRef.current) return
+    if (!SR || !voiceEnabledRef.current || loadingRef.current) return
     // Hard-stop any existing session before starting a new one
     try { recognitionRef.current?.abort() } catch (_) {}
     recognitionRef.current = null
-    window.speechSynthesis?.cancel()
 
     const rec = new SR()
     rec.lang = 'en-US'
@@ -1772,12 +1771,29 @@ export default function Home() {
     let gotResult = false
     let ended = false
 
-    rec.onstart = () => setIsListening(true)
+    rec.onstart = () => { if (!isSpeakingRef.current) setIsListening(true) }
 
     rec.onresult = (e) => {
       gotResult = true
       const transcript = e.results[0][0].transcript.trim()
       setIsListening(false)
+
+      // While JARVIS is speaking, only act on stop commands
+      if (isSpeakingRef.current) {
+        const lower = transcript.toLowerCase()
+        const isStop = /^(stop|jarvis stop|stop it|be quiet|quiet|cancel|ok stop|okay stop|shut up|enough|stop talking)$/.test(lower)
+        if (isStop) {
+          window.speechSynthesis?.cancel()
+          if (currentAudioRef.current) { currentAudioRef.current.pause(); currentAudioRef.current = null }
+          setIsSpeaking(false)
+          isSpeakingRef.current = false
+          if (voiceEnabledRef.current) setTimeout(startListening, 500)
+        } else if (voiceEnabledRef.current) {
+          setTimeout(startListening, 300)
+        }
+        return
+      }
+
       if (transcript.length > 1) {
         send(transcript)
       } else if (voiceEnabledRef.current && !loadingRef.current) {
@@ -1802,8 +1818,9 @@ export default function Home() {
     rec.onend = () => {
       ended = true
       setIsListening(false)
-      if (!gotResult && voiceEnabledRef.current && !loadingRef.current && !isSpeakingRef.current) {
-        setTimeout(startListening, 800)
+      if (!gotResult && voiceEnabledRef.current && !loadingRef.current) {
+        // Keep looping quickly during speech so user can say "stop" at any time
+        setTimeout(startListening, isSpeakingRef.current ? 250 : 800)
       }
     }
 
@@ -2001,6 +2018,22 @@ export default function Home() {
     setInput('')
     setLoading(true)
 
+    // Detect shopping list add commands and execute them immediately
+    let shoppingActionNote = ''
+    const shopAddMatch = userInput.match(
+      /(?:(?:please\s+)?(?:add|put|can you add|jarvis[,\s]+add)\s+(.+?)\s+(?:to|on|onto)\s+(?:the\s+)?(?:shopping|grocery|shop)\s*(?:list)?(?:\s+for me)?$)/i
+    ) || userInput.match(
+      /^(?:add|put)\s+(.+?)\s+(?:to|on)\s+(?:(?:my|our|the)\s+)?(?:shopping|grocery|shop|list)/i
+    )
+    if (shopAddMatch) {
+      const raw = shopAddMatch[1].trim().replace(/^(some|a|an|the)\s+/i, '')
+      const itemText = raw.charAt(0).toUpperCase() + raw.slice(1)
+      const newItem = { id: Date.now(), text: itemText, cat: 'OTHER', done: false }
+      const updatedShopping = [...shopping, newItem]
+      saveShopping(updatedShopping)
+      shoppingActionNote = `\n\nSHOPPING LIST ACTION COMPLETED: You have just added "${itemText}" to the family shopping list in real time. Tell the user you've added it — do not say you "will" add it or ask them to go to the Shopping tab. It is already done.`
+    }
+
     try {
       const liveContext = await buildLiveContext(userInput)
       const activeContext = (user === 'Dad' || user === 'Mom')
@@ -2009,7 +2042,7 @@ export default function Home() {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: newMessages, user, context: activeContext + liveContext })
+        body: JSON.stringify({ messages: newMessages, user, context: activeContext + liveContext + shoppingActionNote })
       })
       const data = await res.json()
       setMessages(m => [...m, { role: 'assistant', content: data.reply, name: 'JARVIS' }])
@@ -2861,7 +2894,7 @@ export default function Home() {
                   style={{
                     width: '42px',
                     height: '42px',
-                    background: 'linear-gradient(135deg,#7a3800,#ff8c00)',
+                    background: 'linear-gradient(135deg,#004088,#0090ff)',
                     border: 'none',
                     cursor: 'pointer',
                     display: 'flex',
@@ -2870,7 +2903,7 @@ export default function Home() {
                     clipPath: 'polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%)',
                     color: 'white',
                     fontSize: '16px',
-                    boxShadow: '0 0 16px rgba(255,140,0,0.35)',
+                    boxShadow: '0 0 16px rgba(0,150,255,0.35)',
                     marginRight: '8px'
                   }}
                   title="Upload math problem image"

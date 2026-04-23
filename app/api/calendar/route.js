@@ -65,18 +65,15 @@ function occursOnDate(parsed, rrule, targetDate) {
 
 export async function GET() {
   const tz = 'America/New_York'
-  const urls = [
+  // Use secret URLs from env vars if set; always include the public calendar URLs
+  // that match what's shown in the embedded calendar tab
+  const urls = [...new Set([
     process.env.ICAL_URL_PERSONAL,
     process.env.ICAL_URL_FAMILY,
+    'https://calendar.google.com/calendar/ical/uktweeter19%40gmail.com/public/basic.ics',
+    'https://calendar.google.com/calendar/ical/family021430976716499641216%40group.calendar.google.com/public/basic.ics',
     'https://calendar.google.com/calendar/ical/98vibj87ujjb3cm68lo4jatcghv2dq16%40import.calendar.google.com/public/basic.ics'
-  ].filter(Boolean)
-
-  if (urls.length < 2) {
-    return NextResponse.json({
-      error: 'Add ICAL_URL_PERSONAL and ICAL_URL_FAMILY to Vercel environment variables',
-      events: []
-    })
-  }
+  ].filter(Boolean))]
 
   // Fetch events for next 7 days
   const targetDates = Array.from({ length: 7 }, (_, i) => getDateStr(tz, i))
