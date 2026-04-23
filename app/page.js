@@ -2094,10 +2094,13 @@ export default function Home() {
       const activeContext = (user === 'Dad' || user === 'Mom')
         ? FAMILY_CONTEXT_ADULTS
         : FAMILY_CONTEXT_KIDS
+      const voiceModeNote = voiceEnabledRef.current
+        ? '\n\nVOICE MODE IS ON: Your reply will be read aloud. Keep it under 2 sentences — spoken responses must be short and natural. No bullet points or markdown.'
+        : '\n\nTEXT MODE: Reply via text only. No TTS will be used.'
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: newMessages, user, context: activeContext + memoryContext + liveContext + shoppingActionNote })
+        body: JSON.stringify({ messages: newMessages, user, context: activeContext + memoryContext + liveContext + voiceModeNote + shoppingActionNote })
       })
       const data = await res.json()
       setMessages(m => [...m, { role: 'assistant', content: data.reply, name: 'JARVIS' }])
@@ -2974,10 +2977,10 @@ export default function Home() {
                 <div className="input-wrap">
                   <textarea value={input} onChange={e => setInput(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }}
-                    placeholder={isListening ? 'Listening...' : (typeof navigator !== 'undefined' && /iP(hone|ad|od)/.test(navigator.userAgent)) ? 'Tap 🎤 on keyboard to speak...' : 'Awaiting your command...'} rows={1} style={{ lineHeight: '20px' }} />
+                    placeholder={isListening ? 'Listening...' : voiceEnabled ? 'Speak or type...' : 'Type your message...'} rows={1} style={{ lineHeight: '20px' }} />
                 </div>
-                {/* Mic button — hidden on iOS Safari where mic permission isn't available */}
-                {!(typeof navigator !== 'undefined' && /iP(hone|ad|od)/.test(navigator.userAgent)) && (
+                {/* Mic button — only shown when voice mode is ON and not on iOS (iOS has native 🎤 keyboard) */}
+                {voiceEnabled && !(typeof navigator !== 'undefined' && /iP(hone|ad|od)/.test(navigator.userAgent)) && (
                   <button
                     className={`mic-btn${isListening ? ' listening' : ''}`}
                     onClick={isListening ? stopListening : startListening}
