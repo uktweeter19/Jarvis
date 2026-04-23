@@ -225,14 +225,15 @@ const styles = `
   @keyframes logFade{from{opacity:0;}to{opacity:0.3;}}
   .log-sep{height:1px;margin:4px 20px 0;background:linear-gradient(90deg,transparent,rgba(255,160,0,0.25),transparent);flex-shrink:0;}
   /* ── ORB (canvas) ── */
-  .jarvis-display{flex:1;display:flex;flex-direction:column;align-items:center;padding:6px 24px 10px;position:relative;overflow:hidden;background:radial-gradient(ellipse at 50% 42%,rgba(100,0,160,0.18) 0%,rgba(30,0,50,0.35) 55%,transparent 80%);}
-  .orb-section{display:flex;justify-content:center;flex-shrink:0;margin-bottom:4px;filter:drop-shadow(0 0 22px rgba(140,0,240,0.55)) drop-shadow(0 0 45px rgba(100,0,180,0.32));transition:filter 0.4s ease;}
-  .orb-section.listening{filter:drop-shadow(0 0 25px rgba(0,255,160,0.5)) drop-shadow(0 0 50px rgba(140,0,240,0.4));animation:orbListenPulse 1.1s ease-in-out infinite;}
-  @keyframes orbListenPulse{0%,100%{transform:scale(1.04);}50%{transform:scale(1.10);}}
-  .orb-section.speaking{filter:drop-shadow(0 0 45px rgba(255,180,0,0.7)) drop-shadow(0 0 80px rgba(140,0,240,0.55));animation:orbSpeakPulse 1.3s ease-in-out infinite;}
-  @keyframes orbSpeakPulse{0%,100%{transform:scale(1.14);}50%{transform:scale(1.26);}}
-  .orb-section.thinking{filter:drop-shadow(0 0 32px rgba(140,0,240,0.65)) drop-shadow(0 0 60px rgba(100,0,180,0.4));animation:orbThinkPulse 1.8s ease-in-out infinite;}
-  @keyframes orbThinkPulse{0%,100%{transform:scale(1.08);}50%{transform:scale(1.15);}}
+  .jarvis-display{flex:1;display:flex;flex-direction:column;align-items:center;padding:4px 6px 8px;position:relative;overflow:hidden;background:radial-gradient(ellipse at 50% 42%,rgba(100,0,160,0.18) 0%,rgba(30,0,50,0.35) 55%,transparent 80%);}
+  .orb-section{display:flex;justify-content:center;width:100%;flex-shrink:0;margin-bottom:4px;filter:drop-shadow(0 0 28px rgba(255,140,0,0.45)) drop-shadow(0 0 55px rgba(100,0,180,0.3));transition:filter 0.4s ease;}
+  .orb-section canvas{width:100% !important;max-width:320px;height:auto !important;}
+  .orb-section.listening{filter:drop-shadow(0 0 30px rgba(0,255,160,0.45)) drop-shadow(0 0 60px rgba(140,0,240,0.35));animation:orbListenPulse 1.1s ease-in-out infinite;}
+  @keyframes orbListenPulse{0%,100%{transform:scaleY(1.04);}50%{transform:scaleY(1.10);}}
+  .orb-section.speaking{filter:drop-shadow(0 0 50px rgba(255,180,0,0.65)) drop-shadow(0 0 90px rgba(140,0,240,0.5));animation:orbSpeakPulse 1.3s ease-in-out infinite;}
+  @keyframes orbSpeakPulse{0%,100%{transform:scaleY(1.12);}50%{transform:scaleY(1.24);}}
+  .orb-section.thinking{filter:drop-shadow(0 0 38px rgba(140,0,240,0.6)) drop-shadow(0 0 70px rgba(100,0,180,0.38));animation:orbThinkPulse 1.8s ease-in-out infinite;}
+  @keyframes orbThinkPulse{0%,100%{transform:scaleY(1.06);}50%{transform:scaleY(1.14);}}
   /* ── WAVEFORM ── */
   .waveform{display:flex;align-items:center;gap:3px;height:22px;margin-bottom:10px;}
   .wave-bar{width:3px;border-radius:2px;background:linear-gradient(to top,rgba(180,60,0,0.7),rgba(255,200,30,0.95));}
@@ -605,6 +606,7 @@ export default function Home() {
   const loadingRef = useRef(false)
   const isSpeakingRef = useRef(false)
   const currentAudioRef = useRef(null)
+  const lockedVoiceRef = useRef(null) // locked once on mount, never changes
   // Tracks which bulletin IDs have already triggered a notification on this device.
   // Initialized when bulletins first load; after that, any NEW id triggers a pop-up.
   const seenBulletinIdsRef = useRef(null)
@@ -1135,6 +1137,23 @@ export default function Home() {
   useEffect(() => { isSpeakingRef.current = isSpeaking }, [isSpeaking])
   useEffect(() => { wakeModeRef.current = wakeMode }, [wakeMode])
 
+  // Lock browser TTS voice once on mount — never changes between responses
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return
+    const lock = () => {
+      const voices = window.speechSynthesis.getVoices()
+      lockedVoiceRef.current = voices.find(v => v.name === 'Daniel')
+        || voices.find(v => v.name === 'Arthur')
+        || voices.find(v => v.name === 'Google UK English Male')
+        || voices.find(v => v.name.includes('Microsoft George'))
+        || voices.find(v => v.name.includes('Microsoft Harry'))
+        || voices.find(v => v.lang === 'en-GB' && !v.name.toLowerCase().includes('female'))
+        || null
+    }
+    if (window.speechSynthesis.getVoices().length > 0) lock()
+    else window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.onvoiceschanged = null; lock() }
+  }, [])
+
   // Canvas particle-orb animation — starts when the chat canvas enters the DOM
   useEffect(() => {
     if (tab !== 'chat' || !userSelected) return
@@ -1144,63 +1163,65 @@ export default function Home() {
     if (orbRafRef.current) cancelAnimationFrame(orbRafRef.current)
 
     const dpr = window.devicePixelRatio || 1
-    const SIZE = 280
-    canvas.width = SIZE * dpr
-    canvas.height = SIZE * dpr
-    canvas.style.width = SIZE + 'px'
-    canvas.style.height = SIZE + 'px'
+    // Wide landscape canvas — fills the section like the reference image
+    const W = Math.min(320, Math.floor((canvas.parentElement?.offsetWidth || 320) * 0.96))
+    const H = Math.round(W * 0.62)
+    canvas.width = W * dpr
+    canvas.height = H * dpr
+    canvas.style.width = W + 'px'
+    canvas.style.height = H + 'px'
     const ctx = canvas.getContext('2d')
     ctx.scale(dpr, dpr)
-    const CX = SIZE / 2, CY = SIZE / 2
+    const CX = W / 2, CY = H / 2
 
-    // Additive-blend cloud blob system.
-    // 'lighter' compositing means overlapping blobs get brighter naturally —
-    // the same technique used in the reference nebula/energy cloud images.
-    // Wisp blobs extend far beyond the center so the shape is never a clean sphere.
+    // Wide horizontal energy-wave cloud using additive blending.
+    // Tier 0: hot orange/amber core spread across the lower-middle of the wave.
+    // Tier 1: warm gold mid-level spanning the full width.
+    // Tier 2: cool blue-white wisps rising above — additive overlay makes the
+    //         overlap regions turn bright white (matching the reference image).
     const BLOBS = [
-      // Tier 0 — white-hot inner core (4 blobs, tight, very bright)
-      ...Array.from({ length: 4 }, (_, i) => ({
-        bx: (Math.random()-0.5)*18, by: (Math.random()-0.5)*18,
-        ax: 9+Math.random()*11,     ay: 8+Math.random()*10,
-        fx: 0.5+Math.random()*0.8,  fy: 0.4+Math.random()*0.7,
-        px: i*Math.PI*0.5,          py: i*Math.PI*0.5+0.9,
-        r: 32+Math.random()*22, tier: 0
+      // Tier 0 — hot orange core, spread across full width in a low band
+      ...Array.from({ length: 9 }, (_, i) => ({
+        bx: W * ((i+0.5)/9) - CX,
+        by: 12 + Math.random()*18,
+        ax: 18+Math.random()*22, ay: 14+Math.random()*16,
+        fx: 0.18+Math.random()*0.28, fy: 0.14+Math.random()*0.22,
+        px: Math.random()*Math.PI*2, py: Math.random()*Math.PI*2,
+        r: 42+Math.random()*32, tier: 0
       })),
-      // Tier 1 — amber cloud body (8 blobs, offset outward, medium drift)
-      ...Array.from({ length: 8 }, (_, i) => {
-        const a = (i/8)*Math.PI*2
+      // Tier 1 — warm gold, full width undulating wave
+      ...Array.from({ length: 11 }, (_, i) => {
+        const xf = i/10
         return {
-          bx: Math.cos(a)*(22+Math.random()*22), by: Math.sin(a)*(18+Math.random()*20),
-          ax: 14+Math.random()*20, ay: 12+Math.random()*16,
-          fx: 0.18+Math.random()*0.28, fy: 0.15+Math.random()*0.25,
+          bx: W*xf - CX + (Math.random()-0.5)*18,
+          by: 8*Math.sin(xf*Math.PI*2.5) + (Math.random()-0.5)*12,
+          ax: 20+Math.random()*24, ay: 16+Math.random()*20,
+          fx: 0.12+Math.random()*0.2, fy: 0.10+Math.random()*0.17,
           px: Math.random()*Math.PI*2, py: Math.random()*Math.PI*2,
-          r: 24+Math.random()*22, tier: 1
+          r: 36+Math.random()*28, tier: 1
         }
       }),
-      // Tier 2 — dim wispy tendrils (8 blobs, far offsets, slow wide drift)
-      // These drift past the 140px canvas edge, creating the irregular cloud arms
-      ...Array.from({ length: 8 }, (_, i) => {
-        const a = (i/8)*Math.PI*2 + Math.random()*0.6
-        return {
-          bx: Math.cos(a)*(60+Math.random()*30), by: Math.sin(a)*(50+Math.random()*28),
-          ax: 25+Math.random()*28, ay: 20+Math.random()*22,
-          fx: 0.06+Math.random()*0.15, fy: 0.05+Math.random()*0.13,
-          px: Math.random()*Math.PI*2, py: Math.random()*Math.PI*2,
-          r: 18+Math.random()*18, tier: 2
-        }
-      })
+      // Tier 2 — cool blue-white wisps rising upward from the wave peaks
+      ...Array.from({ length: 11 }, (_, i) => ({
+        bx: W*((i+0.5)/11) - CX + (Math.random()-0.5)*22,
+        by: -12 - Math.random()*38,
+        ax: 16+Math.random()*20, ay: 18+Math.random()*24,
+        fx: 0.07+Math.random()*0.14, fy: 0.06+Math.random()*0.13,
+        px: Math.random()*Math.PI*2, py: Math.random()*Math.PI*2,
+        r: 28+Math.random()*32, tier: 2
+      }))
     ]
 
     let t = 0
 
     function draw() {
-      ctx.clearRect(0, 0, SIZE, SIZE)
+      ctx.clearRect(0, 0, W, H)
       const spd = orbSpeedMultRef.current
       const br  = orbBrightnessRef.current
-      t += 0.006 * spd
+      t += 0.005 * spd
 
-      // Additive blending — overlapping blobs accumulate brightness,
-      // isolated edges stay transparent — natural cloud luminosity
+      // 'lighter' = additive light blending.
+      // Where orange tier and blue-white tier overlap → bright white (like the image).
       ctx.globalCompositeOperation = 'lighter'
 
       BLOBS.forEach(b => {
@@ -1208,20 +1229,21 @@ export default function Home() {
         const y = CY + b.by + b.ay * Math.cos(t * b.fy + b.py)
         const g = ctx.createRadialGradient(x, y, 0, x, y, b.r)
 
-        if (b.tier === 0) {
-          g.addColorStop(0,    `rgba(255,255,210,${0.52*br})`)
-          g.addColorStop(0.28, `rgba(255,205,40,${0.28*br})`)
-          g.addColorStop(0.62, `rgba(255,110,10,${0.11*br})`)
-          g.addColorStop(1,    `rgba(130,0,80,0)`)
-        } else if (b.tier === 1) {
-          g.addColorStop(0,    `rgba(255,160,18,${0.20*br})`)
-          g.addColorStop(0.42, `rgba(190,60,8,${0.09*br})`)
-          g.addColorStop(0.78, `rgba(90,0,55,${0.03*br})`)
-          g.addColorStop(1,    `rgba(40,0,70,0)`)
-        } else {
-          g.addColorStop(0,    `rgba(190,90,18,${0.12*br})`)
-          g.addColorStop(0.48, `rgba(110,18,55,${0.045*br})`)
-          g.addColorStop(1,    `rgba(35,0,70,0)`)
+        if (b.tier === 0) {          // hot orange/amber
+          g.addColorStop(0,    `rgba(255,150,20,${0.38*br})`)
+          g.addColorStop(0.30, `rgba(255,90,5,${0.20*br})`)
+          g.addColorStop(0.65, `rgba(180,40,0,${0.07*br})`)
+          g.addColorStop(1,    'rgba(80,0,20,0)')
+        } else if (b.tier === 1) {   // warm gold
+          g.addColorStop(0,    `rgba(255,195,45,${0.26*br})`)
+          g.addColorStop(0.38, `rgba(210,110,12,${0.12*br})`)
+          g.addColorStop(0.72, `rgba(120,30,0,${0.04*br})`)
+          g.addColorStop(1,    'rgba(40,0,20,0)')
+        } else {                      // cool blue-white wisps
+          g.addColorStop(0,    `rgba(200,225,255,${0.18*br})`)
+          g.addColorStop(0.40, `rgba(140,185,240,${0.08*br})`)
+          g.addColorStop(0.75, `rgba(80,120,200,${0.03*br})`)
+          g.addColorStop(1,    'rgba(20,40,120,0)')
         }
 
         ctx.fillStyle = g
@@ -1556,36 +1578,19 @@ export default function Home() {
 
   function speakBrowser(clean) {
     if (typeof window === 'undefined' || !window.speechSynthesis) { afterSpeak(); return }
-    const doSpeak = () => {
-      const utter = new SpeechSynthesisUtterance(clean)
-      utter.rate = 0.90
-      utter.pitch = 0.68
-      utter.volume = 1.0
-      const voices = window.speechSynthesis.getVoices()
-      // Strict priority order — pick ONE voice and stick with it
-      const v = voices.find(v => v.name === 'Daniel')           // macOS/iOS British male
-        || voices.find(v => v.name === 'Arthur')                // macOS British male
-        || voices.find(v => v.name === 'Google UK English Male')
-        || voices.find(v => v.name.includes('Microsoft George'))
-        || voices.find(v => v.name.includes('Microsoft Harry'))
-        || voices.find(v => v.lang === 'en-GB' && !v.name.toLowerCase().includes('female'))
-        || voices.find(v => v.lang === 'en-US' && v.name.includes('Male'))
-        || null
-      if (v) utter.voice = v
-      utter.onstart = () => setIsSpeaking(true)
-      utter.onend = afterSpeak
-      utter.onerror = afterSpeak
-      window.speechSynthesis.speak(utter)
-    }
-    // Voices may not be loaded yet on first call
-    if (window.speechSynthesis.getVoices().length > 0) {
-      setTimeout(doSpeak, 50)
-    } else {
-      window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.onvoiceschanged = null; setTimeout(doSpeak, 50) }
-    }
+    const utter = new SpeechSynthesisUtterance(clean)
+    utter.rate = 0.90
+    utter.pitch = 0.68
+    utter.volume = 1.0
+    // Always use the voice locked at startup — never pick a random voice mid-session
+    if (lockedVoiceRef.current) utter.voice = lockedVoiceRef.current
+    utter.onstart = () => setIsSpeaking(true)
+    utter.onend = afterSpeak
+    utter.onerror = afterSpeak
+    setTimeout(() => window.speechSynthesis.speak(utter), 50)
   }
 
-  function speak(text) {
+  function speak(text, _retry = 0) {
     if (typeof window === 'undefined') return
     window.speechSynthesis?.cancel()
     if (currentAudioRef.current) { currentAudioRef.current.pause(); currentAudioRef.current = null }
@@ -1612,16 +1617,27 @@ export default function Home() {
       .then(r => r.json())
       .then(data => {
         if (data.fallback || !data.audioContent) {
+          // Retry once before falling back to browser voice
+          if (_retry < 1) { setTimeout(() => speak(text, _retry + 1), 600); return }
           speakBrowser(clean)
           return
         }
         const audio = new Audio('data:audio/mp3;base64,' + data.audioContent)
         currentAudioRef.current = audio
         audio.onended = afterSpeak
-        audio.onerror = () => speakBrowser(clean)
-        audio.play().catch(() => speakBrowser(clean))
+        audio.onerror = () => {
+          if (_retry < 1) setTimeout(() => speak(text, _retry + 1), 600)
+          else speakBrowser(clean)
+        }
+        audio.play().catch(() => {
+          if (_retry < 1) setTimeout(() => speak(text, _retry + 1), 600)
+          else speakBrowser(clean)
+        })
       })
-      .catch(() => speakBrowser(clean))
+      .catch(() => {
+        if (_retry < 1) setTimeout(() => speak(text, _retry + 1), 600)
+        else speakBrowser(clean)
+      })
   }
 
   function startListening() {
