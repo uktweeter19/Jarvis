@@ -58,7 +58,11 @@ function occursToday(parsed, rrule, today, todayDow) {
 
 export async function GET() {
   const tz = 'America/New_York'
-  const urls = [process.env.ICAL_URL_PERSONAL, process.env.ICAL_URL_FAMILY].filter(Boolean)
+  const urls = [
+    process.env.ICAL_URL_PERSONAL,
+    process.env.ICAL_URL_FAMILY,
+    'https://calendar.google.com/calendar/ical/98vibj87ujjb3cm68lo4jatcghv2dq16%40import.calendar.google.com/public/basic.ics'
+  ].filter(Boolean)
 
   if (!urls.length) {
     return NextResponse.json({
