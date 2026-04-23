@@ -230,15 +230,15 @@ const styles = `
   .log-sep{height:1px;margin:4px 20px 0;background:linear-gradient(90deg,transparent,rgba(255,160,0,0.25),transparent);flex-shrink:0;}
   /* ── ORB (canvas) ── */
   .jarvis-display{flex:1;display:flex;flex-direction:column;position:relative;overflow:hidden;background:radial-gradient(ellipse at 50% 42%,rgba(100,0,160,0.18) 0%,rgba(30,0,50,0.35) 55%,transparent 80%);}
-  .orb-section{position:absolute;inset:0;z-index:0;filter:drop-shadow(0 0 28px rgba(255,140,0,0.45)) drop-shadow(0 0 55px rgba(100,0,180,0.3));transition:filter 0.4s ease;pointer-events:none;}
+  .orb-section{position:absolute;inset:0;z-index:0;filter:drop-shadow(0 0 22px rgba(0,200,255,0.35)) drop-shadow(0 0 50px rgba(0,100,220,0.20));transition:filter 0.4s ease;pointer-events:none;}
   .orb-section canvas{width:100% !important;max-width:none !important;height:100% !important;display:block;}
   .jarvis-display-content{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;width:100%;flex:1;padding:8px 6px 12px;overflow-y:auto;}
-  .orb-section.listening{filter:drop-shadow(0 0 30px rgba(0,255,160,0.45)) drop-shadow(0 0 60px rgba(140,0,240,0.35));animation:orbListenPulse 1.1s ease-in-out infinite;}
-  @keyframes orbListenPulse{0%,100%{filter:drop-shadow(0 0 30px rgba(0,255,160,0.45));}50%{filter:drop-shadow(0 0 55px rgba(0,255,160,0.7));}}
-  .orb-section.speaking{filter:drop-shadow(0 0 50px rgba(255,180,0,0.65)) drop-shadow(0 0 90px rgba(140,0,240,0.5));animation:orbSpeakPulse 1.3s ease-in-out infinite;}
-  @keyframes orbSpeakPulse{0%,100%{filter:drop-shadow(0 0 50px rgba(255,180,0,0.55));}50%{filter:drop-shadow(0 0 90px rgba(255,200,0,0.85));}}
-  .orb-section.thinking{filter:drop-shadow(0 0 55px rgba(255,160,0,0.8)) drop-shadow(0 0 110px rgba(255,100,0,0.5));animation:orbThinkPulse 1.4s ease-in-out infinite;}
-  @keyframes orbThinkPulse{0%,100%{filter:drop-shadow(0 0 35px rgba(255,140,0,0.5));transform:scale(1);}50%{filter:drop-shadow(0 0 90px rgba(255,210,0,0.95)) drop-shadow(0 0 160px rgba(255,120,0,0.55));transform:scale(1.10);}}
+  .orb-section.listening{filter:drop-shadow(0 0 28px rgba(0,255,200,0.50)) drop-shadow(0 0 55px rgba(0,200,255,0.30));animation:orbListenPulse 1.1s ease-in-out infinite;}
+  @keyframes orbListenPulse{0%,100%{filter:drop-shadow(0 0 22px rgba(0,220,200,0.40));}50%{filter:drop-shadow(0 0 50px rgba(0,255,200,0.75));}}
+  .orb-section.speaking{filter:drop-shadow(0 0 45px rgba(0,220,255,0.65)) drop-shadow(0 0 90px rgba(0,150,255,0.35));animation:orbSpeakPulse 1.3s ease-in-out infinite;}
+  @keyframes orbSpeakPulse{0%,100%{filter:drop-shadow(0 0 35px rgba(0,200,255,0.50));}50%{filter:drop-shadow(0 0 80px rgba(0,240,255,0.90));}}
+  .orb-section.thinking{filter:drop-shadow(0 0 55px rgba(0,210,255,0.75)) drop-shadow(0 0 110px rgba(0,140,255,0.40));animation:orbThinkPulse 1.1s ease-in-out infinite;}
+  @keyframes orbThinkPulse{0%,100%{filter:drop-shadow(0 0 35px rgba(0,190,255,0.50));}50%{filter:drop-shadow(0 0 90px rgba(0,235,255,0.95)) drop-shadow(0 0 180px rgba(0,160,255,0.45));}}
   /* ── WAVEFORM ── */
   .waveform{display:flex;align-items:center;gap:3px;height:22px;margin-bottom:10px;}
   .wave-bar{width:3px;border-radius:2px;background:linear-gradient(to top,rgba(180,60,0,0.7),rgba(255,200,30,0.95));}
@@ -1160,7 +1160,7 @@ export default function Home() {
     else window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.onvoiceschanged = null; lock() }
   }, [])
 
-  // Canvas: golden orb cloud with floating particles — pulses larger when thinking
+  // Canvas: JARVIS MCU HUD — concentric rings, spins when thinking, +35% when speaking
   useEffect(() => {
     if (tab !== 'chat' || !userSelected) return
     if ((user === 'Dad' || user === 'Mom') && !adultChatUnlocked) return
@@ -1176,131 +1176,175 @@ export default function Home() {
     const ctx = canvas.getContext('2d')
     ctx.scale(dpr, dpr)
 
-    const rng = Math.random
     const cx = W * 0.50
-    const cy = H * 0.47
-    const baseR = Math.min(W, H) * 0.30   // base cloud radius
-
-    // Box-Muller gaussian sample centered on orb
-    function gaussPt(sigma) {
-      const u1 = Math.max(1e-9, rng()), u2 = rng()
-      const mag = sigma * Math.sqrt(-2 * Math.log(u1))
-      return { x: cx + mag * Math.cos(2 * Math.PI * u2), y: cy + mag * Math.sin(2 * Math.PI * u2) }
-    }
-
-    // ── Cloud body particles (gaussian blob, golden colors) ────────────
-    const innerPts = Array.from({ length: 600 }, () => ({
-      ...gaussPt(baseR * 0.16), ph: rng()*Math.PI*2, sp: 0.30+rng()*0.50, r: 1.0+rng()*2.0, type: 0
-    }))
-    const midPts = Array.from({ length: 1500 }, () => ({
-      ...gaussPt(baseR * 0.42), ph: rng()*Math.PI*2, sp: 0.20+rng()*0.40, r: 0.7+rng()*1.5, type: 1
-    }))
-    const outerPts = Array.from({ length: 800 }, () => ({
-      ...gaussPt(baseR * 0.68), ph: rng()*Math.PI*2, sp: 0.12+rng()*0.28, r: 0.5+rng()*1.2, type: 2
-    }))
-    const cloudPts = [...innerPts, ...midPts, ...outerPts]
-
-    // ── Floating orbital particles (drift around the orb) ─────────────
-    const floatPts = Array.from({ length: 110 }, () => ({
-      angle: rng() * Math.PI * 2,
-      orbitR: baseR * (1.20 + rng() * 0.90),
-      speed: (0.004 + rng() * 0.007) * (rng() < 0.5 ? 1 : -1),
-      ph: rng() * Math.PI * 2,
-      r: 1.2 + rng() * 2.2,
-      bright: 0.45 + rng() * 0.55
-    }))
+    const cy = H * 0.50
+    const baseR = Math.min(W, H) * 0.40
 
     let t = 0
 
     function draw() {
       const spd = orbSpeedMultRef.current
-      const br  = orbBrightnessRef.current
-      const isThinking = loadingRef.current
-      t += 0.005 * spd
+      const br   = orbBrightnessRef.current
+      const thinking = loadingRef.current
+      const speaking = isSpeakingRef.current
+      t += 0.008 * spd
 
-      // Thinking: cloud grows and pulses
-      const thinkPulse = isThinking ? 1.0 + 0.22 * Math.abs(Math.sin(t * 2.8)) : 1.0
-      const R = baseR * thinkPulse
+      // 35% bigger when speaking; rings spin 4.5× faster when thinking
+      const R        = baseR * (speaking ? 1.35 : 1.0)
+      const spinMult = thinking ? 4.5 : 1.0
 
-      // Black background
-      ctx.fillStyle = 'rgba(0,0,8,1)'
+      // ── Background ─────────────────────────────────────────────────
+      ctx.fillStyle = '#020818'
       ctx.fillRect(0, 0, W, H)
+      const bg = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 1.2)
+      bg.addColorStop(0,   `rgba(0,40,90,${(0.55 * br).toFixed(2)})`)
+      bg.addColorStop(0.6, `rgba(0,15,45,${(0.30 * br).toFixed(2)})`)
+      bg.addColorStop(1,   'rgba(0,0,0,0)')
+      ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H)
 
-      // ── Layered golden glow (additive blending) ────────────────────
-      ctx.globalCompositeOperation = 'lighter'
+      // Color helpers
+      const c  = (a) => `rgba(0,210,255,${(a * br).toFixed(2)})`
+      const cb = (a) => `rgba(100,240,255,${(a * br).toFixed(2)})`
+      const cd = (a) => `rgba(0,155,195,${(a * br).toFixed(2)})`
 
-      // Wide outer amber haze
-      const g1 = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 1.55)
-      g1.addColorStop(0.20, `rgba(160,65,0,${(0.12*br).toFixed(2)})`)
-      g1.addColorStop(0.60, `rgba(110,40,0,${(0.15*br).toFixed(2)})`)
-      g1.addColorStop(1,    'rgba(0,0,0,0)')
-      ctx.fillStyle = g1; ctx.fillRect(0, 0, W, H)
+      // ── Drawing helpers ────────────────────────────────────────────
+      function glowArc(r, lw, color, glowColor, blur) {
+        ctx.save()
+        ctx.shadowColor = glowColor; ctx.shadowBlur = blur
+        ctx.strokeStyle = color; ctx.lineWidth = lw
+        ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke()
+        ctx.restore()
+      }
 
-      // Mid orange glow
-      const g2 = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 0.85)
-      g2.addColorStop(0,    `rgba(255,115,8,${(0.26*br).toFixed(2)})`)
-      g2.addColorStop(0.50, `rgba(210,75,3,${(0.18*br).toFixed(2)})`)
-      g2.addColorStop(1,    'rgba(0,0,0,0)')
-      ctx.fillStyle = g2; ctx.fillRect(0, 0, W, H)
+      function partialArc(r, lw, color, startA, endA) {
+        ctx.strokeStyle = color; ctx.lineWidth = lw
+        ctx.beginPath(); ctx.arc(cx, cy, r, startA, endA); ctx.stroke()
+      }
 
-      // Inner amber-gold
-      const g3 = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 0.46)
-      g3.addColorStop(0,    `rgba(255,195,40,${(0.40*br).toFixed(2)})`)
-      g3.addColorStop(0.55, `rgba(255,140,15,${(0.28*br).toFixed(2)})`)
-      g3.addColorStop(1,    'rgba(0,0,0,0)')
-      ctx.fillStyle = g3; ctx.fillRect(0, 0, W, H)
-
-      // Bright white-gold hot core
-      const g4 = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 0.20)
-      g4.addColorStop(0,    `rgba(255,252,210,${(0.92*br).toFixed(2)})`)
-      g4.addColorStop(0.45, `rgba(255,220,90,${(0.62*br).toFixed(2)})`)
-      g4.addColorStop(0.85, `rgba(255,150,20,${(0.25*br).toFixed(2)})`)
-      g4.addColorStop(1,    'rgba(0,0,0,0)')
-      ctx.fillStyle = g4; ctx.fillRect(0, 0, W, H)
-
-      ctx.globalCompositeOperation = 'source-over'
-
-      // ── Cloud body particles ───────────────────────────────────────
-      cloudPts.forEach(p => {
-        const px = p.x + Math.sin(p.ph + t * p.sp) * R * 0.032
-        const py = p.y + Math.cos(p.ph * 1.28 + t * p.sp * 0.75) * R * 0.024
-        if (px < 0 || px > W || py < 0 || py > H) return
-
-        const dx = px - cx, dy = py - cy
-        const dist = Math.sqrt(dx*dx + dy*dy) / R
-
-        let ri, gi, bi, a
-        if (p.type === 0) {
-          const fade = Math.max(0, 1 - dist * 4.2)
-          ri = 255; gi = Math.round(235 + fade * 20); bi = Math.round(150 + fade * 60)
-          a  = (0.22 * fade + 0.04) * br
-        } else if (p.type === 1) {
-          const fade = Math.max(0, 1 - dist * 2.1)
-          ri = 255; gi = Math.round(145 + fade * 65); bi = Math.round(8 + fade * 20)
-          a  = (0.18 * fade + 0.03) * br
-        } else {
-          const fade = Math.max(0, 1 - dist * 1.45)
-          ri = 220; gi = Math.round(85 + fade * 45); bi = 5
-          a  = (0.12 * fade) * br
+      function tickRing(r, n, tickLen, lw, color, rot, majorEvery, majorScale) {
+        ctx.save(); ctx.translate(cx, cy); ctx.rotate(rot)
+        ctx.strokeStyle = color; ctx.lineWidth = lw
+        for (let i = 0; i < n; i++) {
+          const a = (i / n) * Math.PI * 2
+          const len = (i % majorEvery === 0) ? tickLen * majorScale : tickLen
+          const cos = Math.cos(a), sin = Math.sin(a)
+          ctx.beginPath()
+          ctx.moveTo(cos * r, sin * r)
+          ctx.lineTo(cos * (r - len), sin * (r - len))
+          ctx.stroke()
         }
+        ctx.restore()
+      }
 
-        if (a < 0.016) return
-        ctx.fillStyle = `rgba(${ri},${gi},${bi},${a.toFixed(2)})`
-        ctx.fillRect(px - p.r*0.5, py - p.r*0.5, p.r, p.r)
-      })
+      function dotRing(r, n, dotR, color, rot, majorEvery, majorScale) {
+        ctx.save(); ctx.translate(cx, cy); ctx.rotate(rot); ctx.fillStyle = color
+        for (let i = 0; i < n; i++) {
+          const a = (i / n) * Math.PI * 2
+          const dr = (i % majorEvery === 0) ? dotR * majorScale : dotR
+          ctx.beginPath()
+          ctx.arc(Math.cos(a) * r, Math.sin(a) * r, dr, 0, Math.PI * 2)
+          ctx.fill()
+        }
+        ctx.restore()
+      }
 
-      // ── Floating orbital particles ─────────────────────────────────
-      floatPts.forEach(fp => {
-        fp.angle += fp.speed * spd
-        const orb = fp.orbitR * thinkPulse
-        const radOsc = 1 + 0.09 * Math.sin(fp.ph + t * 0.55)
-        const px = cx + Math.cos(fp.angle) * orb * radOsc
-        const py = cy + Math.sin(fp.angle) * orb * radOsc
-        if (px < 0 || px > W || py < 0 || py > H) return
-        const a = (0.45 + 0.55 * Math.abs(Math.sin(fp.ph + t * 0.8))) * fp.bright * br
-        ctx.fillStyle = `rgba(255,175,35,${(a * 0.65).toFixed(2)})`
-        ctx.fillRect(px - fp.r*0.5, py - fp.r*0.5, fp.r, fp.r)
-      })
+      function segRing(r, n, segFrac, lw, color, rot) {
+        ctx.save(); ctx.translate(cx, cy); ctx.rotate(rot)
+        ctx.strokeStyle = color; ctx.lineWidth = lw
+        const step = (Math.PI * 2) / n
+        for (let i = 0; i < n; i++) {
+          const a = i * step + step * (1 - segFrac) * 0.5
+          ctx.beginPath(); ctx.arc(0, 0, r, a, a + step * segFrac); ctx.stroke()
+        }
+        ctx.restore()
+      }
+
+      function rectRing(r, n, rw, rh, color, rot) {
+        ctx.save(); ctx.translate(cx, cy); ctx.rotate(rot); ctx.fillStyle = color
+        for (let i = 0; i < n; i++) {
+          const a = (i / n) * Math.PI * 2
+          ctx.save(); ctx.rotate(a)
+          ctx.fillRect(-rw / 2, -r - rh, rw, rh)
+          ctx.restore()
+        }
+        ctx.restore()
+      }
+
+      function charRing(r, text, fs, color, rot) {
+        ctx.save(); ctx.translate(cx, cy)
+        ctx.font = `${fs}px 'Share Tech Mono', monospace`
+        ctx.fillStyle = color; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+        const chars = text.split('')
+        const step = (Math.PI * 2) / chars.length
+        chars.forEach((ch, i) => {
+          const a = i * step + rot
+          ctx.save(); ctx.rotate(a); ctx.translate(0, -r)
+          ctx.rotate(Math.PI / 2); ctx.fillText(ch, 0, 0)
+          ctx.restore()
+        })
+        ctx.restore()
+      }
+
+      // ── Rings (outer → inner) ──────────────────────────────────────
+      // Ring A — outermost: thin arc + fine ticks + major ticks
+      glowArc(R * 0.94, 0.7, cd(0.30), '#00d4ff', 0)
+      tickRing(R * 0.94, 120, R * 0.025, 0.7, cd(0.40), t * 0.05 * spinMult, 8, 2.2)
+
+      // Ring B — rectangular calibration blocks, counter-rotating
+      rectRing(R * 0.87, 40, R * 0.008, R * 0.022, c(0.45), -t * 0.08 * spinMult)
+      glowArc(R * 0.87, 0.5, cd(0.20), '#00d4ff', 0)
+
+      // Ring C — dot ring
+      dotRing(R * 0.79, 128, R * 0.005, cd(0.40), t * 0.11 * spinMult, 16, 2.5)
+      dotRing(R * 0.79, 16,  R * 0.010, c(0.55),  t * 0.11 * spinMult, 1,  1.0)
+
+      // Ring D — segmented dash ring
+      segRing(R * 0.71, 28, 0.55, 1.8, c(0.52), -t * 0.17 * spinMult)
+      glowArc(R * 0.71, 0.5, cd(0.18), '#00d4ff', 0)
+
+      // Ring E — character/number ring (000000...)
+      charRing(R * 0.63, '000000000000000000000000', Math.round(R * 0.044), cd(0.32), t * 0.13 * spinMult)
+
+      // Ring F — inner tick ring, counter-rotating
+      glowArc(R * 0.55, 0.8, c(0.38), '#00d4ff', 0)
+      tickRing(R * 0.55, 72, R * 0.022, 1.0, c(0.52), -t * 0.24 * spinMult, 6, 1.9)
+
+      // Ring G — segmented accent ring
+      segRing(R * 0.48, 18, 0.62, 2.2, cb(0.65), t * 0.36 * spinMult)
+
+      // Ring H — main inner glowing ring (thick + glow)
+      glowArc(R * 0.42, 3.5, c(0.78), '#00d4ff', 22 * br)
+      glowArc(R * 0.42, 1.2, cb(0.92), '#80f0ff',  8 * br)
+      segRing(R * 0.42, 22, 0.68, 3.8, cb(0.88), t * 0.52 * spinMult)
+
+      // Ring I — innermost glowing ring
+      glowArc(R * 0.29, 2.5, c(0.88),  '#00d4ff', 28 * br)
+      glowArc(R * 0.29, 1.0, 'rgba(215,252,255,0.95)', '#c0f8ff', 12 * br)
+
+      // ── Center fill ───────────────────────────────────────────────
+      const cf = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 0.27)
+      cf.addColorStop(0, 'rgba(0,22,50,0.96)')
+      cf.addColorStop(1, 'rgba(2,8,28,0.98)')
+      ctx.fillStyle = cf
+      ctx.beginPath(); ctx.arc(cx, cy, R * 0.275, 0, Math.PI * 2); ctx.fill()
+
+      // ── J.A.R.V.I.S text ─────────────────────────────────────────
+      ctx.save()
+      ctx.shadowColor = '#00d4ff'; ctx.shadowBlur = 22
+      ctx.fillStyle = `rgba(205,250,255,${(0.96 * br).toFixed(2)})`
+      ctx.font = `700 ${Math.round(R * 0.115)}px 'Rajdhani', sans-serif`
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+      ctx.fillText('J.A.R.V.I.S', cx, cy)
+      ctx.restore()
+
+      // Status sub-text
+      const status = thinking ? 'PROCESSING...' : speaking ? 'SPEAKING' : 'ONLINE'
+      ctx.save()
+      ctx.fillStyle = `rgba(0,210,255,${(0.52 * br).toFixed(2)})`
+      ctx.font = `${Math.round(R * 0.050)}px 'Share Tech Mono', monospace`
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+      ctx.fillText(status, cx, cy + R * 0.125)
+      ctx.restore()
 
       orbRafRef.current = requestAnimationFrame(draw)
     }
