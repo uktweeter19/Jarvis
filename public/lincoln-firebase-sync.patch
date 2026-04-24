@@ -1,0 +1,44 @@
+diff --git a/index.html b/index.html
+index 1ba64e9..4847eb6 100644
+--- a/index.html
++++ b/index.html
+@@ -385,14 +385,14 @@ function saveLog(){
+   WL=WL.filter(function(l){return daysAgo(l.date)<=30;});
+   saveKey(PFX+"logs",WL);
+   resetSets();gel("lex").value="";gel("lnote").value="";
+-  showToast("LOGGED");goTo("home");
++  syncToFirebase();showToast("LOGGED");goTo("home");
+ }
+ function logPractice(){
+   WL.unshift({id:Date.now(),ex:"Practice",sets:[{w:"",r:"session"}],note:"",
+     date:new Date().toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}),
+     time:new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})});
+   WL=WL.filter(function(l){return daysAgo(l.date)<=30;});
+-  saveKey(PFX+"logs",WL);showToast("PRACTICE LOGGED");renderHome();
++  saveKey(PFX+"logs",WL);syncToFirebase();showToast("PRACTICE LOGGED");renderHome();
+ }
+ 
+ // History page (30 days)
+@@ -481,7 +481,7 @@ function renderPRList(){
+ }
+ 
+ // Water
+-function addWater(n){WA[TODAY]=Math.max(0,(WA[TODAY]||0)+n);saveKey(PFX+"water",WA);renderWater();if(CV==="home")renderHome();}
++function addWater(n){WA[TODAY]=Math.max(0,(WA[TODAY]||0)+n);saveKey(PFX+"water",WA);syncToFirebase();renderWater();if(CV==="home")renderHome();}
+ function renderWater(){
+   var c=WA[TODAY]||0,g=WGOAL,pct=Math.min(100,Math.round(c/g*100));
+   gel("wfill").style.height=pct+"%";gel("wnum").textContent=c;
+@@ -849,11 +849,13 @@ function saveStats(){
+   if(h)ST.height=h.value;if(w)ST.weight=w.value;if(t)ST.target=t.value;
+   saveKey(PFX+"stats",ST);renderWeightProg();
+ }
++function syncToFirebase(){try{var m=getMacros();var wkCt=WL.filter(function(l){return daysAgo(l.date)<=7;}).length;var d={name:"Lincoln",sport:"Football - Colts",acc:"#FF6B35",weight:ST.weight||null,waterToday:WA[TODAY]||0,waterGoal:WGOAL,calories:m?m.cal:null,protein:m?m.pro:null,carbs:m?m.carb:null,fat:m?m.fat:null,lastWorkout:WL.length?{ex:WL[0].ex,date:WL[0].date,time:WL[0].time}:null,weeklyCount:wkCt,lastSync:Date.now()};fetch("https://jarvis-family-7e8c9-default-rtdb.firebaseio.com/athletes/lincoln.json",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(d)});}catch(e){}}
+ function saveAll(){
+   var h=gel("inh"),w=gel("inw"),t=gel("int");
+   if(h&&h.value)ST.height=h.value;if(w&&w.value)ST.weight=w.value;if(t&&t.value)ST.target=t.value;
+   saveKey(PFX+"stats",ST);saveKey(PFX+"logs",WL);saveKey(PFX+"water",WA);
+   saveKey(PFX+"liftprs",LP);saveKey(PFX+"runprs",RP);saveKey(PFX+"meals",ML);saveKey(PFX+"exweights",EW);
++  syncToFirebase();
+ }
+ function renderHome(){
+   var bw=getBW(),d=GPROG[TI];
