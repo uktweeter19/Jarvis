@@ -1749,7 +1749,10 @@ export default function Home() {
 
   async function buildLiveContext(userInput) {
     const q = userInput.toLowerCase()
-    const parts = []
+    const now = new Date()
+    const parts = [
+      `TODAY'S DATE: ${now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'America/New_York' })} — Use this as the current date for all responses. Your training data may be from an earlier year; trust this date, not your training.`
+    ]
 
     const wantsNews = q.includes('news') || q.includes('headline') || q.includes('fox')
     const wantsSports = q.includes('sport') || q.includes('score') || q.includes('game') ||
