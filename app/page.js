@@ -1768,6 +1768,30 @@ export default function Home() {
     }
   }
 
+  async function fetchNFLDraft(season = new Date().getFullYear()) {
+    try {
+      const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/football/nfl/draft?season=${season}`)
+      if (!res.ok) throw new Error('not ok')
+      const data = await res.json()
+      const rounds = data.rounds || []
+      if (!rounds.length) return null
+      const lines = []
+      for (const round of rounds) {
+        const num = round.number || round.round
+        for (const pick of (round.picks || [])) {
+          const overall = pick.overallNumber || pick.pickNumber || ''
+          const name = pick.athlete?.displayName || pick.athlete?.fullName || ''
+          const pos = pick.athlete?.position?.abbreviation || ''
+          const team = pick.team?.displayName || pick.team?.shortDisplayName || ''
+          if (name && team) lines.push(`Pick #${overall} (Rd ${num}): ${name} (${pos}) → ${team}`)
+          if (lines.length >= 64) break
+        }
+        if (lines.length >= 64) break
+      }
+      return lines.length ? `${season} NFL DRAFT PICKS:\n` + lines.join('\n') : null
+    } catch (_) { return null }
+  }
+
   async function buildLiveContext(userInput) {
     const q = userInput.toLowerCase()
     const now = new Date()
@@ -1776,6 +1800,9 @@ export default function Home() {
     ]
 
     const wantsNews = q.includes('news') || q.includes('headline') || q.includes('fox')
+    const wantsDraft = q.includes('draft') || q.includes('drafted') || q.includes('first pick') ||
+      q.includes('number one pick') || q.includes('#1 pick') || q.includes('first round pick') ||
+      (q.includes('pick') && (q.includes('nfl') || q.includes('football')))
     const wantsSports = q.includes('sport') || q.includes('score') || q.includes('game') ||
       q.includes('colts') || q.includes('thunder') || q.includes('wildcat') ||
       q.includes('reds') || q.includes('rams') || q.includes('nfl') || q.includes('nba') ||
@@ -1794,6 +1821,15 @@ export default function Home() {
           if (d.headlines?.length) {
             parts.push('CURRENT FOX NEWS HEADLINES:\n' + d.headlines.map((h, i) => `${i + 1}. ${h}`).join('\n'))
           }
+        }).catch(() => {})
+      )
+    }
+
+    if (wantsDraft) {
+      fetches.push(
+        fetchNFLDraft().then(result => {
+          if (result) parts.push(result)
+          else parts.push('NFL DRAFT: Draft data unavailable right now.')
         }).catch(() => {})
       )
     }
