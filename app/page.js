@@ -1660,45 +1660,66 @@ export default function Home() {
 
   function startListening() {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition
-    if (!SR || !voiceEnabledRef.current) return
-    window.speechSynthesis.cancel()
+    if (!SR || !voiceEnabledRef.current || isSpeakingRef.current || loadingRef.current) return
     try { recognitionRef.current?.abort() } catch (_) {}
+    recognitionRef.current = null
+    window.speechSynthesis?.cancel()
+
+    const isIOS = typeof navigator !== 'undefined' && /iP(hone|ad|od)/.test(navigator.userAgent)
     const rec = new SR()
     rec.lang = 'en-US'
     rec.interimResults = false
     rec.maxAlternatives = 1
+    rec.continuous = !isIOS // iOS ignores continuous but causes errors if set
+
     let gotResult = false
+    let restarting = false
+
+    function scheduleRestart(delay = 150) {
+      if (!voiceEnabledRef.current || loadingRef.current || isSpeakingRef.current) return
+      restarting = true
+      setTimeout(() => { restarting = false; startListening() }, delay)
+    }
+
     rec.onstart = () => setIsListening(true)
+
     rec.onresult = (e) => {
+      // With continuous=true, results stream in — grab the latest final result
+      let transcript = ''
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) transcript += e.results[i][0].transcript
+      }
+      transcript = transcript.trim()
+      if (!transcript) return
       gotResult = true
-      const transcript = e.results[0][0].transcript.trim()
       setIsListening(false)
+      try { rec.abort() } catch (_) {}
       if (transcript.length > 1) {
-        send(transcript) // speak() inside send() will restart listening when done
+        send(transcript)
       } else if (voiceEnabledRef.current && !loadingRef.current) {
-        setTimeout(startListening, 400)
+        scheduleRestart(300)
       }
     }
+
     rec.onerror = (e) => {
-      setIsListening(false)
       if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+        setIsListening(false)
         setVoiceEnabled(false)
         voiceEnabledRef.current = false
-        alert('Microphone access was denied.\n\niOS: Go to Settings → Privacy & Security → Microphone and enable it for Safari.\nChrome: click the lock icon in the address bar.')
+        alert('Microphone access was denied.\n\niOS: Settings → Privacy & Security → Microphone → enable Safari.\nChrome: tap the lock icon in the address bar.')
       } else if (e.error === 'network') {
+        setIsListening(false)
         alert('Speech recognition needs internet. Make sure Siri & Dictation is enabled in Settings.')
-      } else if (e.error !== 'aborted' && voiceEnabledRef.current && !loadingRef.current) {
-        setTimeout(startListening, 1500)
+      } else if (e.error !== 'aborted') {
+        scheduleRestart(1200)
       }
     }
+
     rec.onend = () => {
       setIsListening(false)
-      // Restart listening if we didn't get a result and voice is still on
-      // (the onresult handler already handles restarts when speech was detected)
-      if (!gotResult && voiceEnabledRef.current && !loadingRef.current && !isSpeakingRef.current) {
-        setTimeout(startListening, 700)
-      }
+      if (!gotResult && !restarting) scheduleRestart(150)
     }
+
     rec.start()
     recognitionRef.current = rec
   }
